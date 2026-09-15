@@ -12,10 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // No web login page exists yet (backend-only phase); unauthenticated
+        // admin requests always get a JSON 401 via shouldRenderJsonWhen below
+        // rather than a redirect to a route that doesn't exist.
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+            fn (Request $request) => $request->is('api/*') || $request->is('admin/*') || $request->expectsJson(),
         );
     })->create();

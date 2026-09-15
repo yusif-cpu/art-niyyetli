@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ArtworkController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ExhibitionController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::post('artworks/reorder', [ArtworkController::class, 'reorder'])->name('artworks.reorder');
             Route::apiResource('artworks', ArtworkController::class)->except(['create', 'edit']);
+
+            Route::apiResource('exhibitions', ExhibitionController::class)->except(['create', 'edit']);
 
             Route::post('media', [MediaController::class, 'store'])
                 ->name('media.store')

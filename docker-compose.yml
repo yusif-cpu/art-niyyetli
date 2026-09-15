@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: art-niyyetli-app
+    container_name: art-niyyetli-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - art-niyyetli
+
+  webserver:
+    image: nginx:1.27-alpine
+    container_name: art-niyyetli-webserver
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - art-niyyetli
+
+  mysql:
+    image: mysql:8.4
+    container_name: art-niyyetli-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-art_niyyetli}
+      MYSQL_USER: ${DB_USERNAME:-art_niyyetli}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - art-niyyetli-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - art-niyyetli
+
+volumes:
+  art-niyyetli-mysql-data:
+    driver: local
+
+networks:
+  art-niyyetli:
+    driver: bridge

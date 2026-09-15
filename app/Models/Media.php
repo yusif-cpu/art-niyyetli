@@ -7,6 +7,7 @@ use Database\Factories\MediaFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -55,5 +56,10 @@ class Media extends Model
     public function seoMetadata(): HasMany
     {
         return $this->hasMany(SeoMetadata::class, 'og_image_id');
+    }
+
+    public function articles(): BelongsToMany
+    {
+        return $this->belongsToMany(Article::class, 'article_media')->withPivot('sort_order');
     }
 }

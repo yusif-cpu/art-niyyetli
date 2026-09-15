@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\ArtworkController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -21,6 +22,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::apiResource('artworks', ArtworkController::class)->except(['create', 'edit']);
 
             Route::apiResource('exhibitions', ExhibitionController::class)->except(['create', 'edit']);
+
+            Route::apiResource('articles', ArticleController::class)->except(['create', 'edit']);
 
             Route::post('media', [MediaController::class, 'store'])
                 ->name('media.store')

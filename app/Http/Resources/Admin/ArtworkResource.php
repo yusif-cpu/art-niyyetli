@@ -5,6 +5,7 @@ namespace App\Http\Resources\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 
 class ArtworkResource extends JsonResource
 {
@@ -96,13 +97,24 @@ class ArtworkResource extends JsonResource
             'is_main' => $image->is_main,
             'media' => $image->relationLoaded('media') ? [
                 'id' => $image->media->id,
-                'disk' => $image->media->disk,
-                'path' => $image->media->path,
                 'mime_type' => $image->media->mime_type,
                 'width' => $image->media->original_width,
                 'height' => $image->media->original_height,
                 'aspect_ratio' => (float) $image->media->aspect_ratio,
             ] : null,
+            'url' => $this->variantUrl($image, 'detail'),
         ];
+    }
+
+    private function variantUrl($image, string $preferredSize): ?string
+    {
+        if (! $image->relationLoaded('media') || ! $image->media->relationLoaded('variants')) {
+            return null;
+        }
+
+        $variant = $image->media->variants->firstWhere('variant', "{$preferredSize}-webp")
+            ?? $image->media->variants->firstWhere('variant', "{$preferredSize}-jpeg");
+
+        return $variant ? Storage::disk($variant->disk)->url($variant->path) : null;
     }
 }

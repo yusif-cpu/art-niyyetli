@@ -8,9 +8,10 @@ RUN apk add --no-cache \
         libzip-dev \
         libpng-dev \
         libjpeg-turbo-dev \
+        libwebp-dev \
         freetype-dev \
         oniguruma-dev \
-    && docker-php-ext-configure gd --with-jpeg --with-freetype \
+    && docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         mbstring \
@@ -22,6 +23,7 @@ RUN apk add --no-cache \
         intl \
         opcache
 
+COPY docker/php/conf.d/local.ini /usr/local/etc/php/conf.d/zz-local.ini
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html

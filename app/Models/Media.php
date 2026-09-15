@@ -36,4 +36,24 @@ class Media extends Model
     {
         return $this->hasMany(MediaVariant::class);
     }
+
+    public function artworkImages(): HasMany
+    {
+        return $this->hasMany(ArtworkImage::class);
+    }
+
+    public function representingArtists(): HasMany
+    {
+        return $this->hasMany(Artist::class, 'representation_image_id');
+    }
+
+    public function exhibitionMedia(): HasMany
+    {
+        return $this->hasMany(ExhibitionMedium::class);
+    }
+
+    public function seoMetadata(): HasMany
+    {
+        return $this->hasMany(SeoMetadata::class, 'og_image_id');
+    }
 }

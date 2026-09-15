@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\ExhibitionStatus;
 use App\Enums\ExhibitionType;
+use Database\Factories\ExhibitionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['type', 'status', 'start_date', 'end_date', 'is_active'])]
 class Exhibition extends Model
 {
-    use SoftDeletes;
+    /** @use HasFactory<ExhibitionFactory> */
+    use HasFactory, SoftDeletes;
 
     protected function casts(): array
     {

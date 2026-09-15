@@ -30,7 +30,7 @@ class ArtworkController extends Controller
                 'genre.translations' => fn ($q) => $q->whereIn('locale', $locales),
                 'translations' => fn ($q) => $q->whereIn('locale', $locales),
                 'images' => fn ($q) => $q->orderBy('sort_order'),
-                'images.media',
+                'images.media.variants',
             ]);
 
         if ($search = $request->query('search')) {
@@ -74,7 +74,7 @@ class ArtworkController extends Controller
     {
         $artwork->load([
             'artist.translations', 'medium.translations', 'genre.translations',
-            'translations', 'images' => fn ($q) => $q->orderBy('sort_order'), 'images.media',
+            'translations', 'images' => fn ($q) => $q->orderBy('sort_order'), 'images.media.variants',
         ]);
 
         return new ArtworkResource($artwork);

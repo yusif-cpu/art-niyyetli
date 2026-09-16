@@ -76,6 +76,104 @@ docker compose exec app composer install
 
 Application source code lives on the host filesystem and is bind-mounted into the `app` and `webserver` containers, so any file created or edited on the host (or inside the container) is immediately visible on both sides.
 
+## Public API (Phase 09)
+
+A read-only, versioned, locale-aware JSON API for a future separate public frontend. GET-only — nothing under `/api/v1` accepts writes.
+
+**Base URL:** `http://localhost:8080/api/v1` (local Docker dev)
+
+**Locale:** every endpoint accepts `?locale=az|en` (default `az`). Any other or missing value silently falls back to `az` — it is never a `422`. Translated text falls back **field by field**: an `en` request uses the `en` value for a given field when it exists and is non-empty, otherwise that same field's `az` value, otherwise `null`. This is per-field, never a whole-object fallback — one field can come from `en` while a sibling field on the same object falls back to `az`.
+
+**Endpoints:**
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/homepage` | Hero/section copy, dynamic stats, wall, featured (max 6), artists, current/upcoming exhibition, home-page FAQs, social links |
+| GET | `/pages` | Active pages (no `sections`) |
+| GET | `/pages/{slug}` | One active page with active `sections` |
+| GET | `/artists` | Active artists (light — no exhibitions/awards/artworks) |
+| GET | `/artists/{slug}` | One active artist with exhibitions, awards, public artworks |
+| GET | `/artworks` | Paginated catalogue with filters/sorting |
+| GET | `/artworks/{inventoryCode}` | Full artwork detail + similar works |
+| GET | `/exhibitions` | Paginated, `?filter=current\|upcoming\|archive` |
+| GET | `/exhibitions/{slug}` | One active exhibition |
+| GET | `/articles` | Paginated, published-only |
+| GET | `/articles/{slug}` | One published article |
+| GET | `/faqs` | Active FAQs |
+| GET | `/site-settings` | Allowlisted business settings only |
+| GET | `/social-links` | Active social links |
+
+**Common query parameters:** `locale`, `per_page` (default 24, max 60 — out-of-range or non-numeric values silently normalize to 24), `page`.
+
+**Artwork filters** (`GET /artworks`), combined with AND logic:
+
+```
+/api/v1/artworks?locale=en&artist=5&medium=oil&status=available&price_min=1000&price_max=5000&sort=price_asc
+```
+
+`artist` (numeric artist id), `genre`/`medium` (slug), `status` (`available|reserved|sold`), `price_min`/`price_max` (numeric), `sort` (`newest|price_asc|price_desc`, default is the gallery's configured `sort_order`).
+
+**Exhibition filter:** `?filter=current|upcoming|archive`.
+
+**Pagination envelope** (list endpoints):
+
+```json
+{
+  "data": [ /* ... */ ],
+  "meta": { "current_page": 1, "last_page": 3, "per_page": 24, "total": 61 },
+  "links": { "first": "...", "last": "...", "prev": null, "next": "..." }
+}
+```
+
+**Representative responses:**
+
+Artwork card (`GET /artworks`):
+```json
+{
+  "inventory_code": "AN-2026-014",
+  "title": "Sunset Over Baku",
+  "artist": { "id": 5, "name": "Aygün Məmmədova" },
+  "image_url": "http://localhost:8080/storage/media/14/catalogue-webp.webp",
+  "genre": { "slug": "painting", "name": "Painting" },
+  "medium": { "slug": "oil", "name": "Oil on canvas" },
+  "price": 3200.0,
+  "currency": "AZN",
+  "availability": "available",
+  "width_cm": 80.0,
+  "height_cm": 60.0
+}
+```
+`price`/`currency` are `null` when the artwork's `show_price` flag is off; `availability` is always present (sold artworks stay public).
+
+Artwork detail (`GET /artworks/{inventoryCode}`) adds `year_created`, `short_description`, `provenance`, `certificate`, `frame_condition`, `delivery_note`, `images` (each with `type`, `sort_order`, `is_main`, `url` — the `full` variant, distinct from the card's `catalogue` variant), and `similar` (up to 4 same-genre artwork cards).
+
+Page with a section (`GET /pages/home`):
+```json
+{
+  "data": {
+    "slug": "home", "type": "home", "title": "Ana səhifə", "content": "...",
+    "sections": [
+      { "key": "hero", "heading": "Xoş gəldiniz", "body": "...", "sort_order": 0, "image_url": null }
+    ]
+  }
+}
+```
+
+FAQ (`GET /faqs`):
+```json
+{ "id": 3, "question": "...", "answer": "...", "sort_order": 0 }
+```
+
+**Image URLs/variants:** every image field is a ready-to-use public URL (never a filesystem path or the original upload). Context picks the variant: `catalogue` for artwork list/card images, `full` for artwork detail images, `detail` for page sections, artist portraits, exhibition/article media. Each variant is served WebP-first with a JPEG fallback already baked into the URL the API returns — the frontend never has to choose a format.
+
+**Errors** — always JSON, never a stack trace in production:
+- `404` — unknown slug/inventory code, or the record isn't public (inactive/soft-deleted/draft).
+- `422` — invalid filter/sort value, e.g. `?status=not-a-status` or `price_max < price_min`. Body: `{"message": "...", "errors": {"status": ["..."]}}`.
+- `429` — rate limited (60 requests/minute/IP).
+- `405` — any non-GET method on a public API route.
+
+**CORS:** configured in `config/cors.php`, restricted to `PUBLIC_API_CORS_ORIGINS` (comma-separated origins in `.env`; defaults to common localhost dev-server ports). Production sets this to the real frontend origin(s) — never a wildcard.
+
 ## Project reference files
 
 The [`work-files/`](work-files/) directory contains project reference materials (backend requirements, frontend design references, etc.). It is project context, not part of the application code — **do not modify it unless explicitly requested.**

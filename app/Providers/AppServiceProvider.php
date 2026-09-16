@@ -34,5 +34,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('media-upload', fn (Request $request) => Limit::perMinute(20)->by(
             $request->user()?->id ?: $request->ip()
         ));
+
+        // Public read-only API. 60/min/IP is generous for a browsing frontend
+        // while blocking scripted scraping/abuse; Phase 12 can tune further.
+        RateLimiter::for('public-api', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
     }
 }

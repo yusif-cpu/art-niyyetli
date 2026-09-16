@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             EnquirySubjectSeeder::class,
             AdminUserSeeder::class,
+            PageSeeder::class,
         ]);
     }
 }

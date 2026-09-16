@@ -78,7 +78,7 @@ Application source code lives on the host filesystem and is bind-mounted into th
 
 ## Public API (Phase 09)
 
-A read-only, versioned, locale-aware JSON API for a future separate public frontend. GET-only — nothing under `/api/v1` accepts writes.
+A read-only, versioned, locale-aware JSON API for a future separate public frontend. GET-only for the catalogue/content surface — the one exception is `POST /enquiries` (Phase 10, below), the artwork-enquiry submission endpoint.
 
 **Base URL:** `http://localhost:8080/api/v1` (local Docker dev)
 
@@ -102,6 +102,7 @@ A read-only, versioned, locale-aware JSON API for a future separate public front
 | GET | `/faqs` | Active FAQs |
 | GET | `/site-settings` | Allowlisted business settings only |
 | GET | `/social-links` | Active social links |
+| POST | `/enquiries` | Submit an artwork enquiry (Phase 10) — the only write route on the public API |
 
 **Common query parameters:** `locale`, `per_page` (default 24, max 60 — out-of-range or non-numeric values silently normalize to 24), `page`.
 
@@ -169,10 +170,18 @@ FAQ (`GET /faqs`):
 **Errors** — always JSON, never a stack trace in production:
 - `404` — unknown slug/inventory code, or the record isn't public (inactive/soft-deleted/draft).
 - `422` — invalid filter/sort value, e.g. `?status=not-a-status` or `price_max < price_min`. Body: `{"message": "...", "errors": {"status": ["..."]}}`.
-- `429` — rate limited (60 requests/minute/IP).
-- `405` — any non-GET method on a public API route.
+- `429` — rate limited: 60 requests/minute/IP on the read (GET) surface, or 5 requests/hour/IP on `POST /enquiries` specifically (its own separate limit, not shared with the read bucket).
+- `405` — any non-GET method on a route other than `POST /enquiries`.
 
 **CORS:** configured in `config/cors.php`, restricted to `PUBLIC_API_CORS_ORIGINS` (comma-separated origins in `.env`; defaults to common localhost dev-server ports). Production sets this to the real frontend origin(s) — never a wildcard.
+
+### Enquiries (Phase 10)
+
+`POST /api/v1/enquiries` lets a visitor enquire about an artwork from its detail page. Body: `{"name", "email", "phone"?, "message", "artwork_code", "website"?}` — `artwork_code` is the artwork's `inventory_code`; `website` is a honeypot field that must stay empty for real submissions. Success is `201 {"message": "Sorğunuz qeydə alındı."}`; validation failures (missing fields, unknown/inactive artwork code, or a sold artwork unless `ALLOW_SOLD_ENQUIRIES` is enabled) are `422`; more than 5 requests/hour/IP is `429`. A honeypot-triggered submission returns the identical `201` body but persists nothing and sends no email.
+
+Every valid enquiry is saved (`enquiries` table) and triggers an email notification to the gallery's configured `contact_email` site setting, falling back to `ENQUIRY_NOTIFICATION_EMAIL` in `.env`. Notification delivery failure is logged but never rolls back the saved enquiry or affects the HTTP response — database success and email success are independent.
+
+Admins manage enquiries under `/admin/enquiries` (list with `status`/`artwork_id`/`search`/date-range filters, detail, and status/internal-note updates only — enquiries are never admin-created or deleted), gated by the same `admin.access` Gate as every other admin resource. The artwork detail API response also gains a `whatsapp_link` field (`null` unless `GALLERY_WHATSAPP_NUMBER` is configured) for a link-based WhatsApp contact CTA.
 
 ## Project reference files
 

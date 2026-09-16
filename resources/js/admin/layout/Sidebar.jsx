@@ -3,6 +3,7 @@ const NAV_ITEMS = [
     { key: 'artworks', label: 'Əsərlər' },
     { key: 'exhibitions', label: 'Sərgilər' },
     { key: 'articles', label: 'Məqalələr' },
+    { key: 'enquiries', label: 'Sorğular' },
     { key: 'pages', label: 'Səhifələr' },
     { key: 'faqs', label: 'Tez-tez verilən suallar' },
     { key: 'settings', label: 'Sayt ayarları' },
@@ -10,7 +11,7 @@ const NAV_ITEMS = [
     { key: 'media', label: 'Media' },
 ];
 
-export default function Sidebar({ current, onNavigate, isAdministrator, open, onClose }) {
+export default function Sidebar({ current, onNavigate, isAdministrator, open, onClose, badges = {} }) {
     const items = isAdministrator ? [...NAV_ITEMS, { key: 'users', label: 'İstifadəçilər' }] : NAV_ITEMS;
 
     return (
@@ -36,6 +37,11 @@ export default function Sidebar({ current, onNavigate, isAdministrator, open, on
                                 }`}
                             >
                                 {item.label}
+                                {badges[item.key] > 0 && (
+                                    <span className="ml-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-medium text-white">
+                                        {badges[item.key]}
+                                    </span>
+                                )}
                             </button>
                         </li>
                     ))}

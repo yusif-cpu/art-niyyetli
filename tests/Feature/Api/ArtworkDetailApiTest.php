@@ -140,4 +140,30 @@ class ArtworkDetailApiTest extends TestCase
         $this->assertStringNotContainsString('"disk"', $body);
         $this->assertStringNotContainsString('"path"', $body);
     }
+
+    public function test_whatsapp_link_is_null_when_not_configured(): void
+    {
+        config(['gallery.whatsapp_number' => null]);
+        $artwork = $this->makeArtwork();
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.whatsapp_link', null);
+    }
+
+    public function test_whatsapp_link_built_from_config_number_and_includes_inventory_code(): void
+    {
+        config(['gallery.whatsapp_number' => '994501234567']);
+        $artwork = $this->makeArtwork();
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}");
+
+        $response->assertOk();
+        $link = $response->json('data.whatsapp_link');
+        $this->assertStringStartsWith('https://wa.me/994501234567?text=', $link);
+        $query = parse_url($link, PHP_URL_QUERY);
+        parse_str($query, $params);
+        $this->assertStringContainsString($artwork->inventory_code, $params['text']);
+    }
 }

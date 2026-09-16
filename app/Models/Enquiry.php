@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'enquiry_subject_id', 'artwork_id', 'inventory_code', 'submitted_at', 'name',
-    'contact', 'message', 'status', 'internal_note', 'ip_address', 'user_agent',
+    'contact', 'email', 'phone', 'message', 'status', 'internal_note', 'ip_address', 'user_agent',
 ])]
 class Enquiry extends Model
 {

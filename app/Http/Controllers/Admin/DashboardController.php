@@ -30,6 +30,7 @@ class DashboardController extends Controller
                 'articles' => Article::count(),
                 'faqs' => Faq::count(),
                 'enquiries' => Enquiry::count(),
+                'enquiries_new' => Enquiry::where('status', 'new')->count(),
             ],
         ]);
     }

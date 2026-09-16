@@ -9,6 +9,7 @@ import PagesScreen from './screens/PagesScreen.jsx';
 import FaqScreen from './screens/FaqScreen.jsx';
 import SettingsScreen from './screens/SettingsScreen.jsx';
 import SocialLinksScreen from './screens/SocialLinksScreen.jsx';
+import EnquiriesScreen from './screens/EnquiriesScreen.jsx';
 import AdminShell from './layout/AdminShell.jsx';
 
 const SCREENS = {
@@ -17,6 +18,7 @@ const SCREENS = {
     faqs: FaqScreen,
     settings: SettingsScreen,
     'social-links': SocialLinksScreen,
+    enquiries: EnquiriesScreen,
     artworks: PlaceholderScreen,
     exhibitions: PlaceholderScreen,
     articles: PlaceholderScreen,
@@ -29,7 +31,13 @@ function AuthenticatedApp({ session, onLogout }) {
     const Screen = SCREENS[route] || DashboardScreen;
 
     return (
-        <AdminShell user={session.user} current={route} onNavigate={navigate} onLogout={onLogout}>
+        <AdminShell
+            user={session.user}
+            current={route}
+            onNavigate={navigate}
+            onLogout={onLogout}
+            badges={{ enquiries: session.stats?.enquiries_new }}
+        >
             <Screen stats={session.stats} />
         </AdminShell>
     );

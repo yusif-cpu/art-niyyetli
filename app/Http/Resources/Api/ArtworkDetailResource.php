@@ -35,6 +35,19 @@ class ArtworkDetailResource extends JsonResource
                 $this->relationLoaded('similar'),
                 fn () => ArtworkCardResource::collection($this->similar)
             ),
+            'whatsapp_link' => $this->buildWhatsAppLink($card['title']),
         ]);
+    }
+
+    private function buildWhatsAppLink(?string $title): ?string
+    {
+        $number = config('gallery.whatsapp_number');
+        if (! $number) {
+            return null;
+        }
+
+        $text = trim(sprintf('Salam, %s (%s) əsəri ilə maraqlanıram.', $title ?? $this->inventory_code, $this->inventory_code));
+
+        return 'https://wa.me/'.$number.'?text='.rawurlencode($text);
     }
 }

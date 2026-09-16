@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\ArtworkController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\ExhibitionController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\MediaController;
@@ -53,6 +54,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::post('social-links/reorder', [SocialLinkController::class, 'reorder'])->name('social-links.reorder');
             Route::apiResource('social-links', SocialLinkController::class)->except(['create', 'edit']);
+
+            Route::apiResource('enquiries', EnquiryController::class)->only(['index', 'show', 'update']);
 
             Route::middleware('can:admin.manage-users')->group(function () {
                 Route::get('users', [UserManagementController::class, 'index'])->name('users.index');

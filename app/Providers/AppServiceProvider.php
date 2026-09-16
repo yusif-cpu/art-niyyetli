@@ -38,5 +38,9 @@ class AppServiceProvider extends ServiceProvider
         // Public read-only API. 60/min/IP is generous for a browsing frontend
         // while blocking scripted scraping/abuse; Phase 12 can tune further.
         RateLimiter::for('public-api', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
+
+        // The only public write endpoint (enquiry submission). Much stricter
+        // than the general read limit to blunt scripted spam per Phase 10 §11.
+        RateLimiter::for('enquiry-submission', fn (Request $request) => Limit::perHour(5)->by($request->ip()));
     }
 }

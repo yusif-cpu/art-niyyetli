@@ -57,4 +57,18 @@ describe('EnquiryForm', () => {
         expect(await screen.findByText('The email field is required.')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
     });
+
+    it('recovers to an enabled, retryable state on a non-API failure (e.g. network error)', async () => {
+        global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+
+        render(<LocaleProvider><EnquiryForm artworkCode="AN-1" /></LocaleProvider>);
+
+        await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
+        await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
+        await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+
+        expect(await screen.findByText('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
+    });
 });

@@ -29,6 +29,9 @@ export default function EnquiryForm({ artworkCode }) {
                 setStatus('idle');
                 setErrors(err.errors || {});
                 setBanner(err.message);
+            } else {
+                setStatus('idle');
+                setBanner(t(locale, 'common.error'));
             }
         }
     }

@@ -15,9 +15,10 @@ export default function CataloguePage() {
     const { locale } = useLocale();
     const [filters, setFilters] = useState({});
     const [page, setPage] = useState(1);
+    const [retryToken, setRetryToken] = useState(0);
 
     const artists = useApiData(() => listArtists(locale), [locale]);
-    const artworks = useApiData(() => listArtworks(locale, { page, ...filters }), [locale, page, JSON.stringify(filters)]);
+    const artworks = useApiData(() => listArtworks(locale, { page, ...filters }), [locale, page, JSON.stringify(filters), retryToken]);
 
     function updateFilters(next) {
         setFilters(next);
@@ -30,7 +31,7 @@ export default function CataloguePage() {
             <FilterBar artists={artists.data || []} filters={filters} onChange={updateFilters} />
 
             {artworks.loading && <LoadingState />}
-            {artworks.error && <ErrorState error={artworks.error} onRetry={() => setPage((p) => p)} />}
+            {artworks.error && <ErrorState error={artworks.error} onRetry={() => setRetryToken((t) => t + 1)} />}
             {!artworks.loading && !artworks.error && artworks.data?.length === 0 && <EmptyState />}
             {!artworks.loading && !artworks.error && artworks.data?.length > 0 && (
                 <>

@@ -52,4 +52,20 @@ describe('CataloguePage', () => {
         render(<LocaleProvider><CataloguePage /></LocaleProvider>);
         expect(await screen.findByText('Heç nə tapılmadı.')).toBeInTheDocument();
     });
+
+    it('actually re-fetches artworks when the retry button is clicked after an error', async () => {
+        let artworksCallCount = 0;
+        global.fetch = vi.fn((url) => {
+            if (url.startsWith('/api/v1/artists')) return Promise.resolve(jsonResponse({ data: [] }));
+            artworksCallCount += 1;
+            if (artworksCallCount === 1) return Promise.resolve({ ok: false, status: 500, headers: { get: () => 'application/json' }, json: async () => ({ message: 'Server error.' }) });
+            return Promise.resolve(jsonResponse({ data: [artwork], meta: { current_page: 1, last_page: 1, total: 1 } }));
+        });
+
+        render(<LocaleProvider><CataloguePage /></LocaleProvider>);
+        await userEvent.click(await screen.findByRole('button', { name: 'Yenidən cəhd et' }));
+
+        expect(await screen.findByText('Piece One')).toBeInTheDocument();
+        expect(artworksCallCount).toBe(2);
+    });
 });

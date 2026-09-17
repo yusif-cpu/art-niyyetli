@@ -109,7 +109,7 @@ export default function ArticleEditorScreen({ articleId, onBack }) {
         } catch (err) {
             if (err instanceof ApiError) {
                 setErrors(err.errors || {});
-                setBanner('Məlumatları yadda saxlamaq mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.');
+                setBanner(err.message || 'Məlumatları yadda saxlamaq mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.');
             }
         } finally {
             setSaving(false);

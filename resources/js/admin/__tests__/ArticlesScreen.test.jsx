@@ -109,4 +109,23 @@ describe('ArticlesScreen', () => {
             expect(screen.getByText('Dəyişikliklər yadda saxlanıldı')).toBeInTheDocument();
         });
     });
+
+    it('shows the specific validation message for a translation field error, not a generic banner', async () => {
+        setupFetch();
+        await openEditor();
+
+        global.fetch.mockImplementationOnce(() =>
+            Promise.resolve(jsonResponse(422, {
+                message: 'The translations.0.slug field is required.',
+                errors: { 'translations.0.slug': ['The translations.0.slug field is required.'] },
+            }))
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+
+        await waitFor(() => {
+            expect(screen.getByText('The translations.0.slug field is required.')).toBeInTheDocument();
+        });
+        expect(screen.queryByText('Məlumatları yadda saxlamaq mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.')).not.toBeInTheDocument();
+    });
 });

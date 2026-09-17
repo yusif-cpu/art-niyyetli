@@ -30,6 +30,10 @@ export const dictionary = {
             contactWhatsapp: 'WhatsApp ilə əlaqə',
             similar: 'Bənzər əsərlər',
         },
+        artist: {
+            exhibitionHistory: 'Sərgi tarixçəsi',
+            awards: 'Mükafatlar',
+        },
         enquiryForm: {
             name: 'Ad',
             email: 'E-poçt',
@@ -92,6 +96,10 @@ export const dictionary = {
             enquire: 'Send enquiry',
             contactWhatsapp: 'Contact via WhatsApp',
             similar: 'Similar artworks',
+        },
+        artist: {
+            exhibitionHistory: 'Exhibition history',
+            awards: 'Awards',
         },
         enquiryForm: {
             name: 'Name',

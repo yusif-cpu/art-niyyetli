@@ -6,13 +6,15 @@ import NotFoundPage from './pages/NotFoundPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import CataloguePage from './pages/CataloguePage.jsx';
 import ArtworkDetailPage from './pages/ArtworkDetailPage.jsx';
+import ArtistsPage from './pages/ArtistsPage.jsx';
+import ArtistDetailPage from './pages/ArtistDetailPage.jsx';
 
 const PAGES = {
     home: HomePage,
     catalogue: CataloguePage,
     'artwork-detail': ArtworkDetailPage,
-    artists: PlaceholderPage,
-    'artist-detail': PlaceholderPage,
+    artists: ArtistsPage,
+    'artist-detail': ArtistDetailPage,
     exhibitions: PlaceholderPage,
     'exhibition-detail': PlaceholderPage,
     articles: PlaceholderPage,

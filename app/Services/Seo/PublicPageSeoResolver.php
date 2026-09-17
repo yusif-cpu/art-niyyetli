@@ -11,6 +11,7 @@ use App\Models\PageTranslation;
 use App\Services\Admin\SiteSettingService;
 use App\Support\Api\LocalizedFields;
 use App\Support\Seo\PageSeo;
+use App\Support\Seo\SeoLabels;
 use App\Support\Seo\SeoText;
 
 class PublicPageSeoResolver
@@ -23,6 +24,8 @@ class PublicPageSeoResolver
     {
         return match (true) {
             $segments === [] => $this->home($locale),
+            $segments === ['artworks'] => $this->catalogue($locale),
+            count($segments) === 2 && $segments[0] === 'artworks' => $this->artworkDetail($segments[1], $locale),
             count($segments) === 1 => $this->staticPage($segments[0], $locale),
             default => $this->notFound($locale),
         };
@@ -102,6 +105,86 @@ class PublicPageSeoResolver
         );
     }
 
+    private function catalogue(Locale $locale): PageSeo
+    {
+        $canonical = SeoText::absoluteUrl('/artworks');
+        $count = Artwork::query()->where('is_active', true)->count();
+        $description = $locale === Locale::En
+            ? "Explore a catalogue of {$count} artworks."
+            : "{$count} əsərdən ibarət kataloqu kəşf edin.";
+
+        return new PageSeo(
+            title: SeoText::pageTitle(SeoLabels::label($locale, 'artworks')),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'website',
+            ogImageUrl: $this->firstArtworkCardImageUrl(),
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: null,
+        );
+    }
+
+    private function artworkDetail(string $inventoryCode, Locale $locale): PageSeo
+    {
+        $artwork = Artwork::query()
+            ->where('inventory_code', $inventoryCode)
+            ->where('is_active', true)
+            ->with(['translations', 'artist.translations', 'images' => fn ($q) => $q->orderBy('sort_order'), 'images.media.variants'])
+            ->first();
+
+        if (! $artwork) {
+            return $this->notFound($locale);
+        }
+
+        $fields = LocalizedFields::resolve($artwork->translations, $locale, ['title', 'short_description']);
+        $artistFields = LocalizedFields::resolve($artwork->artist->translations, $locale, ['first_name', 'last_name']);
+        $artistName = trim(($artistFields['first_name'] ?? '').' '.($artistFields['last_name'] ?? ''));
+        $override = $artwork->seoOverride($locale);
+
+        $mainImage = $artwork->images->firstWhere('is_main', true) ?? $artwork->images->first();
+        $ogImageUrl = $override?->ogImage
+            ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'full')
+            : ($mainImage ? $this->mediaVariantUrl($mainImage->media, 'full') : null);
+
+        $title = $override?->title ?? $fields['title'];
+        $description = SeoText::description($override?->description ?? $fields['short_description']);
+        $canonical = SeoText::absoluteUrl("/artworks/{$inventoryCode}");
+
+        return new PageSeo(
+            title: SeoText::pageTitle($title),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'website',
+            ogImageUrl: $ogImageUrl,
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    array_filter([
+                        '@type' => 'VisualArtwork',
+                        'name' => $title,
+                        'image' => $ogImageUrl,
+                        'creator' => $artistName !== '' ? ['@type' => 'Person', 'name' => $artistName] : null,
+                        'dateCreated' => $artwork->year_created,
+                        'description' => $description,
+                    ]),
+                    [
+                        '@type' => 'BreadcrumbList',
+                        'itemListElement' => [
+                            ['@type' => 'ListItem', 'position' => 1, 'name' => SeoLabels::label($locale, 'home'), 'item' => SeoText::absoluteUrl('/')],
+                            ['@type' => 'ListItem', 'position' => 2, 'name' => SeoLabels::label($locale, 'artworks'), 'item' => SeoText::absoluteUrl('/artworks')],
+                            ['@type' => 'ListItem', 'position' => 3, 'name' => $title, 'item' => $canonical],
+                        ],
+                    ],
+                ],
+            ],
+        );
+    }
+
     private function notFound(Locale $locale): PageSeo
     {
         return new PageSeo(
@@ -124,6 +207,19 @@ class PublicPageSeoResolver
             ->where('is_active', true)
             ->where('featured', true)
             ->orderBy('sort_order')
+            ->with(['images' => fn ($q) => $q->where('is_main', true), 'images.media.variants'])
+            ->first();
+
+        $mainImage = $artwork?->images->first();
+
+        return $mainImage ? $this->mediaVariantUrl($mainImage->media, 'catalogue') : null;
+    }
+
+    private function firstArtworkCardImageUrl(): ?string
+    {
+        $artwork = Artwork::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')->orderBy('id')
             ->with(['images' => fn ($q) => $q->where('is_main', true), 'images.media.variants'])
             ->first();
 

@@ -4,6 +4,10 @@ namespace Tests\Feature\Seo;
 
 use App\Enums\Locale;
 use App\Enums\PageType;
+use App\Models\Artist;
+use App\Models\Artwork;
+use App\Models\Genre;
+use App\Models\Medium;
 use App\Models\Page;
 use App\Services\Seo\PublicPageSeoResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -96,5 +100,94 @@ class PublicPageSeoResolverTest extends TestCase
 
         $this->assertSame(404, $seo->httpStatus);
         $this->assertSame('en_US', $seo->ogLocale);
+    }
+
+    private function makeArtwork(string $inventoryCode, array $overrides = []): Artwork
+    {
+        $artwork = Artwork::create(array_merge([
+            'artist_id' => Artist::create([])->id,
+            'medium_id' => Medium::firstOrCreate(['slug' => 'oil-on-canvas'])->id,
+            'genre_id' => Genre::firstOrCreate(['slug' => 'abstraction'])->id,
+            'year_created' => 2023, 'width_cm' => 80, 'height_cm' => 100,
+            'price' => 5000, 'show_price' => true, 'inventory_code' => $inventoryCode, 'is_active' => true,
+        ], $overrides));
+
+        $artwork->translations()->create(['locale' => 'az', 'slug' => $inventoryCode, 'title' => 'Sunset Over Baku', 'short_description' => 'An oil painting of the Baku skyline at dusk.', 'provenance' => 'Acquired directly from the artist.']);
+        $artwork->artist->translations()->create(['locale' => 'az', 'slug' => 'artist-'.$artwork->artist_id, 'first_name' => 'Aygün', 'last_name' => 'Məmmədova']);
+
+        return $artwork;
+    }
+
+    public function test_catalogue_uses_a_live_artwork_count_and_is_indexable(): void
+    {
+        $this->makeArtwork('AN-CAT-1');
+        $this->makeArtwork('AN-CAT-2');
+
+        $seo = $this->resolver()->resolve(['artworks'], Locale::Az);
+
+        $this->assertSame('Əsərlər — ArtNiyyətli', $seo->title);
+        $this->assertSame('2 əsərdən ibarət kataloqu kəşf edin.', $seo->description);
+        $this->assertSame('http://localhost:8080/artworks', $seo->canonicalUrl);
+        $this->assertTrue($seo->index);
+        $this->assertNull($seo->jsonLd);
+    }
+
+    public function test_artwork_detail_resolves_title_description_and_json_ld(): void
+    {
+        $this->makeArtwork('AN-DETAIL-1');
+
+        $seo = $this->resolver()->resolve(['artworks', 'AN-DETAIL-1'], Locale::Az);
+
+        $this->assertSame('Sunset Over Baku — ArtNiyyətli', $seo->title);
+        $this->assertSame('An oil painting of the Baku skyline at dusk.', $seo->description);
+        $this->assertSame('http://localhost:8080/artworks/AN-DETAIL-1', $seo->canonicalUrl);
+        $this->assertTrue($seo->index);
+        $this->assertTrue($seo->follow);
+        $this->assertSame(200, $seo->httpStatus);
+        $this->assertSame('VisualArtwork', $seo->jsonLd['@graph'][0]['@type']);
+        $this->assertSame('Aygün Məmmədova', $seo->jsonLd['@graph'][0]['creator']['name']);
+        $this->assertSame('BreadcrumbList', $seo->jsonLd['@graph'][1]['@type']);
+    }
+
+    public function test_artwork_detail_stays_indexable_when_sold(): void
+    {
+        $this->makeArtwork('AN-SOLD-1', ['availability' => 'sold']);
+
+        $seo = $this->resolver()->resolve(['artworks', 'AN-SOLD-1'], Locale::Az);
+
+        $this->assertTrue($seo->index);
+    }
+
+    public function test_artwork_detail_is_not_found_for_an_unknown_code(): void
+    {
+        $seo = $this->resolver()->resolve(['artworks', 'does-not-exist'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+        $this->assertFalse($seo->index);
+    }
+
+    public function test_artwork_detail_is_not_found_for_an_inactive_artwork(): void
+    {
+        $this->makeArtwork('AN-INACTIVE-1', ['is_active' => false]);
+
+        $seo = $this->resolver()->resolve(['artworks', 'AN-INACTIVE-1'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+    }
+
+    public function test_artwork_detail_omits_description_when_short_description_is_empty(): void
+    {
+        $artwork = Artwork::create([
+            'artist_id' => Artist::create([])->id,
+            'medium_id' => Medium::firstOrCreate(['slug' => 'ink'])->id,
+            'genre_id' => Genre::firstOrCreate(['slug' => 'sketch'])->id,
+            'year_created' => 2023, 'width_cm' => 20, 'height_cm' => 20,
+            'price' => 300, 'inventory_code' => 'AN-NODESC-1', 'is_active' => true,
+        ]);
+        $artwork->translations()->create(['locale' => 'az', 'slug' => 'x', 'title' => 'Untitled Sketch', 'short_description' => '', 'provenance' => 'Studio collection.']);
+
+        $seo = $this->resolver()->resolve(['artworks', 'AN-NODESC-1'], Locale::Az);
+
+        $this->assertNull($seo->description);
     }
 }

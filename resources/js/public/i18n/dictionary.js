@@ -41,6 +41,12 @@ export const dictionary = {
             title: 'Səhifə tapılmadı',
             body: 'Axtardığınız səhifə mövcud deyil.',
         },
+        home: {
+            wall: 'Divar',
+            featured: 'Seçilmişlər',
+            artists: 'Rəssamlar',
+            faqs: 'Suallar',
+        },
     },
     en: {
         nav: {
@@ -83,6 +89,12 @@ export const dictionary = {
         notFound: {
             title: 'Page not found',
             body: 'The page you are looking for does not exist.',
+        },
+        home: {
+            wall: 'Wall',
+            featured: 'Featured',
+            artists: 'Artists',
+            faqs: 'FAQ',
         },
     },
 };

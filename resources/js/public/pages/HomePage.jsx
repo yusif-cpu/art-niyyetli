@@ -1,4 +1,5 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
+import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { getHomepage } from '../services/homepage.js';
 import ArtworkCard from '../components/ArtworkCard.jsx';
@@ -35,7 +36,7 @@ export default function HomePage() {
 
             {data.wall.length > 0 && (
                 <section>
-                    <h2 className="mb-4 text-lg font-semibold">Divar</h2>
+                    <h2 className="mb-4 text-lg font-semibold">{t(locale, 'home.wall')}</h2>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         {data.wall.map((artwork) => <ArtworkCard key={artwork.inventory_code} artwork={artwork} />)}
                     </div>
@@ -44,7 +45,7 @@ export default function HomePage() {
 
             {data.featured.length > 0 && (
                 <section>
-                    <h2 className="mb-4 text-lg font-semibold">Seçilmişlər</h2>
+                    <h2 className="mb-4 text-lg font-semibold">{t(locale, 'home.featured')}</h2>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                         {data.featured.map((artwork) => <ArtworkCard key={artwork.inventory_code} artwork={artwork} />)}
                     </div>
@@ -53,7 +54,7 @@ export default function HomePage() {
 
             {data.artists.length > 0 && (
                 <section>
-                    <h2 className="mb-4 text-lg font-semibold">Rəssamlar</h2>
+                    <h2 className="mb-4 text-lg font-semibold">{t(locale, 'home.artists')}</h2>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         {data.artists.map((artist) => <ArtistCard key={artist.slug} artist={artist} />)}
                     </div>
@@ -62,7 +63,7 @@ export default function HomePage() {
 
             {data.faqs.length > 0 && (
                 <section>
-                    <h2 className="mb-4 text-lg font-semibold">Suallar</h2>
+                    <h2 className="mb-4 text-lg font-semibold">{t(locale, 'home.faqs')}</h2>
                     <dl className="space-y-4">
                         {data.faqs.map((faq) => (
                             <div key={faq.id}>

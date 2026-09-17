@@ -1,7 +1,6 @@
 import { LocaleProvider } from './i18n/LocaleContext.jsx';
 import { useRouter } from './lib/useRouter.js';
 import SiteShell from './layout/SiteShell.jsx';
-import PlaceholderPage from './pages/PlaceholderPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import CataloguePage from './pages/CataloguePage.jsx';
@@ -12,6 +11,7 @@ import ExhibitionsPage from './pages/ExhibitionsPage.jsx';
 import ExhibitionDetailPage from './pages/ExhibitionDetailPage.jsx';
 import ArticlesPage from './pages/ArticlesPage.jsx';
 import ArticleDetailPage from './pages/ArticleDetailPage.jsx';
+import StaticPage from './pages/StaticPage.jsx';
 
 const PAGES = {
     home: HomePage,
@@ -23,7 +23,7 @@ const PAGES = {
     'exhibition-detail': ExhibitionDetailPage,
     articles: ArticlesPage,
     'article-detail': ArticleDetailPage,
-    'static-page': PlaceholderPage,
+    'static-page': StaticPage,
     'not-found': NotFoundPage,
 };
 

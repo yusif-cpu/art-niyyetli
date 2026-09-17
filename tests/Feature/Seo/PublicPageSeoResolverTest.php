@@ -190,4 +190,60 @@ class PublicPageSeoResolverTest extends TestCase
 
         $this->assertNull($seo->description);
     }
+
+    private function makeArtist(string $slug, array $overrides = []): Artist
+    {
+        $artist = Artist::create(array_merge(['is_active' => true], $overrides));
+        $artist->translations()->create([
+            'locale' => 'az', 'slug' => $slug, 'first_name' => 'Aygün', 'last_name' => 'Məmmədova',
+            'biography' => 'Aygün Məmmədova müasir Azərbaycan rəssamıdır.',
+        ]);
+
+        return $artist;
+    }
+
+    public function test_artists_list_uses_a_live_count(): void
+    {
+        $this->makeArtist('artist-1');
+        $this->makeArtist('artist-2');
+
+        $seo = $this->resolver()->resolve(['artists'], Locale::Az);
+
+        $this->assertSame('Rəssamlar — ArtNiyyətli', $seo->title);
+        $this->assertSame('2 rəssamla tanış olun.', $seo->description);
+        $this->assertSame('http://localhost:8080/artists', $seo->canonicalUrl);
+        $this->assertTrue($seo->index);
+    }
+
+    public function test_artist_detail_resolves_name_biography_and_json_ld(): void
+    {
+        $this->makeArtist('aygun-mammadova');
+
+        $seo = $this->resolver()->resolve(['artists', 'aygun-mammadova'], Locale::Az);
+
+        $this->assertSame('Aygün Məmmədova — ArtNiyyətli', $seo->title);
+        $this->assertSame('Aygün Məmmədova müasir Azərbaycan rəssamıdır.', $seo->description);
+        $this->assertSame('http://localhost:8080/artists/aygun-mammadova', $seo->canonicalUrl);
+        $this->assertTrue($seo->index);
+        $this->assertSame('Person', $seo->jsonLd['@graph'][0]['@type']);
+        $this->assertSame('Aygün Məmmədova', $seo->jsonLd['@graph'][0]['name']);
+        $this->assertSame('BreadcrumbList', $seo->jsonLd['@graph'][1]['@type']);
+    }
+
+    public function test_artist_detail_is_not_found_for_an_unknown_slug(): void
+    {
+        $seo = $this->resolver()->resolve(['artists', 'nobody'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+        $this->assertFalse($seo->index);
+    }
+
+    public function test_artist_detail_is_not_found_for_an_inactive_artist(): void
+    {
+        $this->makeArtist('inactive-artist', ['is_active' => false]);
+
+        $seo = $this->resolver()->resolve(['artists', 'inactive-artist'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+    }
 }

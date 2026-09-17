@@ -5,6 +5,8 @@ namespace App\Services\Seo;
 use App\Enums\Locale;
 use App\Enums\PageType;
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
+use App\Models\Artist;
+use App\Models\ArtistTranslation;
 use App\Models\Artwork;
 use App\Models\Page;
 use App\Models\PageTranslation;
@@ -26,6 +28,8 @@ class PublicPageSeoResolver
             $segments === [] => $this->home($locale),
             $segments === ['artworks'] => $this->catalogue($locale),
             count($segments) === 2 && $segments[0] === 'artworks' => $this->artworkDetail($segments[1], $locale),
+            $segments === ['artists'] => $this->artists($locale),
+            count($segments) === 2 && $segments[0] === 'artists' => $this->artistDetail($segments[1], $locale),
             count($segments) === 1 => $this->staticPage($segments[0], $locale),
             default => $this->notFound($locale),
         };
@@ -177,6 +181,82 @@ class PublicPageSeoResolver
                         'itemListElement' => [
                             ['@type' => 'ListItem', 'position' => 1, 'name' => SeoLabels::label($locale, 'home'), 'item' => SeoText::absoluteUrl('/')],
                             ['@type' => 'ListItem', 'position' => 2, 'name' => SeoLabels::label($locale, 'artworks'), 'item' => SeoText::absoluteUrl('/artworks')],
+                            ['@type' => 'ListItem', 'position' => 3, 'name' => $title, 'item' => $canonical],
+                        ],
+                    ],
+                ],
+            ],
+        );
+    }
+
+    private function artists(Locale $locale): PageSeo
+    {
+        $canonical = SeoText::absoluteUrl('/artists');
+        $count = Artist::query()->where('is_active', true)->count();
+        $description = $locale === Locale::En
+            ? "Meet {$count} artists."
+            : "{$count} rəssamla tanış olun.";
+
+        return new PageSeo(
+            title: SeoText::pageTitle(SeoLabels::label($locale, 'artists')),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'website',
+            ogImageUrl: null,
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: null,
+        );
+    }
+
+    private function artistDetail(string $slug, Locale $locale): PageSeo
+    {
+        $translation = ArtistTranslation::query()->where('slug', $slug)->first();
+        $artist = $translation
+            ? Artist::query()->where('id', $translation->artist_id)->where('is_active', true)
+                ->with(['translations', 'representationImage.variants'])->first()
+            : null;
+
+        if (! $artist) {
+            return $this->notFound($locale);
+        }
+
+        $fields = LocalizedFields::resolve($artist->translations, $locale, ['first_name', 'last_name', 'biography']);
+        $name = trim(($fields['first_name'] ?? '').' '.($fields['last_name'] ?? ''));
+        $override = $artist->seoOverride($locale);
+
+        $ogImageUrl = $override?->ogImage
+            ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail')
+            : ($artist->representationImage ? $this->mediaVariantUrl($artist->representationImage, 'detail') : null);
+
+        $title = $override?->title ?? $name;
+        $description = SeoText::description($override?->description ?? $fields['biography']);
+        $canonical = SeoText::absoluteUrl("/artists/{$slug}");
+
+        return new PageSeo(
+            title: SeoText::pageTitle($title),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'website',
+            ogImageUrl: $ogImageUrl,
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    array_filter([
+                        '@type' => 'Person',
+                        'name' => $title,
+                        'image' => $ogImageUrl,
+                        'description' => $description,
+                    ]),
+                    [
+                        '@type' => 'BreadcrumbList',
+                        'itemListElement' => [
+                            ['@type' => 'ListItem', 'position' => 1, 'name' => SeoLabels::label($locale, 'home'), 'item' => SeoText::absoluteUrl('/')],
+                            ['@type' => 'ListItem', 'position' => 2, 'name' => SeoLabels::label($locale, 'artists'), 'item' => SeoText::absoluteUrl('/artists')],
                             ['@type' => 'ListItem', 'position' => 3, 'name' => $title, 'item' => $canonical],
                         ],
                     ],

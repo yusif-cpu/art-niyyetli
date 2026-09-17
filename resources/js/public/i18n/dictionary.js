@@ -27,6 +27,8 @@ export const dictionary = {
             reserved: 'Rezerv edilib',
             available: 'Mövcuddur',
             enquire: 'Sorğu göndər',
+            contactWhatsapp: 'WhatsApp ilə əlaqə',
+            similar: 'Bənzər əsərlər',
         },
         enquiryForm: {
             name: 'Ad',
@@ -88,6 +90,8 @@ export const dictionary = {
             reserved: 'Reserved',
             available: 'Available',
             enquire: 'Send enquiry',
+            contactWhatsapp: 'Contact via WhatsApp',
+            similar: 'Similar artworks',
         },
         enquiryForm: {
             name: 'Name',

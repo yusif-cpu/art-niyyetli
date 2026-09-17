@@ -5,11 +5,12 @@ import PlaceholderPage from './pages/PlaceholderPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import CataloguePage from './pages/CataloguePage.jsx';
+import ArtworkDetailPage from './pages/ArtworkDetailPage.jsx';
 
 const PAGES = {
     home: HomePage,
     catalogue: CataloguePage,
-    'artwork-detail': PlaceholderPage,
+    'artwork-detail': ArtworkDetailPage,
     artists: PlaceholderPage,
     'artist-detail': PlaceholderPage,
     exhibitions: PlaceholderPage,

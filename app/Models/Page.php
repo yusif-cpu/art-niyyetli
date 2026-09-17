@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PageType;
+use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\PageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Page extends Model
 {
     /** @use HasFactory<PageFactory> */
-    use HasFactory;
+    use HasFactory, HasSeoOverride;
 
     protected function casts(): array
     {

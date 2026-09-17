@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\ArtistFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Artist extends Model
 {
     /** @use HasFactory<ArtistFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasSeoOverride, SoftDeletes;
 
     protected function casts(): array
     {

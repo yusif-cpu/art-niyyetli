@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ExhibitionStatus;
 use App\Enums\ExhibitionType;
+use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\ExhibitionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Exhibition extends Model
 {
     /** @use HasFactory<ExhibitionFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasSeoOverride, SoftDeletes;
 
     protected function casts(): array
     {

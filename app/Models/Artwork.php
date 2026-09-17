@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ArtworkAvailability;
+use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\ArtworkFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Artwork extends Model
 {
     /** @use HasFactory<ArtworkFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasSeoOverride, SoftDeletes;
 
     protected function casts(): array
     {

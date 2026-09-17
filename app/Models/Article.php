@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ArticleStatus;
 use App\Enums\ArticleType;
+use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Article extends Model
 {
     /** @use HasFactory<ArticleFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasSeoOverride, SoftDeletes;
 
     protected function casts(): array
     {

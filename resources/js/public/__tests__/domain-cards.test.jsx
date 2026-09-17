@@ -58,4 +58,9 @@ describe('ArticleCard', () => {
         expect(screen.getByRole('link')).toHaveAttribute('href', '/articles/artist-interview-2026');
         expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.test/article.webp');
     });
+
+    it('renders a placeholder when there is no media', () => {
+        render(<ArticleCard article={{ slug: 'x', title: 'X', short_text: 'Y', published_at: '2025-01-01T00:00:00+00:00', media: [] }} />);
+        expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    });
 });

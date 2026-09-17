@@ -8,6 +8,8 @@ import CataloguePage from './pages/CataloguePage.jsx';
 import ArtworkDetailPage from './pages/ArtworkDetailPage.jsx';
 import ArtistsPage from './pages/ArtistsPage.jsx';
 import ArtistDetailPage from './pages/ArtistDetailPage.jsx';
+import ExhibitionsPage from './pages/ExhibitionsPage.jsx';
+import ExhibitionDetailPage from './pages/ExhibitionDetailPage.jsx';
 
 const PAGES = {
     home: HomePage,
@@ -15,8 +17,8 @@ const PAGES = {
     'artwork-detail': ArtworkDetailPage,
     artists: ArtistsPage,
     'artist-detail': ArtistDetailPage,
-    exhibitions: PlaceholderPage,
-    'exhibition-detail': PlaceholderPage,
+    exhibitions: ExhibitionsPage,
+    'exhibition-detail': ExhibitionDetailPage,
     articles: PlaceholderPage,
     'article-detail': PlaceholderPage,
     'static-page': PlaceholderPage,

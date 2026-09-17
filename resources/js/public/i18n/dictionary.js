@@ -65,6 +65,13 @@ export const dictionary = {
             priceMin: 'Min. qiymət',
             priceMax: 'Maks. qiymət',
         },
+        exhibitions: {
+            all: 'Hamısı',
+            current: 'Cari',
+            upcoming: 'Qarşıdan gələn',
+            archive: 'Arxiv',
+            participatingArtists: 'İştirakçı rəssamlar',
+        },
     },
     en: {
         nav: {
@@ -131,6 +138,13 @@ export const dictionary = {
             sortPriceDesc: 'Price (high to low)',
             priceMin: 'Min price',
             priceMax: 'Max price',
+        },
+        exhibitions: {
+            all: 'All',
+            current: 'Current',
+            upcoming: 'Upcoming',
+            archive: 'Archive',
+            participatingArtists: 'Participating artists',
         },
     },
 };

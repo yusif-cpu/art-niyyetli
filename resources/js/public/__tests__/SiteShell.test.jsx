@@ -1,0 +1,41 @@
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import SiteShell from '../layout/SiteShell.jsx';
+
+function jsonResponse(body) {
+    return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body };
+}
+
+describe('SiteShell', () => {
+    beforeEach(() => {
+        global.fetch = vi.fn((url) => {
+            if (url.includes('/site-settings')) {
+                return Promise.resolve(jsonResponse({ data: { contact_email: 'hello@artniyyetli.az', phone: null, address: null, opening_hours: null, footer_text: 'ArtNiyyətli qalereyası' } }));
+            }
+            if (url.includes('/social-links')) {
+                return Promise.resolve(jsonResponse({ data: [{ platform: 'instagram', url: 'https://instagram.com/artniyyetli', sort_order: 0 }] }));
+            }
+            return Promise.resolve(jsonResponse({ data: {} }));
+        });
+    });
+
+    it('renders nav links, footer contact info, and social links, guarding null fields', async () => {
+        render(
+            <LocaleProvider>
+                <SiteShell>
+                    <p>Page content</p>
+                </SiteShell>
+            </LocaleProvider>
+        );
+
+        expect(screen.getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
+        expect(screen.getByRole('link', { name: 'Rəssamlar' })).toHaveAttribute('href', '/artists');
+        expect(screen.getByText('Page content')).toBeInTheDocument();
+
+        expect(await screen.findByText('hello@artniyyetli.az')).toBeInTheDocument();
+        expect(screen.getByText('ArtNiyyətli qalereyası')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'instagram' })).toHaveAttribute('href', 'https://instagram.com/artniyyetli');
+        expect(screen.queryByText('null')).not.toBeInTheDocument();
+    });
+});

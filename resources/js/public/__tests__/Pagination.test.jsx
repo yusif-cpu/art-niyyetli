@@ -20,9 +20,13 @@ describe('Pagination', () => {
     });
 
     it('disables Previous on the first page and Next on the last page', () => {
-        render(withLocale(<Pagination meta={{ current_page: 1, last_page: 3, total: 61 }} onPageChange={vi.fn()} />));
+        const { rerender } = render(withLocale(<Pagination meta={{ current_page: 1, last_page: 3, total: 61 }} onPageChange={vi.fn()} />));
         expect(screen.getByRole('button', { name: 'Əvvəlki' })).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Növbəti' })).not.toBeDisabled();
+
+        rerender(withLocale(<Pagination meta={{ current_page: 3, last_page: 3, total: 61 }} onPageChange={vi.fn()} />));
+        expect(screen.getByRole('button', { name: 'Əvvəlki' })).not.toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Növbəti' })).toBeDisabled();
     });
 
     it('calls onPageChange with the next/previous page number', async () => {

@@ -10,6 +10,8 @@ import ArtistsPage from './pages/ArtistsPage.jsx';
 import ArtistDetailPage from './pages/ArtistDetailPage.jsx';
 import ExhibitionsPage from './pages/ExhibitionsPage.jsx';
 import ExhibitionDetailPage from './pages/ExhibitionDetailPage.jsx';
+import ArticlesPage from './pages/ArticlesPage.jsx';
+import ArticleDetailPage from './pages/ArticleDetailPage.jsx';
 
 const PAGES = {
     home: HomePage,
@@ -19,8 +21,8 @@ const PAGES = {
     'artist-detail': ArtistDetailPage,
     exhibitions: ExhibitionsPage,
     'exhibition-detail': ExhibitionDetailPage,
-    articles: PlaceholderPage,
-    'article-detail': PlaceholderPage,
+    articles: ArticlesPage,
+    'article-detail': ArticleDetailPage,
     'static-page': PlaceholderPage,
     'not-found': NotFoundPage,
 };

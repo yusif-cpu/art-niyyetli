@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+
+@source not '../../resources/js/admin/**/*';
+@source not '../../resources/css/admin.css';
+@source not '../../resources/views/admin.blade.php';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';

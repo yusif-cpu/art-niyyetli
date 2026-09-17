@@ -47,6 +47,18 @@ export const dictionary = {
             artists: 'Rəssamlar',
             faqs: 'Suallar',
         },
+        filters: {
+            artist: 'Rəssam',
+            all: 'Hamısı',
+            status: 'Status',
+            sort: 'Sıralama',
+            sortDefault: 'Kurator sırası',
+            sortNewest: 'Ən yeni',
+            sortPriceAsc: 'Qiymət (artan)',
+            sortPriceDesc: 'Qiymət (azalan)',
+            priceMin: 'Min. qiymət',
+            priceMax: 'Maks. qiymət',
+        },
     },
     en: {
         nav: {
@@ -95,6 +107,18 @@ export const dictionary = {
             featured: 'Featured',
             artists: 'Artists',
             faqs: 'FAQ',
+        },
+        filters: {
+            artist: 'Artist',
+            all: 'All',
+            status: 'Status',
+            sort: 'Sort',
+            sortDefault: 'Curated order',
+            sortNewest: 'Newest',
+            sortPriceAsc: 'Price (low to high)',
+            sortPriceDesc: 'Price (high to low)',
+            priceMin: 'Min price',
+            priceMax: 'Max price',
         },
     },
 };

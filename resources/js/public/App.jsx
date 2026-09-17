@@ -4,10 +4,11 @@ import SiteShell from './layout/SiteShell.jsx';
 import PlaceholderPage from './pages/PlaceholderPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import HomePage from './pages/HomePage.jsx';
+import CataloguePage from './pages/CataloguePage.jsx';
 
 const PAGES = {
     home: HomePage,
-    catalogue: PlaceholderPage,
+    catalogue: CataloguePage,
     'artwork-detail': PlaceholderPage,
     artists: PlaceholderPage,
     'artist-detail': PlaceholderPage,

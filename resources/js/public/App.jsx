@@ -3,9 +3,10 @@ import { useRouter } from './lib/useRouter.js';
 import SiteShell from './layout/SiteShell.jsx';
 import PlaceholderPage from './pages/PlaceholderPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
+import HomePage from './pages/HomePage.jsx';
 
 const PAGES = {
-    home: PlaceholderPage,
+    home: HomePage,
     catalogue: PlaceholderPage,
     'artwork-detail': PlaceholderPage,
     artists: PlaceholderPage,

@@ -9,6 +9,7 @@ use App\Models\Genre;
 use App\Models\Media;
 use App\Models\MediaVariant;
 use App\Models\Medium;
+use App\Models\SiteSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -165,5 +166,17 @@ class ArtworkDetailApiTest extends TestCase
         $query = parse_url($link, PHP_URL_QUERY);
         parse_str($query, $params);
         $this->assertStringContainsString($artwork->inventory_code, $params['text']);
+    }
+
+    public function test_whatsapp_link_prefers_the_site_setting_over_env_config(): void
+    {
+        config(['gallery.whatsapp_number' => '994501234567']);
+        SiteSetting::query()->create(['key' => 'whatsapp_number', 'value' => '994509876543', 'type' => 'string']);
+        $artwork = $this->makeArtwork();
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}");
+
+        $response->assertOk();
+        $this->assertStringStartsWith('https://wa.me/994509876543?text=', $response->json('data.whatsapp_link'));
     }
 }

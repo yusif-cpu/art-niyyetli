@@ -14,7 +14,7 @@ export default function SocialLinkForm({ link, onSave, onCancel, errors }) {
     }
 
     return (
-        <form onSubmit={submit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
+        <form onSubmit={submit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
             <TextField label="Platforma" value={platform} onChange={setPlatform} error={errors?.platform?.[0]} required />
             <TextField label="URL" value={url} onChange={setUrl} error={errors?.url?.[0]} required />
             <Toggle checked={isActive} onChange={setIsActive} label="Aktiv" />

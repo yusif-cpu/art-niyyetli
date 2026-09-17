@@ -6,7 +6,7 @@
     <title>ArtNiyyətli — Admin</title>
     @vite(['resources/css/admin.css', 'resources/js/admin/main.jsx'])
 </head>
-<body class="bg-neutral-50 text-neutral-900 antialiased">
+<body class="bg-neutral-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
     <div id="admin-root"></div>
 </body>
 </html>

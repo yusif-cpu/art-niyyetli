@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api;
 
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
+use App\Services\Admin\SiteSettingService;
 use App\Support\Api\LocaleResolver;
 use App\Support\Api\LocalizedFields;
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class ArtworkDetailResource extends JsonResource
 
     private function buildWhatsAppLink(?string $title): ?string
     {
-        $number = config('gallery.whatsapp_number');
+        $number = app(SiteSettingService::class)->all()['whatsapp_number'] ?? config('gallery.whatsapp_number');
         if (! $number) {
             return null;
         }

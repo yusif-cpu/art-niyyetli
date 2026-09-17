@@ -7,6 +7,7 @@ import LocaleTabs from '../components/LocaleTabs.jsx';
 import Toggle from '../components/Toggle.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
 import PageSectionForm from './PageSectionForm.jsx';
 
 function translationsToState(translations) {
@@ -106,16 +107,16 @@ export default function PageEditorScreen({ pageId, onBack }) {
     }
 
     if (!page || !fields) {
-        return <p className="text-sm text-neutral-500">Yüklənir...</p>;
+        return <p className="text-sm text-neutral-500 dark:text-neutral-400">Yüklənir...</p>;
     }
 
     return (
-        <div className="max-w-3xl space-y-6">
-            <button type="button" onClick={onBack} className="text-sm text-neutral-500 hover:underline">
+        <div className="max-w-3xl space-y-4">
+            <button type="button" onClick={onBack} className="text-sm text-neutral-500 hover:underline dark:text-neutral-400">
                 ← Səhifələrə qayıt
             </button>
 
-            <form onSubmit={save} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
+            <form onSubmit={save} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="flex items-center justify-between">
                     <LocaleTabs active={locale} onChange={setLocale} />
                     <Toggle checked={isActive} onChange={setIsActive} label="Aktiv" />
@@ -136,7 +137,10 @@ export default function PageEditorScreen({ pageId, onBack }) {
 
             <div>
                 <div className="mb-2 flex items-center justify-between">
-                    <h2 className="text-base font-semibold text-neutral-900">Bölmələr</h2>
+                    <div>
+                        <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">Bölmələr</h2>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">Bu səhifənin daxilindəki bölmələr</p>
+                    </div>
                     <Button variant="secondary" onClick={() => setSectionForm('new')}>
                         Yeni bölmə
                     </Button>
@@ -154,10 +158,15 @@ export default function PageEditorScreen({ pageId, onBack }) {
 
                 <ul className="space-y-2">
                     {page.sections?.map((section, index) => (
-                        <li key={section.id} className="flex items-center justify-between rounded-md border border-neutral-200 bg-white px-4 py-2">
-                            <div>
-                                <p className="text-sm font-medium text-neutral-900">{section.key}</p>
-                                <p className="text-xs text-neutral-500">{section.is_active ? 'Aktiv' : 'Deaktiv'}</p>
+                        <li key={section.id} className="flex items-center justify-between rounded-md border border-neutral-200 bg-white px-4 py-2 dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="flex items-center gap-3">
+                                {section.image_url && (
+                                    <img src={section.image_url} alt="Bölmə şəkli" className="h-10 w-10 rounded object-cover" />
+                                )}
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{section.key}</p>
+                                    <StatusBadge active={section.is_active} />
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button type="button" disabled={index === 0} onClick={() => moveSection(section, -1)} className="text-sm disabled:opacity-30">

@@ -4,6 +4,9 @@ import { useToast } from '../components/ToastContext.jsx';
 import Button from '../components/Button.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import Banner from '../components/Banner.jsx';
+import Card from '../components/Card.jsx';
+import PageHeader from '../components/PageHeader.jsx';
 import SocialLinkForm from './SocialLinkForm.jsx';
 
 export default function SocialLinksScreen() {
@@ -12,9 +15,13 @@ export default function SocialLinksScreen() {
     const [formOpen, setFormOpen] = useState(null); // null | 'new' | link
     const [formErrors, setFormErrors] = useState({});
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [error, setError] = useState('');
 
     function load() {
-        apiFetch('/social-links').then((res) => setLinks(res.data));
+        setError('');
+        apiFetch('/social-links')
+            .then((res) => setLinks(res.data))
+            .catch(() => setError('Sosial media əlaqələrini yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.'));
     }
 
     useEffect(load, []);
@@ -63,10 +70,7 @@ export default function SocialLinksScreen() {
 
     return (
         <div className="max-w-3xl">
-            <div className="mb-4 flex items-center justify-between">
-                <h1 className="text-lg font-semibold text-neutral-900">Sosial media</h1>
-                <Button onClick={() => setFormOpen('new')}>Yeni əlaqə</Button>
-            </div>
+            <PageHeader title="Sosial media" actions={<Button onClick={() => setFormOpen('new')}>Yeni əlaqə</Button>} />
 
             {formOpen && (
                 <div className="mb-4">
@@ -82,32 +86,39 @@ export default function SocialLinksScreen() {
                 </div>
             )}
 
+            <Banner type="error">{error}</Banner>
+
+            {links === null && !error && <p className="text-sm text-neutral-500 dark:text-neutral-400">Yüklənir...</p>}
             {links && links.length === 0 && <EmptyState title="Hələ heç bir əlaqə yoxdur" body="Yeni sosial media əlaqəsi əlavə edin." />}
 
-            <ul className="space-y-2">
-                {links?.map((link, index) => (
-                    <li key={link.id} className="flex items-center justify-between rounded-md border border-neutral-200 bg-white px-4 py-3">
-                        <div>
-                            <p className="text-sm font-medium text-neutral-900">{link.platform}</p>
-                            <p className="text-xs text-neutral-500">{link.url}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button type="button" disabled={index === 0} onClick={() => moveLink(link, -1)} className="text-sm disabled:opacity-30">
-                                ↑
-                            </button>
-                            <button type="button" disabled={index === links.length - 1} onClick={() => moveLink(link, 1)} className="text-sm disabled:opacity-30">
-                                ↓
-                            </button>
-                            <Button variant="secondary" onClick={() => setFormOpen(link)}>
-                                Redaktə et
-                            </Button>
-                            <Button variant="danger" onClick={() => setDeleteTarget(link)}>
-                                Sil
-                            </Button>
-                        </div>
-                    </li>
-                ))}
-            </ul>
+            {links && links.length > 0 && (
+                <Card>
+                    <ul className="-m-4 divide-y divide-neutral-200 dark:divide-neutral-800">
+                        {links.map((link, index) => (
+                            <li key={link.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{link.platform}</p>
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{link.url}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button type="button" disabled={index === 0} onClick={() => moveLink(link, -1)} className="text-sm disabled:opacity-30">
+                                        ↑
+                                    </button>
+                                    <button type="button" disabled={index === links.length - 1} onClick={() => moveLink(link, 1)} className="text-sm disabled:opacity-30">
+                                        ↓
+                                    </button>
+                                    <Button variant="secondary" onClick={() => setFormOpen(link)}>
+                                        Redaktə et
+                                    </Button>
+                                    <Button variant="danger" onClick={() => setDeleteTarget(link)}>
+                                        Sil
+                                    </Button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </Card>
+            )}
 
             <ConfirmDialog
                 open={!!deleteTarget}

@@ -1,6 +1,7 @@
 const VARIANTS = {
     primary: 'bg-neutral-900 text-white hover:bg-neutral-700 disabled:bg-neutral-400',
-    secondary: 'bg-white text-neutral-900 border border-neutral-300 hover:bg-neutral-100 disabled:text-neutral-400',
+    secondary:
+        'bg-white text-neutral-900 border border-neutral-300 hover:bg-neutral-100 disabled:text-neutral-400 dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 dark:disabled:text-neutral-600',
     danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
 };
 

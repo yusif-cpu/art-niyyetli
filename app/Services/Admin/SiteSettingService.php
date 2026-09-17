@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class SiteSettingService
 {
-    public const ALLOWED_KEYS = ['contact_email', 'phone', 'address', 'opening_hours', 'footer_text'];
+    public const ALLOWED_KEYS = ['contact_email', 'phone', 'address', 'opening_hours', 'footer_text', 'whatsapp_number'];
 
     public function all(): array
     {

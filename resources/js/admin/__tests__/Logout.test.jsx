@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import AdminShell from '../layout/AdminShell.jsx';
+import { ThemeProvider } from '../components/ThemeContext.jsx';
 
 describe('Logout', () => {
     beforeEach(() => {
@@ -19,9 +20,11 @@ describe('Logout', () => {
         });
 
         render(
-            <AdminShell user={{ username: 'jane.admin', roles: ['administrator'] }} current="dashboard" onNavigate={() => {}} onLogout={onLogout}>
-                <p>content</p>
-            </AdminShell>
+            <ThemeProvider>
+                <AdminShell user={{ username: 'jane.admin', roles: ['administrator'] }} current="dashboard" onNavigate={() => {}} onLogout={onLogout}>
+                    <p>content</p>
+                </AdminShell>
+            </ThemeProvider>
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Çıxış' }));

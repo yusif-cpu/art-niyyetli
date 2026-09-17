@@ -3,7 +3,7 @@ import TextField from '../components/TextField.jsx';
 import Toggle from '../components/Toggle.jsx';
 import LocaleTabs from '../components/LocaleTabs.jsx';
 import TextArea from '../components/TextArea.jsx';
-import MediaPicker from '../components/MediaPicker.jsx';
+import PageImageUpload from '../components/PageImageUpload.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 
@@ -47,12 +47,12 @@ export default function PageSectionForm({ section, onSave, onCancel, errors }) {
     }
 
     return (
-        <form onSubmit={submit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
+        <form onSubmit={submit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
             <TextField label="Açar (key)" value={key} onChange={setKey} error={errors?.key?.[0]} required />
             <Toggle checked={isActive} onChange={setIsActive} label="Aktiv" />
             <div>
-                <span className="mb-1 block text-sm font-medium text-neutral-700">Şəkil</span>
-                <MediaPicker
+                <span className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Şəkil</span>
+                <PageImageUpload
                     value={mediaId}
                     previewUrl={previewUrl}
                     onChange={(id, url) => {

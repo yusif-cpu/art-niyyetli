@@ -19,6 +19,7 @@ class UpdateSiteSettingsRequest extends FormRequest
             'address' => ['sometimes', 'nullable', 'string', 'max:500'],
             'opening_hours' => ['sometimes', 'nullable', 'string', 'max:255'],
             'footer_text' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'whatsapp_number' => ['sometimes', 'nullable', 'string', 'max:50'],
         ];
     }
 }

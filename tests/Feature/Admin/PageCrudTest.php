@@ -127,6 +127,60 @@ class PageCrudTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_multiple_custom_type_pages_can_be_created(): void
+    {
+        $first = $this->actingAs($this->admin)->postJson('/admin/pages', $this->validPagePayload([
+            'type' => 'custom',
+            'translations' => [['locale' => 'az', 'slug' => 'privacy-policy-'.uniqid(), 'title' => 'Məxfilik siyasəti', 'content' => 'Məzmun']],
+        ]));
+        $first->assertOk();
+
+        $second = $this->actingAs($this->admin)->postJson('/admin/pages', $this->validPagePayload([
+            'type' => 'custom',
+            'translations' => [['locale' => 'az', 'slug' => 'terms-of-use-'.uniqid(), 'title' => 'İstifadə şərtləri', 'content' => 'Məzmun']],
+        ]));
+        $second->assertOk();
+
+        $this->assertNotSame($first->json('data.id'), $second->json('data.id'));
+    }
+
+    public function test_duplicate_page_type_is_still_rejected_for_canonical_types(): void
+    {
+        Page::query()->create(['type' => 'home', 'is_active' => true]);
+
+        $this->actingAs($this->admin)
+            ->postJson('/admin/pages', $this->validPagePayload([
+                'type' => 'home',
+                'translations' => [['locale' => 'az', 'slug' => 'home-'.uniqid(), 'title' => 'Home', 'content' => 'C']],
+            ]))
+            ->assertStatus(422);
+    }
+
+    public function test_custom_page_slug_still_rejects_collisions_with_other_pages(): void
+    {
+        $this->actingAs($this->admin)->postJson('/admin/pages', $this->validPagePayload([
+            'type' => 'custom',
+            'translations' => [['locale' => 'az', 'slug' => 'custom-collision-slug', 'title' => 'A', 'content' => 'C']],
+        ]))->assertOk();
+
+        $response = $this->actingAs($this->admin)->postJson('/admin/pages', $this->validPagePayload([
+            'type' => 'custom',
+            'translations' => [['locale' => 'az', 'slug' => 'custom-collision-slug', 'title' => 'B', 'content' => 'C']],
+        ]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['translations.0.slug']);
+    }
+
+    public function test_custom_page_type_can_be_updated_without_uniqueness_conflict(): void
+    {
+        $first = Page::query()->create(['type' => 'custom', 'is_active' => true]);
+        $second = Page::query()->create(['type' => 'custom', 'is_active' => true]);
+
+        $this->actingAs($this->admin)->putJson("/admin/pages/{$second->id}", ['type' => 'custom'])
+            ->assertOk();
+    }
+
     public function test_unauthenticated_request_cannot_list_or_create_pages(): void
     {
         $this->getJson('/admin/pages')->assertStatus(401);

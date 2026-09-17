@@ -28,8 +28,8 @@ class StoreArtworkRequest extends FormRequest
             'medium_id' => ['required', 'integer', Rule::exists('mediums', 'id')->where('is_active', true)],
             'genre_id' => ['required', 'integer', Rule::exists('genres', 'id')->where('is_active', true)],
             'year_created' => ['required', 'integer', 'min:1000', 'max:'.$currentYear],
-            'width_cm' => ['required', 'numeric', 'gt:0'],
-            'height_cm' => ['required', 'numeric', 'gt:0'],
+            'width_cm' => ['required', 'numeric', 'gt:0', 'max:999999.99'],
+            'height_cm' => ['required', 'numeric', 'gt:0', 'max:999999.99'],
             'price' => ['required', 'numeric', 'min:0', 'decimal:0,2'],
             'show_price' => ['required', 'boolean'],
             'availability' => ['required', Rule::enum(ArtworkAvailability::class)],
@@ -58,6 +58,14 @@ class StoreArtworkRequest extends FormRequest
             'images.*.type' => ['required', Rule::enum(ArtworkImageType::class)],
             'images.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'images.*.is_main' => ['nullable', 'boolean'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'width_cm.max' => 'En ölçüsü 999999.99 sm-dən çox ola bilməz.',
+            'height_cm.max' => 'Hündürlük ölçüsü 999999.99 sm-dən çox ola bilməz.',
         ];
     }
 

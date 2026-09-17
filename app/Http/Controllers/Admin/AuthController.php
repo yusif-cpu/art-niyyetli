@@ -47,6 +47,16 @@ class AuthController extends Controller
             ]);
         }
 
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+            RateLimiter::hit($usernameIpKey, self::DECAY_SECONDS);
+            RateLimiter::hit($ipKey, self::DECAY_SECONDS);
+
+            throw ValidationException::withMessages([
+                'username' => ['These credentials do not match our records.'],
+            ]);
+        }
+
         // Only the username+IP counter is cleared: it is specific to the
         // account that just proved ownership. The shared per-IP counter is
         // deliberately left alone — clearing it on any success would let an

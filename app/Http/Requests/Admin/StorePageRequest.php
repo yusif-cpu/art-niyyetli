@@ -21,7 +21,14 @@ class StorePageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', Rule::enum(PageType::class), Rule::unique('pages', 'type')],
+            'type' => [
+                'required',
+                Rule::enum(PageType::class),
+                Rule::when(
+                    $this->input('type') !== PageType::Custom->value,
+                    [Rule::unique('pages', 'type')]
+                ),
+            ],
             'is_active' => ['required', 'boolean'],
 
             'translations' => ['required', 'array', 'min:1'],

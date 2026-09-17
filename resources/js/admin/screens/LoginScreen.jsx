@@ -31,9 +31,9 @@ export default function LoginScreen({ onLoggedIn }) {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-neutral-100 px-4">
-            <form onSubmit={submit} className="w-full max-w-sm rounded-lg bg-white p-8 shadow-sm">
-                <h1 className="mb-6 text-lg font-semibold text-neutral-900">ArtNiyyətli — Admin</h1>
+        <div className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 dark:bg-neutral-950">
+            <form onSubmit={submit} className="w-full max-w-sm rounded-lg bg-white p-8 shadow-sm dark:bg-neutral-900">
+                <h1 className="mb-6 text-lg font-semibold text-neutral-900 dark:text-neutral-100">ArtNiyyətli — Admin</h1>
 
                 <div className="space-y-4">
                     <TextField label="İstifadəçi adı" value={username} onChange={setUsername} autoComplete="username" required />

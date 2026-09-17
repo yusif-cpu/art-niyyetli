@@ -34,6 +34,7 @@ class EnquiryCrudTest extends TestCase
         $this->admin->roles()->attach(Role::query()->firstOrCreate(['name' => 'administrator']));
 
         $this->subject = EnquirySubject::query()->create(['key' => 'buy', 'sort_order' => 0, 'is_active' => true]);
+        $this->subject->translations()->create(['locale' => 'az', 'name' => 'Almaq']);
 
         $this->artwork = Artwork::factory()->create([
             'artist_id' => Artist::factory()->create()->id,
@@ -77,6 +78,18 @@ class EnquiryCrudTest extends TestCase
         $response->assertOk();
         $this->assertSame($newer->id, $response->json('data.0.id'));
         $this->assertSame($older->id, $response->json('data.1.id'));
+    }
+
+    public function test_index_lists_new_enquiries_before_others_regardless_of_age(): void
+    {
+        $olderNew = $this->makeEnquiry(['status' => 'new', 'created_at' => now()->subDays(5)]);
+        $newerReplied = $this->makeEnquiry(['status' => 'replied', 'created_at' => now()]);
+
+        $response = $this->actingAs($this->admin)->getJson('/admin/enquiries');
+
+        $response->assertOk();
+        $this->assertSame($olderNew->id, $response->json('data.0.id'));
+        $this->assertSame($newerReplied->id, $response->json('data.1.id'));
     }
 
     public function test_status_filter(): void
@@ -149,6 +162,10 @@ class EnquiryCrudTest extends TestCase
         $response->assertJsonPath('data.artwork.inventory_code', $this->artwork->inventory_code);
         $response->assertJsonPath('data.email', 'aysel@example.com');
         $response->assertJsonPath('data.phone', '+994501234567');
+        $response->assertJsonPath('data.inventory_code', $this->artwork->inventory_code);
+        $this->assertNotNull($response->json('data.submitted_at'));
+        $response->assertJsonPath('data.subject', 'Almaq');
+        $this->assertSame([], $response->json('data.replies'));
     }
 
     public function test_administrator_can_update_status_and_note(): void

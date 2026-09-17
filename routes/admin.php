@@ -1,13 +1,16 @@
 <?php
 
 use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\ArtistController;
 use App\Http\Controllers\Admin\ArtworkController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EnquiryController;
 use App\Http\Controllers\Admin\ExhibitionController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\GenreController;
 use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\MediumController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\SiteSettingController;
@@ -26,6 +29,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::post('artworks/reorder', [ArtworkController::class, 'reorder'])->name('artworks.reorder');
             Route::apiResource('artworks', ArtworkController::class)->except(['create', 'edit']);
+
+            Route::apiResource('artists', ArtistController::class)->only(['index', 'store', 'show', 'update']);
+            Route::get('genres', [GenreController::class, 'index'])->name('genres.index');
+            Route::get('mediums', [MediumController::class, 'index'])->name('mediums.index');
 
             Route::apiResource('exhibitions', ExhibitionController::class)->except(['create', 'edit']);
 
@@ -56,9 +63,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::apiResource('social-links', SocialLinkController::class)->except(['create', 'edit']);
 
             Route::apiResource('enquiries', EnquiryController::class)->only(['index', 'show', 'update']);
+            Route::post('enquiries/{enquiry}/reply', [EnquiryController::class, 'reply']);
 
             Route::middleware('can:admin.manage-users')->group(function () {
-                Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
+                Route::apiResource('users', UserManagementController::class)->only(['index', 'store', 'update', 'destroy']);
             });
         });
     });

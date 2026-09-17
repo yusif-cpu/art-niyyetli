@@ -23,7 +23,14 @@ class UpdatePageRequest extends FormRequest
         $pageId = $this->route('page')?->id;
 
         return [
-            'type' => ['sometimes', Rule::enum(PageType::class), Rule::unique('pages', 'type')->ignore($pageId)],
+            'type' => [
+                'sometimes',
+                Rule::enum(PageType::class),
+                Rule::when(
+                    $this->input('type') !== PageType::Custom->value,
+                    [Rule::unique('pages', 'type')->ignore($pageId)]
+                ),
+            ],
             'is_active' => ['sometimes', 'boolean'],
 
             'translations' => ['sometimes', 'array', 'min:1'],

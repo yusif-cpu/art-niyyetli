@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from './lib/api.js';
 import { useHashRoute } from './lib/useHashRoute.js';
+import { ThemeProvider } from './components/ThemeContext.jsx';
 import { ToastProvider } from './components/ToastContext.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
-import PlaceholderScreen from './screens/PlaceholderScreen.jsx';
 import DashboardScreen from './screens/DashboardScreen.jsx';
 import PagesScreen from './screens/PagesScreen.jsx';
 import FaqScreen from './screens/FaqScreen.jsx';
 import SettingsScreen from './screens/SettingsScreen.jsx';
 import SocialLinksScreen from './screens/SocialLinksScreen.jsx';
 import EnquiriesScreen from './screens/EnquiriesScreen.jsx';
+import ArtworksScreen from './screens/ArtworksScreen.jsx';
+import ArtistsScreen from './screens/ArtistsScreen.jsx';
+import ExhibitionsScreen from './screens/ExhibitionsScreen.jsx';
+import ArticlesScreen from './screens/ArticlesScreen.jsx';
+import MediaScreen from './screens/MediaScreen.jsx';
+import UsersScreen from './screens/UsersScreen.jsx';
 import AdminShell from './layout/AdminShell.jsx';
 
 const SCREENS = {
@@ -19,11 +25,12 @@ const SCREENS = {
     settings: SettingsScreen,
     'social-links': SocialLinksScreen,
     enquiries: EnquiriesScreen,
-    artworks: PlaceholderScreen,
-    exhibitions: PlaceholderScreen,
-    articles: PlaceholderScreen,
-    media: PlaceholderScreen,
-    users: PlaceholderScreen,
+    artworks: ArtworksScreen,
+    artists: ArtistsScreen,
+    exhibitions: ExhibitionsScreen,
+    articles: ArticlesScreen,
+    media: MediaScreen,
+    users: UsersScreen,
 };
 
 function AuthenticatedApp({ session, onLogout }) {
@@ -38,7 +45,12 @@ function AuthenticatedApp({ session, onLogout }) {
             onLogout={onLogout}
             badges={{ enquiries: session.stats?.enquiries_new }}
         >
-            <Screen stats={session.stats} />
+            <Screen
+                stats={session.stats}
+                recentEnquiries={session.recent_enquiries}
+                upcomingExhibitions={session.upcoming_exhibitions}
+                recentArtworks={session.recent_artworks}
+            />
         </AdminShell>
     );
 }
@@ -62,10 +74,12 @@ export default function App() {
     }
 
     return (
-        <ToastProvider>
-            {session === undefined && <p className="p-6 text-sm text-neutral-500">Yüklənir...</p>}
-            {session === null && <LoginScreen onLoggedIn={setSession} />}
-            {session && <AuthenticatedApp session={session} onLogout={logout} />}
-        </ToastProvider>
+        <ThemeProvider>
+            <ToastProvider>
+                {session === undefined && <p className="p-6 text-sm text-neutral-500 dark:text-neutral-400">Yüklənir...</p>}
+                {session === null && <LoginScreen onLoggedIn={setSession} />}
+                {session && <AuthenticatedApp session={session} onLogout={logout} />}
+            </ToastProvider>
+        </ThemeProvider>
     );
 }

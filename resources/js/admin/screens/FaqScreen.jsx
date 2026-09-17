@@ -4,6 +4,10 @@ import { useToast } from '../components/ToastContext.jsx';
 import Button from '../components/Button.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import Banner from '../components/Banner.jsx';
+import Card from '../components/Card.jsx';
+import PageHeader from '../components/PageHeader.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
 import FaqForm from './FaqForm.jsx';
 
 export default function FaqScreen() {
@@ -13,10 +17,16 @@ export default function FaqScreen() {
     const [formOpen, setFormOpen] = useState(null); // null | 'new' | faq
     const [formErrors, setFormErrors] = useState({});
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [error, setError] = useState('');
 
     function load() {
-        apiFetch('/faqs').then((res) => setFaqs(res.data));
-        apiFetch('/pages').then((res) => setPages(res.data));
+        setError('');
+        apiFetch('/faqs')
+            .then((res) => setFaqs(res.data))
+            .catch(() => setError('Sualları yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.'));
+        apiFetch('/pages')
+            .then((res) => setPages(res.data))
+            .catch(() => setError('Sualları yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.'));
     }
 
     useEffect(load, []);
@@ -65,13 +75,10 @@ export default function FaqScreen() {
 
     return (
         <div className="max-w-3xl">
-            <div className="mb-4 flex items-center justify-between">
-                <h1 className="text-lg font-semibold text-neutral-900">Tez-tez verilən suallar</h1>
-                <Button onClick={() => setFormOpen('new')}>Yeni sual</Button>
-            </div>
+            <PageHeader title="Tez-tez verilən suallar" actions={<Button onClick={() => setFormOpen('new')}>Yeni sual</Button>} />
 
             {formOpen && (
-                <div className="mb-4">
+                <div className="mb-6">
                     <FaqForm
                         faq={formOpen === 'new' ? null : formOpen}
                         pages={pages}
@@ -82,35 +89,43 @@ export default function FaqScreen() {
                             setFormErrors({});
                         }}
                     />
+                    <hr className="mt-6 border-neutral-200 dark:border-neutral-800" />
                 </div>
             )}
 
+            <Banner type="error">{error}</Banner>
+
+            {faqs === null && !error && <p className="text-sm text-neutral-500 dark:text-neutral-400">Yüklənir...</p>}
             {faqs && faqs.length === 0 && <EmptyState title="Hələ heç bir sual yoxdur" body="Yeni sual əlavə edin." />}
 
-            <ul className="space-y-2">
-                {faqs?.map((faq, index) => (
-                    <li key={faq.id} className="flex items-center justify-between rounded-md border border-neutral-200 bg-white px-4 py-3">
-                        <div>
-                            <p className="text-sm font-medium text-neutral-900">{faq.translation?.question}</p>
-                            <p className="text-xs text-neutral-500">{faq.is_active ? 'Aktiv' : 'Deaktiv'}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button type="button" disabled={index === 0} onClick={() => moveFaq(faq, -1)} className="text-sm disabled:opacity-30">
-                                ↑
-                            </button>
-                            <button type="button" disabled={index === faqs.length - 1} onClick={() => moveFaq(faq, 1)} className="text-sm disabled:opacity-30">
-                                ↓
-                            </button>
-                            <Button variant="secondary" onClick={() => setFormOpen(faq)}>
-                                Redaktə et
-                            </Button>
-                            <Button variant="danger" onClick={() => setDeleteTarget(faq)}>
-                                Sil
-                            </Button>
-                        </div>
-                    </li>
-                ))}
-            </ul>
+            {faqs && faqs.length > 0 && (
+                <Card>
+                    <ul className="-m-4 divide-y divide-neutral-200 dark:divide-neutral-800">
+                        {faqs.map((faq, index) => (
+                            <li key={faq.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{faq.translation?.question}</p>
+                                    <StatusBadge active={faq.is_active} />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button type="button" disabled={index === 0} onClick={() => moveFaq(faq, -1)} className="text-sm disabled:opacity-30">
+                                        ↑
+                                    </button>
+                                    <button type="button" disabled={index === faqs.length - 1} onClick={() => moveFaq(faq, 1)} className="text-sm disabled:opacity-30">
+                                        ↓
+                                    </button>
+                                    <Button variant="secondary" onClick={() => setFormOpen(faq)}>
+                                        Redaktə et
+                                    </Button>
+                                    <Button variant="danger" onClick={() => setDeleteTarget(faq)}>
+                                        Sil
+                                    </Button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </Card>
+            )}
 
             <ConfirmDialog
                 open={!!deleteTarget}

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import PagesScreen from '../screens/PagesScreen.jsx';
@@ -85,5 +85,89 @@ describe('PagesScreen', () => {
         await waitFor(() => {
             expect(screen.getByText('Yadda saxlanıldı')).toBeInTheDocument();
         });
+    });
+
+    it('shows an error banner when the initial pages fetch fails', async () => {
+        global.fetch = vi.fn(() => Promise.resolve(jsonResponse(500, { message: 'Server error' })));
+
+        render(
+            <ToastProvider>
+                <PagesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Səhifələri yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.');
+    });
+
+    it('creates a new custom page and opens its editor', async () => {
+        const newPageDetail = {
+            id: 2,
+            type: 'custom',
+            is_active: true,
+            translations: [{ locale: 'az', slug: 'yeni-sehife', title: 'Yeni səhifə başlığı', content: 'Yeni məzmun' }],
+            sections: [],
+        };
+
+        global.fetch = vi.fn((url, options) => {
+            if (url === '/admin/pages' && options?.method === 'POST') {
+                return Promise.resolve(jsonResponse(201, { data: { id: 2 } }));
+            }
+            if (url === '/admin/pages' && options?.method === 'GET') {
+                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, translation: { title: 'Ana səhifə başlığı' } }] }));
+            }
+            if (url === '/admin/pages/2') {
+                return Promise.resolve(jsonResponse(200, { data: newPageDetail }));
+            }
+            if (url === '/admin/pages/1') {
+                return Promise.resolve(jsonResponse(200, { data: pageDetail }));
+            }
+            return Promise.resolve(jsonResponse(200, { data: {} }));
+        });
+
+        render(
+            <ToastProvider>
+                <PagesScreen />
+            </ToastProvider>
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Yeni səhifə' }));
+
+        await userEvent.type(screen.getByLabelText('URL (slug)'), 'yeni-sehife');
+        await userEvent.type(screen.getByLabelText('Başlıq'), 'Yeni səhifə başlığı');
+        await userEvent.type(screen.getByLabelText('Məzmun'), 'Yeni məzmun');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+
+        await screen.findByDisplayValue('Yeni səhifə başlığı');
+    });
+
+    it('shows an image preview for a section that has one, and no broken preview for a section without one (regression check)', async () => {
+        global.fetch = vi.fn((url) => {
+            if (url === '/admin/pages') {
+                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, translation: { title: 'Ana səhifə başlığı' } }] }));
+            }
+            if (url === '/admin/pages/1') {
+                return Promise.resolve(
+                    jsonResponse(200, {
+                        data: {
+                            ...pageDetail,
+                            sections: [
+                                { id: 10, key: 'hero', is_active: true, image_url: 'https://example.test/hero-detail.webp' },
+                                { id: 11, key: 'about', is_active: true, image_url: null },
+                            ],
+                        },
+                    })
+                );
+            }
+            return Promise.resolve(jsonResponse(200, { data: {} }));
+        });
+
+        await openEditor();
+
+        const heroRow = (await screen.findByText('hero')).closest('li');
+        expect(within(heroRow).getByRole('img')).toHaveAttribute('src', 'https://example.test/hero-detail.webp');
+
+        const aboutRow = screen.getByText('about').closest('li');
+        expect(within(aboutRow).queryByRole('img')).not.toBeInTheDocument();
     });
 });

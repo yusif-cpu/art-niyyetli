@@ -38,20 +38,22 @@ const listItems = [
     },
 ];
 
+const listMeta = { current_page: 1, last_page: 1, total: listItems.length };
+
 describe('EnquiriesScreen', () => {
     beforeEach(() => {
         global.fetch = vi.fn((url) => {
             if (url.startsWith('/admin/enquiries/1')) {
                 return Promise.resolve(jsonResponse(200, { data: listItems[0] }));
             }
-            if (url.startsWith('/admin/enquiries?status=new')) {
-                return Promise.resolve(jsonResponse(200, { data: [listItems[0]] }));
+            if (url.startsWith('/admin/enquiries?') && url.includes('status=new')) {
+                return Promise.resolve(jsonResponse(200, { data: [listItems[0]], meta: { current_page: 1, last_page: 1, total: 1 } }));
             }
             if (url.startsWith('/admin/enquiries?') && url.includes('search=')) {
-                return Promise.resolve(jsonResponse(200, { data: [listItems[0]] }));
+                return Promise.resolve(jsonResponse(200, { data: [listItems[0]], meta: { current_page: 1, last_page: 1, total: 1 } }));
             }
             if (url.startsWith('/admin/enquiries')) {
-                return Promise.resolve(jsonResponse(200, { data: listItems }));
+                return Promise.resolve(jsonResponse(200, { data: listItems, meta: listMeta }));
             }
             return Promise.resolve(jsonResponse(200, { data: {} }));
         });
@@ -174,5 +176,82 @@ describe('EnquiriesScreen', () => {
         await waitFor(() => {
             expect(screen.getByText('Qeyd yadda saxlanıldı')).toBeInTheDocument();
         });
+    });
+
+    it('shows the loading state before the list renders', async () => {
+        let resolveFetch;
+        global.fetch = vi.fn(
+            () =>
+                new Promise((resolve) => {
+                    resolveFetch = resolve;
+                })
+        );
+
+        render(
+            <ToastProvider>
+                <EnquiriesScreen />
+            </ToastProvider>
+        );
+
+        expect(screen.getByText('Yüklənir...')).toBeInTheDocument();
+
+        resolveFetch(jsonResponse(200, { data: listItems, meta: listMeta }));
+
+        await screen.findByText('Aysel Məmmədova — aysel@example.com');
+        expect(screen.queryByText('Yüklənir...')).not.toBeInTheDocument();
+    });
+
+    it('shows the unread marker on new enquiries but not on others', async () => {
+        render(
+            <ToastProvider>
+                <EnquiriesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Aysel Məmmədova — aysel@example.com');
+
+        const newRow = screen.getByText('Aysel Məmmədova — aysel@example.com').closest('li');
+        const closedRow = screen.getByText('Elvin Quliyev — elvin@example.com').closest('li');
+
+        expect(newRow.className).toContain('border-l-4');
+        expect(newRow.className).toContain('border-l-red-600');
+        expect(newRow.querySelector('span')).toHaveTextContent('Yeni');
+
+        expect(closedRow.className).not.toContain('border-l-red-600');
+        expect(closedRow.querySelector('span')).toBeNull();
+    });
+
+    it('renders pagination when there is more than one page and fetches the next page', async () => {
+        global.fetch = vi.fn(() =>
+            Promise.resolve(jsonResponse(200, { data: listItems, meta: { current_page: 1, last_page: 2, total: 4 } }))
+        );
+
+        render(
+            <ToastProvider>
+                <EnquiriesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Aysel Məmmədova — aysel@example.com');
+        expect(screen.getByText('1 / 2 səhifə (4 nəticə)')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Növbəti' }));
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('page=2'), expect.anything());
+        });
+    });
+
+    it('shows an error banner when the request fails', async () => {
+        global.fetch = vi.fn(() => Promise.reject(new Error('network error')));
+
+        render(
+            <ToastProvider>
+                <EnquiriesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Sorğuları yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.');
+        expect(screen.queryByText('Yüklənir...')).not.toBeInTheDocument();
     });
 });

@@ -6,12 +6,24 @@ import TextArea from '../components/TextArea.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 
-const FIELDS = [
-    { key: 'contact_email', label: 'Əlaqə e-poçtu', type: 'text' },
-    { key: 'phone', label: 'Telefon', type: 'text' },
-    { key: 'address', label: 'Ünvan', type: 'textarea' },
-    { key: 'opening_hours', label: 'İş saatları', type: 'textarea' },
-    { key: 'footer_text', label: 'Alt yazı mətni', type: 'textarea' },
+const SECTIONS = [
+    {
+        label: 'Əlaqə',
+        fields: [
+            { key: 'contact_email', label: 'Əlaqə e-poçtu', type: 'text' },
+            { key: 'phone', label: 'Telefon', type: 'text' },
+            { key: 'address', label: 'Ünvan', type: 'textarea' },
+            { key: 'opening_hours', label: 'İş saatları', type: 'textarea' },
+        ],
+    },
+    {
+        label: 'Sayt',
+        fields: [{ key: 'footer_text', label: 'Alt yazı mətni', type: 'textarea' }],
+    },
+    {
+        label: 'WhatsApp',
+        fields: [{ key: 'whatsapp_number', label: 'WhatsApp nömrəsi', type: 'text' }],
+    },
 ];
 
 export default function SettingsScreen() {
@@ -43,27 +55,32 @@ export default function SettingsScreen() {
     }
 
     if (!values) {
-        return <p className="text-sm text-neutral-500">Yüklənir...</p>;
+        return <p className="text-sm text-neutral-500 dark:text-neutral-400">Yüklənir...</p>;
     }
 
     return (
         <form onSubmit={submit} className="max-w-xl space-y-4">
-            <h1 className="text-lg font-semibold text-neutral-900">Sayt ayarları</h1>
+            <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Sayt ayarları</h1>
             <Banner type="error">{Object.values(errors)[0]?.[0]}</Banner>
 
-            {FIELDS.map((field) => {
-                const Field = field.type === 'textarea' ? TextArea : TextField;
+            {SECTIONS.map((section) => (
+                <div key={section.label} className="space-y-4">
+                    <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{section.label}</h2>
+                    {section.fields.map((field) => {
+                        const Field = field.type === 'textarea' ? TextArea : TextField;
 
-                return (
-                    <Field
-                        key={field.key}
-                        label={field.label}
-                        value={values[field.key]}
-                        onChange={(v) => setValues((current) => ({ ...current, [field.key]: v }))}
-                        error={errors[field.key]?.[0]}
-                    />
-                );
-            })}
+                        return (
+                            <Field
+                                key={field.key}
+                                label={field.label}
+                                value={values[field.key]}
+                                onChange={(v) => setValues((current) => ({ ...current, [field.key]: v }))}
+                                error={errors[field.key]?.[0]}
+                            />
+                        );
+                    })}
+                </div>
+            ))}
 
             <Button type="submit" loading={saving}>
                 Yadda saxla

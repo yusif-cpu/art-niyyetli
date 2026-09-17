@@ -25,7 +25,7 @@ class SiteSettingTest extends TestCase
         $this->admin->roles()->attach(Role::query()->firstOrCreate(['name' => 'administrator']));
     }
 
-    public function test_all_five_allowlisted_keys_are_returned_null_when_unset(): void
+    public function test_all_six_allowlisted_keys_are_returned_null_when_unset(): void
     {
         $response = $this->actingAs($this->admin)->getJson('/admin/settings');
 
@@ -35,6 +35,7 @@ class SiteSettingTest extends TestCase
             'address' => null,
             'opening_hours' => null,
             'footer_text' => null,
+            'whatsapp_number' => null,
         ]]);
     }
 
@@ -49,6 +50,17 @@ class SiteSettingTest extends TestCase
 
         $response->assertJsonPath('data.contact_email', 'info@artniyyetli.az');
         $response->assertJsonPath('data.phone', '+994 50 000 00 00');
+    }
+
+    public function test_whatsapp_number_round_trips_through_get_and_put(): void
+    {
+        $this->actingAs($this->admin)->putJson('/admin/settings', [
+            'whatsapp_number' => '+994 55 123 45 67',
+        ])->assertOk()->assertJsonPath('data.whatsapp_number', '+994 55 123 45 67');
+
+        $response = $this->actingAs($this->admin)->getJson('/admin/settings');
+
+        $response->assertJsonPath('data.whatsapp_number', '+994 55 123 45 67');
     }
 
     public function test_arbitrary_key_in_the_request_body_never_creates_a_setting_row(): void

@@ -24,9 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('admin.access', fn (User $user) => $user->hasRole('administrator') || $user->hasRole('editor'));
+        Gate::define('admin.access', fn (User $user) => $user->is_active && ($user->hasRole('administrator') || $user->hasRole('editor')));
 
-        Gate::define('admin.manage-users', fn (User $user) => $user->hasRole('administrator'));
+        Gate::define('admin.manage-users', fn (User $user) => $user->is_active && $user->hasRole('administrator'));
 
         // Separate from the login limiter (5/min per username+IP in
         // AuthController). 20/minute per admin user comfortably covers a

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../lib/api.js';
+import { useEffect, useRef, useState } from 'react';
+import { apiFetch, ApiError } from '../lib/api.js';
 import Button from './Button.jsx';
+import Banner from './Banner.jsx';
 
 function thumbUrl(item) {
     const variant = item.variants?.find((v) => v.variant === 'thumbnail-webp') || item.variants?.find((v) => v.variant === 'thumbnail-jpeg');
@@ -8,10 +9,34 @@ function thumbUrl(item) {
     return variant?.url || null;
 }
 
+function previewUrlFromVariants(variants) {
+    const order = ['detail-webp', 'detail-jpeg', 'thumbnail-webp', 'thumbnail-jpeg'];
+    for (const variant of order) {
+        const match = variants?.find((v) => v.variant === variant);
+        if (match?.url) return match.url;
+    }
+
+    return null;
+}
+
+function explainUploadError(message) {
+    if (/mime|extension|format|type/i.test(message || '')) {
+        return 'Bu şəkil formatı dəstəklənmir. JPG, PNG və ya WebP istifadə edin.';
+    }
+    if (/max|size|kilobytes|large/i.test(message || '')) {
+        return 'Bu şəkil həddindən artıq böyükdür.';
+    }
+
+    return message || 'Şəkli yükləmək mümkün olmadı.';
+}
+
 export default function MediaPicker({ value, previewUrl, onChange }) {
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (!open) return;
@@ -22,16 +47,37 @@ export default function MediaPicker({ value, previewUrl, onChange }) {
             .finally(() => setLoading(false));
     }, [open]);
 
+    async function uploadFile(file) {
+        setUploading(true);
+        setUploadError('');
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await apiFetch('/media', { method: 'POST', body: formData });
+            onChange(res.data.id, previewUrlFromVariants(res.data.variants));
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setUploadError(explainUploadError(err.message));
+            }
+        } finally {
+            setUploading(false);
+        }
+    }
+
     return (
         <div>
             <div className="flex items-center gap-3">
                 {value && previewUrl ? (
                     <img src={previewUrl} alt="Seçilmiş şəkil" className="h-16 w-16 rounded object-cover" />
                 ) : (
-                    <span className="text-sm text-neutral-500">Şəkil seçilməyib</span>
+                    <span className="text-sm text-neutral-500 dark:text-neutral-400">Şəkil seçilməyib</span>
                 )}
                 <Button variant="secondary" onClick={() => setOpen(true)}>
-                    Şəkil seç
+                    Media-dan seç
+                </Button>
+                <Button variant="secondary" onClick={() => fileInputRef.current?.click()} loading={uploading} disabled={uploading}>
+                    Kompüterdən yüklə
                 </Button>
                 {value && (
                     <Button variant="secondary" onClick={() => onChange(null, null)}>
@@ -40,16 +86,32 @@ export default function MediaPicker({ value, previewUrl, onChange }) {
                 )}
             </div>
 
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadFile(file);
+                    e.target.value = '';
+                }}
+            />
+
+            <div className="mt-2">
+                <Banner type="error">{uploadError}</Banner>
+            </div>
+
             {open && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 dark:bg-black/60">
+                    <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg dark:bg-neutral-900">
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="text-base font-semibold">Media seçin</h2>
                             <Button variant="secondary" onClick={() => setOpen(false)}>
                                 Bağla
                             </Button>
                         </div>
-                        {loading && <p className="text-sm text-neutral-500">Yüklənir...</p>}
+                        {loading && <p className="text-sm text-neutral-500 dark:text-neutral-400">Yüklənir...</p>}
                         <div className="grid grid-cols-4 gap-3">
                             {items.map((item) => (
                                 <button
@@ -59,7 +121,7 @@ export default function MediaPicker({ value, previewUrl, onChange }) {
                                         onChange(item.id, thumbUrl(item));
                                         setOpen(false);
                                     }}
-                                    className="aspect-square overflow-hidden rounded border border-neutral-200 hover:ring-2 hover:ring-neutral-400"
+                                    className="aspect-square overflow-hidden rounded border border-neutral-200 hover:ring-2 hover:ring-neutral-400 dark:border-neutral-800"
                                 >
                                     {thumbUrl(item) ? (
                                         <img src={thumbUrl(item)} alt="Media" className="h-full w-full object-cover" />

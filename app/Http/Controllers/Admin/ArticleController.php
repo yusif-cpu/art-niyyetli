@@ -19,12 +19,11 @@ class ArticleController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $locale = $request->query('locale', 'az');
-        $locales = array_unique([$locale, 'az']);
-
         $query = Article::query()
             ->with([
-                'translations' => fn ($q) => $q->whereIn('locale', $locales),
+                // Unfiltered: the admin AZ/EN editor needs every existing
+                // translation regardless of ?locale= (Phase 08 fix pattern).
+                'translations',
                 'media.variants',
             ]);
 

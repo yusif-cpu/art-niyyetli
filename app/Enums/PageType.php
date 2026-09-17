@@ -8,4 +8,5 @@ enum PageType: string
     case About = 'about';
     case Collectors = 'collectors';
     case Contact = 'contact';
+    case Custom = 'custom';
 }

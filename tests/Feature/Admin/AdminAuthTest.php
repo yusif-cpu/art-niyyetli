@@ -60,6 +60,43 @@ class AdminAuthTest extends TestCase
         $this->assertFalse(Auth::check());
     }
 
+    public function test_deactivated_user_cannot_authenticate_even_with_correct_password(): void
+    {
+        $user = $this->createUserWithRole('editor');
+        $user->update(['is_active' => false]);
+
+        $response = $this->postJson('/admin/login', ['username' => 'jane.admin', 'password' => 'correct-password']);
+
+        $response->assertStatus(422);
+        $this->assertFalse(Auth::check());
+    }
+
+    public function test_reactivated_user_can_authenticate_again(): void
+    {
+        $user = $this->createUserWithRole('editor');
+        $user->update(['is_active' => false]);
+        $this->postJson('/admin/login', ['username' => 'jane.admin', 'password' => 'correct-password'])->assertStatus(422);
+
+        $user->update(['is_active' => true]);
+
+        $this->postJson('/admin/login', ['username' => 'jane.admin', 'password' => 'correct-password'])
+            ->assertOk()
+            ->assertJson(['message' => 'Authenticated.']);
+        $this->assertTrue(Auth::check());
+    }
+
+    public function test_deactivating_a_user_with_an_existing_session_immediately_revokes_admin_access(): void
+    {
+        $user = $this->createUserWithRole('editor');
+        $this->actingAs($user);
+
+        $this->getJson('/admin/dashboard')->assertOk();
+
+        $user->update(['is_active' => false]);
+
+        $this->getJson('/admin/dashboard')->assertStatus(403);
+    }
+
     public function test_invalid_password_and_unknown_username_return_the_identical_generic_message(): void
     {
         $this->createUserWithRole('editor');
@@ -224,6 +261,7 @@ class AdminAuthTest extends TestCase
         $response->assertOk();
         $this->assertStringNotContainsString($admin->password, $response->getContent());
         $response->assertJsonMissingPath('users.0.password');
+        $response->assertJsonPath('users.0.roles.0', 'administrator');
     }
 
     public function test_protected_route_cannot_be_accessed_after_logout(): void

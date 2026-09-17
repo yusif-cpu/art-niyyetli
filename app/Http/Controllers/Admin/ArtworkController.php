@@ -28,7 +28,10 @@ class ArtworkController extends Controller
                 'artist.translations' => fn ($q) => $q->whereIn('locale', $locales),
                 'medium.translations' => fn ($q) => $q->whereIn('locale', $locales),
                 'genre.translations' => fn ($q) => $q->whereIn('locale', $locales),
-                'translations' => fn ($q) => $q->whereIn('locale', $locales),
+                // Unfiltered (unlike the summary relations above): the admin AZ/EN
+                // editor needs every existing translation regardless of ?locale=,
+                // same fix as PageController/FaqController (Phase 08).
+                'translations',
                 'images' => fn ($q) => $q->orderBy('sort_order'),
                 'images.media.variants',
             ]);

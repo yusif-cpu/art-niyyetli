@@ -161,6 +161,36 @@ class ArtworkValidationTest extends TestCase
         $this->createArtwork($this->validArtworkPayload(['height_cm' => -5]))->assertStatus(422);
     }
 
+    public function test_width_beyond_database_column_range_is_rejected_with_a_field_error(): void
+    {
+        $response = $this->createArtwork($this->validArtworkPayload(['width_cm' => 9999999]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('width_cm');
+        $this->assertSame(
+            'En ölçüsü 999999.99 sm-dən çox ola bilməz.',
+            $response->json('errors.width_cm.0')
+        );
+    }
+
+    public function test_height_beyond_database_column_range_is_rejected_with_a_field_error(): void
+    {
+        $response = $this->createArtwork($this->validArtworkPayload(['height_cm' => 9999999]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('height_cm');
+        $this->assertSame(
+            'Hündürlük ölçüsü 999999.99 sm-dən çox ola bilməz.',
+            $response->json('errors.height_cm.0')
+        );
+    }
+
+    public function test_dimension_at_the_maximum_valid_database_boundary_is_accepted(): void
+    {
+        $this->createArtwork($this->validArtworkPayload(['width_cm' => 999999.99, 'height_cm' => 500]))
+            ->assertStatus(200);
+    }
+
     public function test_negative_price_is_rejected(): void
     {
         $this->createArtwork($this->validArtworkPayload(['price' => -10]))->assertStatus(422);

@@ -43,13 +43,13 @@ export default function FaqForm({ faq, pages, onSave, onCancel, errors }) {
     }
 
     return (
-        <form onSubmit={submit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4">
+        <form onSubmit={submit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
             <label className="block">
-                <span className="mb-1 block text-sm font-medium text-neutral-700">Hansı səhifə</span>
+                <span className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Hansı səhifə</span>
                 <select
                     value={pageId}
                     onChange={(e) => setPageId(e.target.value)}
-                    className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
                 >
                     {pages?.map((page) => (
                         <option key={page.id} value={page.id}>
@@ -60,7 +60,11 @@ export default function FaqForm({ faq, pages, onSave, onCancel, errors }) {
             </label>
 
             <Toggle checked={isActive} onChange={setIsActive} label="Aktiv" />
-            <LocaleTabs active={locale} onChange={setLocale} />
+
+            <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Sual və cavab (AZ / EN)</h2>
+                <LocaleTabs active={locale} onChange={setLocale} />
+            </div>
             <Banner type="error">{errors?.translations?.[0]}</Banner>
 
             <TextField

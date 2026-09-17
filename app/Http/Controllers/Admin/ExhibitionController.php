@@ -24,7 +24,9 @@ class ExhibitionController extends Controller
 
         $query = Exhibition::query()
             ->with([
-                'translations' => fn ($q) => $q->whereIn('locale', $locales),
+                // Unfiltered: the admin AZ/EN editor needs every existing
+                // translation regardless of ?locale= (Phase 08 fix pattern).
+                'translations',
                 'artists.translations' => fn ($q) => $q->whereIn('locale', $locales),
                 'artworks.translations' => fn ($q) => $q->whereIn('locale', $locales),
                 'media.media.variants',

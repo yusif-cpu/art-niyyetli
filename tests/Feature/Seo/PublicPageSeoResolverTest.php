@@ -6,6 +6,7 @@ use App\Enums\Locale;
 use App\Enums\PageType;
 use App\Models\Artist;
 use App\Models\Artwork;
+use App\Models\Exhibition;
 use App\Models\Genre;
 use App\Models\Medium;
 use App\Models\Page;
@@ -243,6 +244,60 @@ class PublicPageSeoResolverTest extends TestCase
         $this->makeArtist('inactive-artist', ['is_active' => false]);
 
         $seo = $this->resolver()->resolve(['artists', 'inactive-artist'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+    }
+
+    private function makeExhibition(string $slug, array $overrides = []): Exhibition
+    {
+        $exhibition = Exhibition::create(array_merge([
+            'type' => 'exhibition', 'status' => 'current',
+            'start_date' => '2026-01-10', 'end_date' => '2026-02-10', 'is_active' => true,
+        ], $overrides));
+        $exhibition->translations()->create([
+            'locale' => 'az', 'slug' => $slug, 'title' => 'Winter Show 2026', 'venue' => 'Main Gallery',
+            'short_text' => 'A winter showcase of new work.', 'full_text' => 'Full concept text.',
+        ]);
+
+        return $exhibition;
+    }
+
+    public function test_exhibitions_list_uses_a_live_count(): void
+    {
+        $this->makeExhibition('winter-2026');
+
+        $seo = $this->resolver()->resolve(['exhibitions'], Locale::Az);
+
+        $this->assertSame('Sərgilər — ArtNiyyətli', $seo->title);
+        $this->assertSame('1 sərgiyə baxın.', $seo->description);
+        $this->assertTrue($seo->index);
+    }
+
+    public function test_exhibition_detail_resolves_title_and_breadcrumb(): void
+    {
+        $this->makeExhibition('winter-show-2026');
+
+        $seo = $this->resolver()->resolve(['exhibitions', 'winter-show-2026'], Locale::Az);
+
+        $this->assertSame('Winter Show 2026 — ArtNiyyətli', $seo->title);
+        $this->assertSame('A winter showcase of new work.', $seo->description);
+        $this->assertSame('http://localhost:8080/exhibitions/winter-show-2026', $seo->canonicalUrl);
+        $this->assertTrue($seo->index);
+        $this->assertSame('BreadcrumbList', $seo->jsonLd['@graph'][0]['@type']);
+    }
+
+    public function test_exhibition_detail_is_not_found_for_an_unknown_slug(): void
+    {
+        $seo = $this->resolver()->resolve(['exhibitions', 'nope'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+    }
+
+    public function test_exhibition_detail_is_not_found_when_inactive(): void
+    {
+        $this->makeExhibition('hidden-show', ['is_active' => false]);
+
+        $seo = $this->resolver()->resolve(['exhibitions', 'hidden-show'], Locale::Az);
 
         $this->assertSame(404, $seo->httpStatus);
     }

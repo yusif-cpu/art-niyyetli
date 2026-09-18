@@ -8,6 +8,8 @@ use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
 use App\Models\Artist;
 use App\Models\ArtistTranslation;
 use App\Models\Artwork;
+use App\Models\Exhibition;
+use App\Models\ExhibitionTranslation;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Services\Admin\SiteSettingService;
@@ -30,6 +32,8 @@ class PublicPageSeoResolver
             count($segments) === 2 && $segments[0] === 'artworks' => $this->artworkDetail($segments[1], $locale),
             $segments === ['artists'] => $this->artists($locale),
             count($segments) === 2 && $segments[0] === 'artists' => $this->artistDetail($segments[1], $locale),
+            $segments === ['exhibitions'] => $this->exhibitions($locale),
+            count($segments) === 2 && $segments[0] === 'exhibitions' => $this->exhibitionDetail($segments[1], $locale),
             count($segments) === 1 => $this->staticPage($segments[0], $locale),
             default => $this->notFound($locale),
         };
@@ -257,6 +261,71 @@ class PublicPageSeoResolver
                         'itemListElement' => [
                             ['@type' => 'ListItem', 'position' => 1, 'name' => SeoLabels::label($locale, 'home'), 'item' => SeoText::absoluteUrl('/')],
                             ['@type' => 'ListItem', 'position' => 2, 'name' => SeoLabels::label($locale, 'artists'), 'item' => SeoText::absoluteUrl('/artists')],
+                            ['@type' => 'ListItem', 'position' => 3, 'name' => $title, 'item' => $canonical],
+                        ],
+                    ],
+                ],
+            ],
+        );
+    }
+
+    private function exhibitions(Locale $locale): PageSeo
+    {
+        $canonical = SeoText::absoluteUrl('/exhibitions');
+        $count = Exhibition::query()->where('is_active', true)->count();
+        $description = $locale === Locale::En
+            ? "View {$count} exhibitions."
+            : "{$count} sərgiyə baxın.";
+
+        return new PageSeo(
+            title: SeoText::pageTitle(SeoLabels::label($locale, 'exhibitions')),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'website',
+            ogImageUrl: null,
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: null,
+        );
+    }
+
+    private function exhibitionDetail(string $slug, Locale $locale): PageSeo
+    {
+        $translation = ExhibitionTranslation::query()->where('slug', $slug)->first();
+        $exhibition = $translation
+            ? Exhibition::query()->where('id', $translation->exhibition_id)->where('is_active', true)->with('translations')->first()
+            : null;
+
+        if (! $exhibition) {
+            return $this->notFound($locale);
+        }
+
+        $fields = LocalizedFields::resolve($exhibition->translations, $locale, ['title', 'short_text']);
+        $override = $exhibition->seoOverride($locale);
+
+        $ogImageUrl = $override?->ogImage ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail') : null;
+        $title = $override?->title ?? $fields['title'];
+        $description = SeoText::description($override?->description ?? $fields['short_text']);
+        $canonical = SeoText::absoluteUrl("/exhibitions/{$slug}");
+
+        return new PageSeo(
+            title: SeoText::pageTitle($title),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'website',
+            ogImageUrl: $ogImageUrl,
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    [
+                        '@type' => 'BreadcrumbList',
+                        'itemListElement' => [
+                            ['@type' => 'ListItem', 'position' => 1, 'name' => SeoLabels::label($locale, 'home'), 'item' => SeoText::absoluteUrl('/')],
+                            ['@type' => 'ListItem', 'position' => 2, 'name' => SeoLabels::label($locale, 'exhibitions'), 'item' => SeoText::absoluteUrl('/exhibitions')],
                             ['@type' => 'ListItem', 'position' => 3, 'name' => $title, 'item' => $canonical],
                         ],
                     ],

@@ -1,5 +1,6 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { useApiData } from '../lib/useApiData.js';
+import { usePageMeta } from '../lib/usePageMeta.js';
 import { getPage } from '../services/pages.js';
 import ImageWithFallback from '../components/ImageWithFallback.jsx';
 import LoadingState from '../components/LoadingState.jsx';
@@ -9,6 +10,8 @@ import NotFoundPage from './NotFoundPage.jsx';
 export default function StaticPage({ params }) {
     const { locale } = useLocale();
     const { data, loading, error } = useApiData(() => getPage(locale, params.slug), [locale, params.slug]);
+
+    usePageMeta(data ? { title: `${data.title} — ArtNiyyətli`, description: data.content } : {});
 
     if (loading) return <LoadingState />;
     if (error?.status === 404) return <NotFoundPage />;

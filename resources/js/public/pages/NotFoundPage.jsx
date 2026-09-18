@@ -1,8 +1,10 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
+import { usePageMeta } from '../lib/usePageMeta.js';
 
 export default function NotFoundPage() {
     const { locale } = useLocale();
+    usePageMeta({ title: `${t(locale, 'notFound.title')} — ArtNiyyətli`, noIndex: true });
 
     return (
         <div className="p-8 text-center">

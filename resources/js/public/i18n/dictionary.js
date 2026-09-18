@@ -72,6 +72,10 @@ export const dictionary = {
             archive: 'Arxiv',
             participatingArtists: 'İştirakçı rəssamlar',
         },
+        contact: {
+            title: 'Əlaqə',
+            subjectLabel: 'Mövzu',
+        },
     },
     en: {
         nav: {
@@ -145,6 +149,10 @@ export const dictionary = {
             upcoming: 'Upcoming',
             archive: 'Archive',
             participatingArtists: 'Participating artists',
+        },
+        contact: {
+            title: 'Contact',
+            subjectLabel: 'Subject',
         },
     },
 };

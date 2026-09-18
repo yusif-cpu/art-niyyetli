@@ -56,7 +56,7 @@ class EnquiryService
         }
 
         try {
-            Mail::to($recipient)->send(new NewEnquiryReceived($enquiry->load('artwork.translations')));
+            Mail::to($recipient)->send(new NewEnquiryReceived($enquiry->load('artwork.translations', 'subject.translations')));
         } catch (\Throwable $e) {
             Log::error('Enquiry notification failed to send.', ['enquiry_id' => $enquiry->id, 'error' => $e->getMessage()]);
         }

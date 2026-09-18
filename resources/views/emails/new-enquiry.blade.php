@@ -1,9 +1,15 @@
-<p>Yeni artwork sorğusu alındı.</p>
+<p>Yeni sorğu alındı.</p>
 
+@if ($enquiry->subject->key === 'buy')
 <p>
     <strong>Əsər:</strong> {{ $enquiry->artwork?->translations->firstWhere('locale', \App\Enums\Locale::Az)?->title ?? $enquiry->inventory_code }}<br>
     <strong>İnventar kodu:</strong> {{ $enquiry->inventory_code }}
 </p>
+@else
+<p>
+    <strong>Mövzu:</strong> {{ $enquiry->subject->translations->firstWhere('locale', \App\Enums\Locale::Az)?->name }}
+</p>
+@endif
 
 <p>
     <strong>Ad:</strong> {{ $enquiry->name }}<br>

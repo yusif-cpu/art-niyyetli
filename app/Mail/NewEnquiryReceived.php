@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Enums\Locale;
 use App\Models\Enquiry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -15,7 +16,11 @@ class NewEnquiryReceived extends Mailable
 
     public function build(): self
     {
-        $mail = $this->subject('Yeni sorğu: '.$this->enquiry->inventory_code)
+        $subjectLine = $this->enquiry->subject->key === 'buy'
+            ? 'Yeni sorğu: '.$this->enquiry->inventory_code
+            : 'Yeni sorğu: '.$this->enquiry->subject->translations->firstWhere('locale', Locale::Az)?->name;
+
+        $mail = $this->subject($subjectLine)
             ->view('emails.new-enquiry')
             ->with([
                 'enquiry' => $this->enquiry,

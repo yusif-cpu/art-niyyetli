@@ -143,6 +143,20 @@ class EnquiryCrudTest extends TestCase
         $this->assertSame($recent->id, $response->json('data.0.id'));
     }
 
+    public function test_subject_filter(): void
+    {
+        $other = EnquirySubject::query()->create(['key' => 'general_contact', 'sort_order' => 1, 'is_active' => true]);
+        $other->translations()->create(['locale' => 'az', 'name' => 'Ümumi əlaqə']);
+
+        $this->makeEnquiry();
+        $this->makeEnquiry(['enquiry_subject_id' => $other->id, 'artwork_id' => null, 'inventory_code' => null]);
+
+        $response = $this->actingAs($this->admin)->getJson('/admin/enquiries?subject=general_contact');
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+    }
+
     public function test_per_page_is_clamped_to_100(): void
     {
         $response = $this->actingAs($this->admin)->getJson('/admin/enquiries?per_page=9999');

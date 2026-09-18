@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\ArticleController;
 use App\Http\Controllers\Api\V1\ArtistController;
 use App\Http\Controllers\Api\V1\ArtworkController;
 use App\Http\Controllers\Api\V1\EnquiryController;
+use App\Http\Controllers\Api\V1\EnquirySubjectController;
 use App\Http\Controllers\Api\V1\ExhibitionController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\HomepageController;
@@ -27,5 +28,6 @@ Route::prefix('v1')->middleware('throttle:public-api')->group(function () {
     Route::get('articles', [ArticleController::class, 'index']);
     Route::get('articles/{slug}', [ArticleController::class, 'show']);
     Route::get('homepage', [HomepageController::class, 'index']);
+    Route::get('enquiry-subjects', [EnquirySubjectController::class, 'index']);
     Route::post('enquiries', [EnquiryController::class, 'store'])->middleware('throttle:enquiry-submission');
 });

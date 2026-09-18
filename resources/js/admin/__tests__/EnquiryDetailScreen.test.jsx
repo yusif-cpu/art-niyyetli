@@ -165,4 +165,21 @@ describe('EnquiryDetailScreen', () => {
         expect(screen.getByText('Re: AN-000001')).toBeInTheDocument();
         expect(screen.getByText(new Date('2026-09-16T12:00:00Z').toLocaleString('az'))).toBeInTheDocument();
     });
+
+    it('hides the artwork row when the enquiry has no artwork', async () => {
+        global.fetch = vi.fn((url) => {
+            if (url.startsWith('/admin/enquiries/1')) {
+                return Promise.resolve(
+                    jsonResponse(200, { data: buildEnquiry({ artwork: null, inventory_code: null, subject: 'Ümumi əlaqə' }) })
+                );
+            }
+            return Promise.resolve(jsonResponse(200, { data: {} }));
+        });
+
+        renderScreen();
+
+        await screen.findByText('Bu əsər haqqında məlumat almaq istəyirəm.');
+        expect(screen.queryByText('Əsər:')).not.toBeInTheDocument();
+        expect(screen.getByText('Ümumi əlaqə')).toBeInTheDocument();
+    });
 });

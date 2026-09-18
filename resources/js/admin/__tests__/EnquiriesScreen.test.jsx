@@ -114,6 +114,22 @@ describe('EnquiriesScreen', () => {
         });
     });
 
+    it('requests the subject filter when changed', async () => {
+        render(
+            <ToastProvider>
+                <EnquiriesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Aysel Məmmədova — aysel@example.com');
+
+        await userEvent.selectOptions(screen.getByDisplayValue('Bütün mövzular'), 'media');
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('subject=media'), expect.anything());
+        });
+    });
+
     it('opens the detail screen and shows the message', async () => {
         render(
             <ToastProvider>

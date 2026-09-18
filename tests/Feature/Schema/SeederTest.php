@@ -22,7 +22,7 @@ class SeederTest extends TestCase
         $this->seed(EnquirySubjectSeeder::class);
 
         $this->assertSame(2, Role::count());
-        $this->assertSame(3, EnquirySubject::count());
-        $this->assertSame(6, EnquirySubjectTranslation::count());
+        $this->assertSame(7, EnquirySubject::count());
+        $this->assertSame(14, EnquirySubjectTranslation::count());
     }
 }

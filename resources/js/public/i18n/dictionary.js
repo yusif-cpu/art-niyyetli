@@ -7,6 +7,7 @@ export const dictionary = {
             exhibitions: 'Sərgilər',
             articles: 'Jurnal',
             faqs: 'Suallar',
+            contact: 'Əlaqə',
         },
         common: {
             loading: 'Yüklənir...',
@@ -72,6 +73,10 @@ export const dictionary = {
             archive: 'Arxiv',
             participatingArtists: 'İştirakçı rəssamlar',
         },
+        contact: {
+            title: 'Əlaqə',
+            subjectLabel: 'Mövzu',
+        },
     },
     en: {
         nav: {
@@ -81,6 +86,7 @@ export const dictionary = {
             exhibitions: 'Exhibitions',
             articles: 'Journal',
             faqs: 'FAQ',
+            contact: 'Contact',
         },
         common: {
             loading: 'Loading...',
@@ -145,6 +151,10 @@ export const dictionary = {
             upcoming: 'Upcoming',
             archive: 'Archive',
             participatingArtists: 'Participating artists',
+        },
+        contact: {
+            title: 'Contact',
+            subjectLabel: 'Subject',
         },
     },
 };

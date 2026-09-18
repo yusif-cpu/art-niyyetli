@@ -114,9 +114,9 @@ export default function EnquiryDetailScreen({ enquiryId, onBack }) {
                         <strong>İnventar kodu:</strong> {enquiry.inventory_code}
                     </p>
                 )}
-                <p className="flex flex-wrap items-center gap-2">
-                    <strong>Əsər:</strong> {enquiry.artwork?.title} ({enquiry.artwork?.inventory_code})
-                    {enquiry.artwork && (
+                {enquiry.artwork && (
+                    <p className="flex flex-wrap items-center gap-2">
+                        <strong>Əsər:</strong> {enquiry.artwork.title} ({enquiry.artwork.inventory_code})
                         <button
                             type="button"
                             onClick={() => {
@@ -126,8 +126,8 @@ export default function EnquiryDetailScreen({ enquiryId, onBack }) {
                         >
                             Əsərə keç
                         </button>
-                    )}
-                </p>
+                    </p>
+                )}
                 <p>
                     <strong>Tarix:</strong> {new Date(submittedAt).toLocaleString('az')}
                 </p>

@@ -10,6 +10,7 @@ const ROUTES = [
     { pattern: '/exhibitions/:slug', page: 'exhibition-detail' },
     { pattern: '/articles', page: 'articles' },
     { pattern: '/articles/:slug', page: 'article-detail' },
+    { pattern: '/contact', page: 'contact' },
     { pattern: '/:slug', page: 'static-page' },
 ];
 

@@ -9,12 +9,22 @@ import PageHeader from '../components/PageHeader.jsx';
 import EnquiryDetailScreen from './EnquiryDetailScreen.jsx';
 
 const STATUS_LABELS = { new: 'Yeni', read: 'Oxunub', replied: 'Cavablandırılıb', closed: 'Bağlanıb' };
+const SUBJECT_LABELS = {
+    buy: 'Əsər almaq',
+    general_contact: 'Ümumi əlaqə',
+    artist_submission: 'Rəssam müraciəti',
+    media: 'Media sorğusu',
+    exhibition_invitation: 'Sərgi / dəvət',
+    collaboration: 'Əməkdaşlıq',
+    other: 'Digər',
+};
 
 export default function EnquiriesScreen() {
     const [enquiries, setEnquiries] = useState(null);
     const [meta, setMeta] = useState(null);
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState('');
+    const [subject, setSubject] = useState('');
     const [search, setSearch] = useState('');
     const [openId, setOpenId] = useState(null);
     const [error, setError] = useState('');
@@ -23,6 +33,7 @@ export default function EnquiriesScreen() {
         setError('');
         const params = new URLSearchParams({ page });
         if (status) params.set('status', status);
+        if (subject) params.set('subject', subject);
         if (search) params.set('search', search);
 
         apiFetch('/enquiries?' + params.toString())
@@ -33,7 +44,7 @@ export default function EnquiriesScreen() {
             .catch(() => setError('Sorğuları yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.'));
     }
 
-    useEffect(load, [page, status, search]);
+    useEffect(load, [page, status, subject, search]);
 
     if (openId) {
         return (
@@ -62,6 +73,21 @@ export default function EnquiriesScreen() {
                 >
                     <option value="">Bütün statuslar</option>
                     {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                            {label}
+                        </option>
+                    ))}
+                </select>
+                <select
+                    value={subject}
+                    onChange={(e) => {
+                        setPage(1);
+                        setSubject(e.target.value);
+                    }}
+                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
+                >
+                    <option value="">Bütün mövzular</option>
+                    {Object.entries(SUBJECT_LABELS).map(([value, label]) => (
                         <option key={value} value={value}>
                             {label}
                         </option>

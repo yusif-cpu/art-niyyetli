@@ -11,6 +11,7 @@ import ExhibitionsPage from './pages/ExhibitionsPage.jsx';
 import ExhibitionDetailPage from './pages/ExhibitionDetailPage.jsx';
 import ArticlesPage from './pages/ArticlesPage.jsx';
 import ArticleDetailPage from './pages/ArticleDetailPage.jsx';
+import ContactPage from './pages/ContactPage.jsx';
 import StaticPage from './pages/StaticPage.jsx';
 
 const PAGES = {
@@ -23,6 +24,7 @@ const PAGES = {
     'exhibition-detail': ExhibitionDetailPage,
     articles: ArticlesPage,
     'article-detail': ArticleDetailPage,
+    contact: ContactPage,
     'static-page': StaticPage,
     'not-found': NotFoundPage,
 };

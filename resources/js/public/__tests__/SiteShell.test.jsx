@@ -31,6 +31,7 @@ describe('SiteShell', () => {
 
         expect(screen.getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
         expect(screen.getByRole('link', { name: 'Rəssamlar' })).toHaveAttribute('href', '/artists');
+        expect(screen.getByRole('link', { name: 'Əlaqə' })).toHaveAttribute('href', '/contact');
         expect(screen.getByText('Page content')).toBeInTheDocument();
 
         expect(await screen.findByText('hello@artniyyetli.az')).toBeInTheDocument();

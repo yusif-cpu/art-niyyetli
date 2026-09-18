@@ -47,7 +47,7 @@ export default function ArtworkDetailPage({ params }) {
                 )}
 
                 <div className="mt-6">
-                    <EnquiryForm artworkCode={data.inventory_code} />
+                    <EnquiryForm subject="buy" artworkCode={data.inventory_code} />
                 </div>
 
                 {data.similar.length > 0 && (

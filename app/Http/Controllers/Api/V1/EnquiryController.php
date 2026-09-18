@@ -25,7 +25,10 @@ class EnquiryController extends Controller
             return response()->json(['message' => 'Sorğunuz qeydə alındı.'], 201);
         }
 
-        $artwork = Artwork::query()->where('inventory_code', $data['artwork_code'])->firstOrFail();
+        $artwork = null;
+        if ($data['subject'] === 'buy') {
+            $artwork = Artwork::query()->where('inventory_code', $data['artwork_code'])->firstOrFail();
+        }
 
         $this->enquiries->createFromPublicSubmission($artwork, $data, $request->ip(), $request->userAgent());
 

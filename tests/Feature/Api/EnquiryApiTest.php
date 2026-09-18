@@ -36,6 +36,7 @@ class EnquiryApiTest extends TestCase
             'email' => 'aysel@example.com',
             'phone' => '+994501234567',
             'message' => 'Bu əsər haqqında məlumat almaq istəyirəm.',
+            'subject' => 'buy',
         ], $overrides);
     }
 
@@ -206,5 +207,74 @@ class EnquiryApiTest extends TestCase
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('enquiries', ['artwork_id' => $artwork->id]);
+    }
+
+    public function test_missing_subject_returns_422(): void
+    {
+        $artwork = $this->makeArtwork();
+        $payload = $this->payload(['artwork_code' => $artwork->inventory_code]);
+        unset($payload['subject']);
+
+        $response = $this->postJson('/api/v1/enquiries', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('subject');
+    }
+
+    public function test_other_subject_is_rejected(): void
+    {
+        $response = $this->postJson('/api/v1/enquiries', $this->payload(['subject' => 'other']));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('subject');
+    }
+
+    public function test_unknown_subject_is_rejected(): void
+    {
+        $response = $this->postJson('/api/v1/enquiries', $this->payload(['subject' => 'not-a-real-subject']));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('subject');
+    }
+
+    public function test_artwork_code_is_prohibited_for_non_buy_subjects(): void
+    {
+        $artwork = $this->makeArtwork();
+
+        $response = $this->postJson('/api/v1/enquiries', $this->payload([
+            'subject' => 'general_contact',
+            'artwork_code' => $artwork->inventory_code,
+        ]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('artwork_code');
+    }
+
+    public function test_meta_field_in_payload_is_rejected(): void
+    {
+        $artwork = $this->makeArtwork();
+
+        $response = $this->postJson('/api/v1/enquiries', $this->payload([
+            'artwork_code' => $artwork->inventory_code,
+            'meta' => ['note' => 'x'],
+        ]));
+
+        $response->assertStatus(422);
+    }
+
+    public function test_valid_submission_for_each_non_artwork_subject_creates_enquiry_and_sends_notification(): void
+    {
+        Mail::fake();
+        config(['gallery.enquiry_notification_email' => 'gallery@example.com']);
+
+        foreach (['general_contact', 'artist_submission', 'media', 'exhibition_invitation', 'collaboration'] as $subject) {
+            $response = $this->postJson('/api/v1/enquiries', $this->payload(['subject' => $subject]));
+
+            $response->assertStatus(201);
+        }
+
+        $this->assertDatabaseCount('enquiries', 5);
+        $this->assertDatabaseHas('enquiries', ['email' => 'aysel@example.com', 'artwork_id' => null, 'meta' => null]);
+        Mail::assertSent(NewEnquiryReceived::class, 5);
     }
 }

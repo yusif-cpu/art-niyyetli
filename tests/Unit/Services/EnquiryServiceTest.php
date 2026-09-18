@@ -108,4 +108,23 @@ class EnquiryServiceTest extends TestCase
 
         $this->assertDatabaseHas('enquiries', ['id' => $enquiry->id, 'status' => 'new']);
     }
+
+    public function test_creates_enquiry_for_non_buy_subject_without_artwork(): void
+    {
+        Mail::fake();
+
+        $data = array_merge($this->validData(), ['subject' => 'general_contact']);
+        $enquiry = app(EnquiryService::class)->createFromPublicSubmission(null, $data, null, null);
+
+        $this->assertDatabaseHas('enquiries', [
+            'id' => $enquiry->id,
+            'artwork_id' => null,
+            'inventory_code' => null,
+            'meta' => null,
+        ]);
+
+        $subject = EnquirySubject::query()->where('key', 'general_contact')->first();
+        $this->assertNotNull($subject);
+        $this->assertSame($subject->id, $enquiry->enquiry_subject_id);
+    }
 }

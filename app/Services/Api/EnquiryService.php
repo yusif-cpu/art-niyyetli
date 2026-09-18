@@ -15,18 +15,18 @@ class EnquiryService
 {
     public function __construct(private SiteSettingService $settings) {}
 
-    public function createFromPublicSubmission(Artwork $artwork, array $data, ?string $ip, ?string $userAgent): Enquiry
+    public function createFromPublicSubmission(?Artwork $artwork, array $data, ?string $ip, ?string $userAgent): Enquiry
     {
         $enquiry = DB::transaction(function () use ($artwork, $data, $ip, $userAgent) {
             $subject = EnquirySubject::query()->firstOrCreate(
-                ['key' => 'buy'],
+                ['key' => $data['subject'] ?? 'buy'],
                 ['sort_order' => 0, 'is_active' => true]
             );
 
             return Enquiry::query()->create([
                 'enquiry_subject_id' => $subject->id,
-                'artwork_id' => $artwork->id,
-                'inventory_code' => $artwork->inventory_code,
+                'artwork_id' => $artwork?->id,
+                'inventory_code' => $artwork?->inventory_code,
                 'submitted_at' => now(),
                 'name' => $data['name'],
                 'contact' => $data['email'],
@@ -34,6 +34,7 @@ class EnquiryService
                 'phone' => $data['phone'] ?? null,
                 'message' => $data['message'],
                 'status' => 'new',
+                'meta' => null,
                 'ip_address' => $ip,
                 'user_agent' => $userAgent,
             ]);

@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
 import ArtistDetailPage from '../pages/ArtistDetailPage.jsx';
 
 function jsonResponse(status, body) {
@@ -31,5 +33,25 @@ describe('ArtistDetailPage', () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(404, { message: 'Not found.' }));
         render(<LocaleProvider><ArtistDetailPage params={{ slug: 'nope' }} /></LocaleProvider>);
         expect(await screen.findByText('Səhifə tapılmadı')).toBeInTheDocument();
+    });
+
+    it('sets document.title from the artist name', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
+
+        render(<LocaleProvider><ArtistDetailPage params={{ slug: detail.slug }} /></LocaleProvider>);
+
+        await waitFor(() => expect(document.title).toBe(`${detail.first_name} ${detail.last_name} — ArtNiyyətli`));
+    });
+
+    it('does not crash when the locale changes after the page has already loaded', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
+
+        render(<LocaleProvider><LocaleSwitcher /><ArtistDetailPage params={{ slug: detail.slug }} /></LocaleProvider>);
+
+        await screen.findByText('Bio text.');
+
+        await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+
+        await waitFor(() => expect(screen.getAllByText('Bio text.').length).toBeGreaterThan(0));
     });
 });

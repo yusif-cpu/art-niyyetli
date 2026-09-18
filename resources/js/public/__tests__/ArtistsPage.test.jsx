@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
 import ArtistsPage from '../pages/ArtistsPage.jsx';
@@ -21,5 +21,13 @@ describe('ArtistsPage', () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [] }));
         render(<LocaleProvider><ArtistsPage /></LocaleProvider>);
         expect(await screen.findByText('Heç nə tapılmadı.')).toBeInTheDocument();
+    });
+
+    it('sets a static artists document title', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [{ id: 5, slug: 'aygun-mammadova', first_name: 'Aygün', last_name: 'Məmmədova', direction: 'Modern', portrait_url: null }] }));
+
+        render(<LocaleProvider><ArtistsPage /></LocaleProvider>);
+
+        await waitFor(() => expect(document.title).toBe('Rəssamlar — ArtNiyyətli'));
     });
 });

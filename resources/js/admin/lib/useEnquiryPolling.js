@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from './api.js';
 
-const POLL_INTERVAL_MS = 15000;
+const POLL_INTERVAL_MS = 3000;
 
 export function useEnquiryPolling(initialNewCount, initialTotalCount) {
     const [newCount, setNewCount] = useState(initialNewCount ?? 0);

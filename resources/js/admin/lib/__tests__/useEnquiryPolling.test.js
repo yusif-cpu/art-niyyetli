@@ -51,7 +51,7 @@ describe('useEnquiryPolling', () => {
 
         latestId = 6;
         await act(async () => {
-            await vi.advanceTimersByTimeAsync(15000);
+            await vi.advanceTimersByTimeAsync(3000);
         });
 
         expect(result.current.refreshSignal).toBe(initialSignal + 1);
@@ -70,7 +70,7 @@ describe('useEnquiryPolling', () => {
         const initialSignal = result.current.refreshSignal;
 
         await act(async () => {
-            await vi.advanceTimersByTimeAsync(15000);
+            await vi.advanceTimersByTimeAsync(3000);
         });
 
         expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -91,7 +91,7 @@ describe('useEnquiryPolling', () => {
         Object.defineProperty(document, 'hidden', { value: true, configurable: true });
 
         await act(async () => {
-            await vi.advanceTimersByTimeAsync(15000);
+            await vi.advanceTimersByTimeAsync(3000);
         });
 
         expect(global.fetch).toHaveBeenCalledTimes(1);

@@ -42,12 +42,20 @@ describe('submitEnquiry', () => {
 });
 
 describe('getEnquirySubjects', () => {
-    it('fetches the public subject list', async () => {
+    it('fetches the public subject list with the given locale', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: [{ key: 'buy', label: 'Əsər almaq' }] }));
 
-        const result = await getEnquirySubjects();
+        const result = await getEnquirySubjects('az');
 
-        expect(global.fetch).toHaveBeenCalledWith('/api/v1/enquiry-subjects', expect.objectContaining({ headers: expect.anything() }));
+        expect(global.fetch).toHaveBeenCalledWith('/api/v1/enquiry-subjects?locale=az', expect.objectContaining({ headers: expect.anything() }));
         expect(result).toEqual({ data: [{ key: 'buy', label: 'Əsər almaq' }] });
+    });
+
+    it('fetches the English subject list when the locale is en', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: [{ key: 'buy', label: 'Buy an artwork' }] }));
+
+        await getEnquirySubjects('en');
+
+        expect(global.fetch).toHaveBeenCalledWith('/api/v1/enquiry-subjects?locale=en', expect.objectContaining({ headers: expect.anything() }));
     });
 });

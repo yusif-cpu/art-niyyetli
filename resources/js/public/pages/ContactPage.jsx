@@ -10,7 +10,7 @@ import ErrorState from '../components/ErrorState.jsx';
 
 export default function ContactPage() {
     const { locale } = useLocale();
-    const { data: subjects, loading, error } = useApiData(() => getEnquirySubjects(), []);
+    const { data: subjects, loading, error } = useApiData(() => getEnquirySubjects(locale), [locale]);
     const [selectedSubject, setSelectedSubject] = useState('');
 
     usePageMeta({ title: `${t(locale, 'contact.title')} — ArtNiyyətli` });

@@ -4,6 +4,6 @@ export function submitEnquiry(payload) {
     return publicApiPost('/enquiries', payload);
 }
 
-export function getEnquirySubjects() {
-    return publicApiFetch('/enquiry-subjects');
+export function getEnquirySubjects(locale) {
+    return publicApiFetch('/enquiry-subjects', { locale });
 }

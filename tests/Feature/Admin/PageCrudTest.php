@@ -220,6 +220,34 @@ class PageCrudTest extends TestCase
         $this->assertDatabaseMissing('navigation_items', ['id' => $item->id]);
     }
 
+    public function test_a_normal_cms_page_with_navigation_entries_is_deletable_while_structural_pages_stay_protected(): void
+    {
+        // Regression test for a reported UAT bug: a normal (non-structural)
+        // CMS page with navigation entries in both placements could not be
+        // deleted. Traced to PageService::delete()'s navigation cleanup query
+        // failing when the navigation_items table was missing from the local
+        // database (a pending-migration issue, not a guard/authorization bug).
+        $page = Page::query()->create(['type' => 'custom', 'is_active' => true]);
+        $page->translations()->create(['locale' => 'az', 'slug' => 'swdff', 'title' => 'swdff', 'content' => 'C']);
+        $headerItem = NavigationItem::factory()->forPage($page->id)->create(['placement' => 'header', 'sort_order' => 0]);
+        $footerItem = NavigationItem::factory()->forPage($page->id)->create(['placement' => 'footer', 'sort_order' => 0]);
+
+        $response = $this->actingAs($this->admin)->deleteJson("/admin/pages/{$page->id}");
+
+        $response->assertOk()->assertJsonPath('message', 'Page archived.');
+        $this->assertSoftDeleted('pages', ['id' => $page->id]);
+        $this->assertDatabaseMissing('navigation_items', ['id' => $headerItem->id]);
+        $this->assertDatabaseMissing('navigation_items', ['id' => $footerItem->id]);
+
+        $structural = Page::query()->create(['type' => 'about', 'is_active' => true]);
+        $structural->translations()->create(['locale' => 'az', 'slug' => 'about-protected', 'title' => 'Y', 'content' => 'C']);
+
+        $protectedResponse = $this->actingAs($this->admin)->deleteJson("/admin/pages/{$structural->id}");
+
+        $protectedResponse->assertStatus(409);
+        $this->assertNull($structural->fresh()->deleted_at);
+    }
+
     public function test_deleting_a_structural_page_is_rejected(): void
     {
         $page = Page::query()->create(['type' => 'home', 'is_active' => true]);

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
+import { usePageMeta } from '../lib/usePageMeta.js';
 import { listArtworks } from '../services/artworks.js';
 import { listArtists } from '../services/artists.js';
 import ArtworkCard from '../components/ArtworkCard.jsx';
@@ -19,6 +20,8 @@ export default function CataloguePage() {
 
     const artists = useApiData(() => listArtists(locale), [locale]);
     const artworks = useApiData(() => listArtworks(locale, { page, ...filters }), [locale, page, JSON.stringify(filters), retryToken]);
+
+    usePageMeta({ title: `${t(locale, 'nav.artworks')} — ArtNiyyətli` });
 
     function updateFilters(next) {
         setFilters(next);

@@ -68,4 +68,15 @@ describe('CataloguePage', () => {
         expect(await screen.findByText('Piece One')).toBeInTheDocument();
         expect(artworksCallCount).toBe(2);
     });
+
+    it('sets a static catalogue document title', async () => {
+        global.fetch = vi.fn((url) => {
+            if (url.startsWith('/api/v1/artists')) return Promise.resolve(jsonResponse({ data: [] }));
+            return Promise.resolve(jsonResponse({ data: [artwork], meta: { current_page: 1, last_page: 1, total: 1 } }));
+        });
+
+        render(<LocaleProvider><CataloguePage /></LocaleProvider>);
+
+        await waitFor(() => expect(document.title).toBe('Əsərlər — ArtNiyyətli'));
+    });
 });

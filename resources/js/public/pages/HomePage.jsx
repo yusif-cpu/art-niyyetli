@@ -1,6 +1,7 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
+import { usePageMeta } from '../lib/usePageMeta.js';
 import { getHomepage } from '../services/homepage.js';
 import ArtworkCard from '../components/ArtworkCard.jsx';
 import ArtistCard from '../components/ArtistCard.jsx';
@@ -11,6 +12,12 @@ import ErrorState from '../components/ErrorState.jsx';
 export default function HomePage() {
     const { locale } = useLocale();
     const { data, loading, error } = useApiData(() => getHomepage(locale), [locale]);
+
+    const hero = data?.page?.sections?.[0];
+    usePageMeta({
+        title: data ? (hero ? `${hero.heading} — ArtNiyyətli` : 'ArtNiyyətli') : undefined,
+        description: data ? hero?.body : undefined,
+    });
 
     if (loading) return <LoadingState />;
     if (error) return <ErrorState error={error} />;

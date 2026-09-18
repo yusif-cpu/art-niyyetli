@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
 import HomePage from '../pages/HomePage.jsx';
 
 function jsonResponse(body) {
@@ -49,5 +51,30 @@ describe('HomePage', () => {
         render(<LocaleProvider><HomePage /></LocaleProvider>);
 
         expect(await screen.findByText('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')).toBeInTheDocument();
+    });
+
+    it('sets document.title from the hero section heading', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({
+            data: {
+                page: { sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Discover Azerbaijani art.', sort_order: 0, image_url: null }] },
+                stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [],
+            },
+        }));
+
+        render(<LocaleProvider><HomePage /></LocaleProvider>);
+
+        await waitFor(() => expect(document.title).toBe('ArtNiyyətli — ArtNiyyətli'));
+    });
+
+    it('does not crash when the locale changes after the page has already loaded', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: homepageData }));
+
+        render(<LocaleProvider><LocaleSwitcher /><HomePage /></LocaleProvider>);
+
+        await screen.findByText('Wall Piece');
+
+        await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+
+        await waitFor(() => expect(screen.getAllByText('ArtNiyyətli').length).toBeGreaterThan(0));
     });
 });

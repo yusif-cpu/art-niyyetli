@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
 import ArtworkDetailPage from '../pages/ArtworkDetailPage.jsx';
 
 function jsonResponse(status, body) {
@@ -45,5 +47,25 @@ describe('ArtworkDetailPage', () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(404, { message: 'Not found.' }));
         render(<LocaleProvider><ArtworkDetailPage params={{ code: 'nope' }} /></LocaleProvider>);
         expect(await screen.findByText('Səhifə tapılmadı')).toBeInTheDocument();
+    });
+
+    it('sets document.title from the artwork title', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
+
+        render(<LocaleProvider><ArtworkDetailPage params={{ code: detail.inventory_code }} /></LocaleProvider>);
+
+        await waitFor(() => expect(document.title).toBe(`${detail.title} — ArtNiyyətli`));
+    });
+
+    it('does not crash when the locale changes after the page has already loaded', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
+
+        render(<LocaleProvider><LocaleSwitcher /><ArtworkDetailPage params={{ code: detail.inventory_code }} /></LocaleProvider>);
+
+        await screen.findByText('Sunset Over Baku');
+
+        await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+
+        await waitFor(() => expect(screen.getAllByText('Sunset Over Baku').length).toBeGreaterThan(0));
     });
 });

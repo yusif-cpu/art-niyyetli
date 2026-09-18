@@ -17,7 +17,6 @@ class PageResource extends JsonResource
         return [
             'slug' => $fields['slug'],
             'type' => $this->type->value,
-            'nav_placement' => $this->nav_placement->value,
             'title' => $fields['title'],
             'content' => $fields['content'],
             'sections' => $this->when(

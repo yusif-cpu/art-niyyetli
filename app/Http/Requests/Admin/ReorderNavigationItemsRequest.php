@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-class ReorderPagesRequest extends FormRequest
+class ReorderNavigationItemsRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -17,7 +17,7 @@ class ReorderPagesRequest extends FormRequest
     {
         return [
             'items' => ['required', 'array', 'min:1'],
-            'items.*.id' => ['required', 'integer', Rule::exists('pages', 'id')],
+            'items.*.id' => ['required', 'integer', Rule::exists('navigation_items', 'id')],
             'items.*.sort_order' => ['required', 'integer', 'min:0'],
         ];
     }
@@ -28,7 +28,7 @@ class ReorderPagesRequest extends FormRequest
             $ids = collect($this->input('items', []))->pluck('id');
 
             if ($ids->count() !== $ids->unique()->count()) {
-                $validator->errors()->add('items', 'Duplicate page id in the reorder payload.');
+                $validator->errors()->add('items', 'Duplicate navigation item id in the reorder payload.');
             }
         });
     }

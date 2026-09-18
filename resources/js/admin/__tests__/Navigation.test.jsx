@@ -84,6 +84,7 @@ describe('Screen routing completeness', () => {
     const IMPLEMENTED_MODULES = [
         'dashboard',
         'pages',
+        'navigation',
         'faqs',
         'settings',
         'social-links',

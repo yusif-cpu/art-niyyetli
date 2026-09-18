@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\PageNavPlacement;
 use App\Enums\PageType;
 use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\PageFactory;
@@ -12,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['type', 'is_active', 'nav_placement', 'sort_order'])]
+#[Fillable(['type', 'is_active'])]
 class Page extends Model
 {
     /** @use HasFactory<PageFactory> */
@@ -23,7 +22,6 @@ class Page extends Model
         return [
             'type' => PageType::class,
             'is_active' => 'boolean',
-            'nav_placement' => PageNavPlacement::class,
         ];
     }
 
@@ -40,5 +38,10 @@ class Page extends Model
     public function faqs(): HasMany
     {
         return $this->hasMany(Faq::class);
+    }
+
+    public function navigationItems(): HasMany
+    {
+        return $this->hasMany(NavigationItem::class);
     }
 }

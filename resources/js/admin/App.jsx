@@ -7,6 +7,7 @@ import { ToastProvider } from './components/ToastContext.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
 import DashboardScreen from './screens/DashboardScreen.jsx';
 import PagesScreen from './screens/PagesScreen.jsx';
+import NavigationScreen from './screens/NavigationScreen.jsx';
 import FaqScreen from './screens/FaqScreen.jsx';
 import SettingsScreen from './screens/SettingsScreen.jsx';
 import SocialLinksScreen from './screens/SocialLinksScreen.jsx';
@@ -22,6 +23,7 @@ import AdminShell from './layout/AdminShell.jsx';
 const SCREENS = {
     dashboard: DashboardScreen,
     pages: PagesScreen,
+    navigation: NavigationScreen,
     faqs: FaqScreen,
     settings: SettingsScreen,
     'social-links': SocialLinksScreen,

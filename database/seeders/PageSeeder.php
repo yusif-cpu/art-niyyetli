@@ -3,7 +3,10 @@
 namespace Database\Seeders;
 
 use App\Enums\Locale;
+use App\Enums\NavRouteKey;
+use App\Enums\NavType;
 use App\Enums\PageType;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use Illuminate\Database\Seeder;
@@ -26,6 +29,18 @@ class PageSeeder extends Seeder
         'about' => 1,
         'collectors' => 2,
         'contact' => 3,
+    ];
+
+    /**
+     * The 4 special catalogue routes have always rendered in the header, in this
+     * fixed order, after the structural pages above — see NavigationBackfiller,
+     * which applies the same order when converting existing installs.
+     */
+    private const HEADER_ROUTES = [
+        NavRouteKey::Artworks,
+        NavRouteKey::Artists,
+        NavRouteKey::Exhibitions,
+        NavRouteKey::Articles,
     ];
 
     /**
@@ -61,9 +76,12 @@ class PageSeeder extends Seeder
 
             $page = Page::query()->updateOrCreate(['type' => $type->value], [
                 'is_active' => true,
-                'nav_placement' => 'header',
-                'sort_order' => self::HEADER_ORDER[$type->value],
             ]);
+
+            NavigationItem::query()->updateOrCreate(
+                ['placement' => 'header', 'page_id' => $page->id],
+                ['nav_type' => NavType::Page->value, 'route_key' => null, 'sort_order' => self::HEADER_ORDER[$type->value], 'is_visible' => true]
+            );
 
             foreach (Locale::cases() as $locale) {
                 $page->translations()->updateOrCreate(
@@ -82,6 +100,7 @@ class PageSeeder extends Seeder
         }
 
         $this->seedLegalPages();
+        $this->seedHeaderRoutes();
     }
 
     private function seedLegalPages(): void
@@ -95,9 +114,12 @@ class PageSeeder extends Seeder
                 : Page::query()->create([
                     'type' => PageType::Custom->value,
                     'is_active' => true,
-                    'nav_placement' => 'footer',
-                    'sort_order' => $sortOrder,
                 ]);
+
+            NavigationItem::query()->updateOrCreate(
+                ['placement' => 'footer', 'page_id' => $page->id],
+                ['nav_type' => NavType::Page->value, 'route_key' => null, 'sort_order' => $sortOrder, 'is_visible' => true]
+            );
             $sortOrder++;
 
             foreach (Locale::cases() as $locale) {
@@ -110,6 +132,19 @@ class PageSeeder extends Seeder
                     ]
                 );
             }
+        }
+    }
+
+    private function seedHeaderRoutes(): void
+    {
+        $sortOrder = count(self::HEADER_ORDER);
+
+        foreach (self::HEADER_ROUTES as $routeKey) {
+            NavigationItem::query()->updateOrCreate(
+                ['placement' => 'header', 'route_key' => $routeKey->value],
+                ['nav_type' => NavType::Route->value, 'page_id' => null, 'sort_order' => $sortOrder, 'is_visible' => true]
+            );
+            $sortOrder++;
         }
     }
 

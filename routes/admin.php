@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\GenreController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediumController;
+use App\Http\Controllers\Admin\NavigationController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\SiteSettingController;
@@ -46,8 +47,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::match(['put', 'patch'], 'media/{media}', [MediaController::class, 'update'])->name('media.update');
             Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
-            Route::post('pages/reorder', [PageController::class, 'reorder'])->name('pages.reorder');
             Route::apiResource('pages', PageController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+
+            Route::post('navigation/reorder', [NavigationController::class, 'reorder'])->name('navigation.reorder');
+            Route::apiResource('navigation', NavigationController::class)->only(['index', 'store', 'update', 'destroy']);
 
             Route::get('pages/{page}/sections', [PageSectionController::class, 'index'])->name('pages.sections.index');
             Route::post('pages/{page}/sections', [PageSectionController::class, 'store'])->name('pages.sections.store');

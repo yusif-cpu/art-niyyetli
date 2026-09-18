@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\EnquirySubjectController;
 use App\Http\Controllers\Api\V1\ExhibitionController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\HomepageController;
+use App\Http\Controllers\Api\V1\NavigationController;
 use App\Http\Controllers\Api\V1\PageController;
 use App\Http\Controllers\Api\V1\SiteSettingController;
 use App\Http\Controllers\Api\V1\SocialLinkController;
@@ -19,6 +20,7 @@ Route::prefix('v1')->middleware('throttle:public-api')->group(function () {
     Route::get('faqs', [FaqController::class, 'index']);
     Route::get('pages', [PageController::class, 'index']);
     Route::get('pages/{slug}', [PageController::class, 'show']);
+    Route::get('navigation', [NavigationController::class, 'index']);
     Route::get('artworks', [ArtworkController::class, 'index']);
     Route::get('artworks/{inventoryCode}', [ArtworkController::class, 'show']);
     Route::get('artists', [ArtistController::class, 'index']);

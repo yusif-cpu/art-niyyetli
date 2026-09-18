@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\Role;
 use App\Models\User;
@@ -187,70 +188,6 @@ class PageCrudTest extends TestCase
         $this->postJson('/admin/pages', $this->validPagePayload())->assertStatus(401);
     }
 
-    public function test_nav_placement_defaults_to_none_and_can_be_set_on_create(): void
-    {
-        $default = $this->actingAs($this->admin)->postJson('/admin/pages', $this->validPagePayload([
-            'type' => 'custom',
-            'translations' => [['locale' => 'az', 'slug' => 'unplaced-'.uniqid(), 'title' => 'X', 'content' => 'C']],
-        ]));
-        $default->assertOk();
-        $this->assertSame('none', $default->json('data.nav_placement'));
-
-        $placed = $this->actingAs($this->admin)->postJson('/admin/pages', $this->validPagePayload([
-            'type' => 'custom',
-            'nav_placement' => 'footer',
-            'translations' => [['locale' => 'az', 'slug' => 'placed-'.uniqid(), 'title' => 'Y', 'content' => 'C']],
-        ]));
-        $placed->assertOk();
-        $this->assertSame('footer', $placed->json('data.nav_placement'));
-    }
-
-    public function test_nav_placement_can_be_changed_on_update_without_resending_translations(): void
-    {
-        $page = Page::query()->create(['type' => 'custom', 'is_active' => true, 'nav_placement' => 'none']);
-        $page->translations()->create(['locale' => 'az', 'slug' => 'movable', 'title' => 'X', 'content' => 'C']);
-
-        $response = $this->actingAs($this->admin)->putJson("/admin/pages/{$page->id}", ['nav_placement' => 'header']);
-
-        $response->assertOk();
-        $this->assertSame('header', $page->fresh()->nav_placement->value);
-    }
-
-    public function test_invalid_nav_placement_is_rejected(): void
-    {
-        $this->actingAs($this->admin)
-            ->postJson('/admin/pages', $this->validPagePayload(['nav_placement' => 'sidebar']))
-            ->assertStatus(422);
-    }
-
-    public function test_authorized_user_can_reorder_pages(): void
-    {
-        $first = Page::query()->create(['type' => 'about', 'is_active' => true, 'sort_order' => 0]);
-        $second = Page::query()->create(['type' => 'collectors', 'is_active' => true, 'sort_order' => 1]);
-
-        $response = $this->actingAs($this->admin)->postJson('/admin/pages/reorder', [
-            'items' => [
-                ['id' => $first->id, 'sort_order' => 1],
-                ['id' => $second->id, 'sort_order' => 0],
-            ],
-        ]);
-
-        $response->assertOk();
-        $this->assertSame(1, $first->fresh()->sort_order);
-        $this->assertSame(0, $second->fresh()->sort_order);
-    }
-
-    public function test_unauthenticated_request_cannot_reorder_pages(): void
-    {
-        $page = Page::query()->create(['type' => 'about', 'is_active' => true]);
-
-        $this->postJson('/admin/pages/reorder', [
-            'items' => [['id' => $page->id, 'sort_order' => 5]],
-        ])->assertStatus(401);
-
-        $this->assertSame(0, $page->fresh()->sort_order);
-    }
-
     public function test_editor_can_manage_pages(): void
     {
         $editor = User::factory()->create(['username' => 'ed.editor']);
@@ -258,59 +195,6 @@ class PageCrudTest extends TestCase
 
         $this->actingAs($editor)->postJson('/admin/pages', $this->validPagePayload())->assertOk();
         $this->actingAs($editor)->getJson('/admin/pages')->assertOk();
-    }
-
-    public function test_moving_a_page_into_a_placement_assigns_a_non_colliding_sort_order(): void
-    {
-        $home = Page::query()->create(['type' => 'home', 'is_active' => true, 'nav_placement' => 'header', 'sort_order' => 0]);
-        $about = Page::query()->create(['type' => 'about', 'is_active' => true, 'nav_placement' => 'header', 'sort_order' => 1]);
-        $newPage = Page::query()->create(['type' => 'custom', 'is_active' => true, 'nav_placement' => 'none', 'sort_order' => 0]);
-        $newPage->translations()->create(['locale' => 'az', 'slug' => 'new-page', 'title' => 'New', 'content' => 'C']);
-
-        $response = $this->actingAs($this->admin)->putJson("/admin/pages/{$newPage->id}", ['nav_placement' => 'header']);
-
-        $response->assertOk();
-        $this->assertSame(2, $newPage->fresh()->sort_order);
-        $this->assertNotSame($home->fresh()->sort_order, $newPage->fresh()->sort_order);
-        $this->assertNotSame($about->fresh()->sort_order, $newPage->fresh()->sort_order);
-    }
-
-    public function test_creating_a_page_with_a_placement_gets_a_unique_appended_sort_order(): void
-    {
-        Page::query()->create(['type' => 'home', 'is_active' => true, 'nav_placement' => 'header', 'sort_order' => 0]);
-
-        $response = $this->actingAs($this->admin)->postJson('/admin/pages', $this->validPagePayload([
-            'type' => 'custom',
-            'nav_placement' => 'header',
-            'translations' => [['locale' => 'az', 'slug' => 'second-header-'.uniqid(), 'title' => 'Y', 'content' => 'C']],
-        ]));
-
-        $response->assertOk();
-        $this->assertSame(1, $response->json('data.sort_order'));
-    }
-
-    public function test_reordering_two_pages_that_previously_shared_a_sort_order_now_visibly_swaps_them(): void
-    {
-        $first = Page::query()->create(['type' => 'home', 'is_active' => true, 'nav_placement' => 'header', 'sort_order' => 0]);
-        $second = Page::query()->create(['type' => 'custom', 'is_active' => true, 'nav_placement' => 'none', 'sort_order' => 0]);
-        $second->translations()->create(['locale' => 'az', 'slug' => 'promoted', 'title' => 'Promoted', 'content' => 'C']);
-
-        $this->actingAs($this->admin)->putJson("/admin/pages/{$second->id}", ['nav_placement' => 'header'])->assertOk();
-
-        $response = $this->actingAs($this->admin)->getJson('/admin/pages');
-        $response->assertOk();
-        $ids = array_column($response->json('data'), 'id');
-        $this->assertSame([$first->id, $second->id], $ids);
-
-        $this->actingAs($this->admin)->postJson('/admin/pages/reorder', [
-            'items' => [
-                ['id' => $first->id, 'sort_order' => $second->fresh()->sort_order],
-                ['id' => $second->id, 'sort_order' => $first->fresh()->sort_order],
-            ],
-        ])->assertOk();
-
-        $reordered = $this->actingAs($this->admin)->getJson('/admin/pages');
-        $this->assertSame([$second->id, $first->id], array_column($reordered->json('data'), 'id'));
     }
 
     public function test_administrator_can_delete_a_custom_page(): void
@@ -323,6 +207,17 @@ class PageCrudTest extends TestCase
         $response->assertOk();
         $this->assertSoftDeleted('pages', ['id' => $page->id]);
         $this->actingAs($this->admin)->getJson('/admin/pages')->assertJsonMissing(['id' => $page->id]);
+    }
+
+    public function test_deleting_a_page_removes_its_navigation_item(): void
+    {
+        $page = Page::query()->create(['type' => 'custom', 'is_active' => true]);
+        $page->translations()->create(['locale' => 'az', 'slug' => 'deletable-nav', 'title' => 'X', 'content' => 'C']);
+        $item = NavigationItem::factory()->forPage($page->id)->create(['placement' => 'footer', 'sort_order' => 0]);
+
+        $this->actingAs($this->admin)->deleteJson("/admin/pages/{$page->id}")->assertOk();
+
+        $this->assertDatabaseMissing('navigation_items', ['id' => $item->id]);
     }
 
     public function test_deleting_a_structural_page_is_rejected(): void

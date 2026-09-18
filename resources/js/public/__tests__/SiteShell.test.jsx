@@ -8,25 +8,35 @@ function jsonResponse(body) {
     return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body };
 }
 
-const PAGES_AZ = [
-    { slug: 'home', type: 'home', nav_placement: 'header', title: 'Ana səhifə' },
-    { slug: 'about', type: 'about', nav_placement: 'header', title: 'Haqqımızda' },
-    { slug: 'collectors', type: 'collectors', nav_placement: 'header', title: 'Kolleksionerlər üçün' },
-    { slug: 'contact', type: 'contact', nav_placement: 'header', title: 'Əlaqə' },
-    { slug: 'privacy-policy', type: 'custom', nav_placement: 'footer', title: 'Məxfilik siyasəti' },
-    { slug: 'terms', type: 'custom', nav_placement: 'footer', title: 'İstifadə şərtləri' },
-    { slug: 'unlisted', type: 'custom', nav_placement: 'none', title: 'Unlisted draft' },
-];
+const NAV_AZ = {
+    header: [
+        { type: 'page', title: 'Ana səhifə', href: '/' },
+        { type: 'page', title: 'Haqqımızda', href: '/about' },
+        { type: 'page', title: 'Kolleksionerlər üçün', href: '/collectors' },
+        { type: 'page', title: 'Əlaqə', href: '/contact' },
+        { type: 'route', route_key: 'artworks', href: '/artworks' },
+        { type: 'route', route_key: 'artists', href: '/artists' },
+    ],
+    footer: [
+        { type: 'page', title: 'Məxfilik siyasəti', href: '/privacy-policy' },
+        { type: 'page', title: 'İstifadə şərtləri', href: '/terms' },
+    ],
+};
 
-const PAGES_EN = [
-    { slug: 'home', type: 'home', nav_placement: 'header', title: 'Home' },
-    { slug: 'about', type: 'about', nav_placement: 'header', title: 'About' },
-    { slug: 'collectors', type: 'collectors', nav_placement: 'header', title: 'For collectors' },
-    { slug: 'contact', type: 'contact', nav_placement: 'header', title: 'Contact' },
-    { slug: 'privacy-policy', type: 'custom', nav_placement: 'footer', title: 'Privacy Policy' },
-    { slug: 'terms', type: 'custom', nav_placement: 'footer', title: 'Terms & Conditions' },
-    { slug: 'unlisted', type: 'custom', nav_placement: 'none', title: 'Unlisted draft' },
-];
+const NAV_EN = {
+    header: [
+        { type: 'page', title: 'Home', href: '/' },
+        { type: 'page', title: 'About', href: '/about' },
+        { type: 'page', title: 'For collectors', href: '/collectors' },
+        { type: 'page', title: 'Contact', href: '/contact' },
+        { type: 'route', route_key: 'artworks', href: '/artworks' },
+        { type: 'route', route_key: 'artists', href: '/artists' },
+    ],
+    footer: [
+        { type: 'page', title: 'Privacy Policy', href: '/privacy-policy' },
+        { type: 'page', title: 'Terms & Conditions', href: '/terms' },
+    ],
+};
 
 describe('SiteShell', () => {
     beforeEach(() => {
@@ -37,8 +47,8 @@ describe('SiteShell', () => {
             if (url.includes('/social-links')) {
                 return Promise.resolve(jsonResponse({ data: [{ platform: 'instagram', url: 'https://instagram.com/artniyyetli', sort_order: 0 }] }));
             }
-            if (url.includes('/pages')) {
-                return Promise.resolve(jsonResponse({ data: url.includes('locale=en') ? PAGES_EN : PAGES_AZ }));
+            if (url.includes('/navigation')) {
+                return Promise.resolve(jsonResponse({ data: url.includes('locale=en') ? NAV_EN : NAV_AZ }));
             }
             return Promise.resolve(jsonResponse({ data: {} }));
         });
@@ -68,10 +78,9 @@ describe('SiteShell', () => {
 
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toHaveAttribute('href', '/privacy-policy');
         expect(screen.getByRole('link', { name: 'İstifadə şərtləri' })).toHaveAttribute('href', '/terms');
-        expect(screen.queryByText('Unlisted draft')).not.toBeInTheDocument();
     });
 
-    it('switches header and footer page labels to English on locale change', async () => {
+    it('switches header and footer labels to English on locale change', async () => {
         render(
             <LocaleProvider>
                 <SiteShell>

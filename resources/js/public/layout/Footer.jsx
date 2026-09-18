@@ -1,19 +1,20 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
+import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { getSiteSettings } from '../services/siteSettings.js';
 import { listSocialLinks } from '../services/socialLinks.js';
-import { listPages } from '../services/pages.js';
+import { getNavigation } from '../services/navigation.js';
 
-function pageHref(page) {
-    return page.type === 'home' ? '/' : `/${page.slug}`;
+function itemLabel(locale, item) {
+    return item.type === 'page' ? item.title : t(locale, `nav.${item.route_key}`);
 }
 
 export default function Footer() {
     const { locale } = useLocale();
     const settings = useApiData(() => getSiteSettings(locale), [locale]);
     const socialLinks = useApiData(() => listSocialLinks(locale), [locale]);
-    const pages = useApiData(() => listPages(locale), [locale]);
-    const footerPages = (Array.isArray(pages.data) ? pages.data : []).filter((page) => page.nav_placement === 'footer');
+    const navigation = useApiData(() => getNavigation(locale), [locale]);
+    const footerItems = Array.isArray(navigation.data?.footer) ? navigation.data.footer : [];
 
     return (
         <footer className="border-t border-neutral-200 px-6 py-8 text-sm text-neutral-600">
@@ -33,11 +34,11 @@ export default function Footer() {
                 </div>
             )}
 
-            {footerPages.length > 0 && (
+            {footerItems.length > 0 && (
                 <nav className="mt-4 flex flex-wrap gap-4" aria-label="Legal">
-                    {footerPages.map((page) => (
-                        <a key={page.slug} href={pageHref(page)} className="underline">
-                            {page.title}
+                    {footerItems.map((item) => (
+                        <a key={item.href} href={item.href} className="underline">
+                            {itemLabel(locale, item)}
                         </a>
                     ))}
                 </nav>

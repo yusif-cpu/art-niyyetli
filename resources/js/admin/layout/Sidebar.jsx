@@ -14,6 +14,7 @@ const NAV_SECTIONS = [
             { key: 'exhibitions', label: 'Sərgilər' },
             { key: 'articles', label: 'Məqalələr' },
             { key: 'pages', label: 'Səhifələr' },
+            { key: 'navigation', label: 'Naviqasiya' },
             { key: 'faqs', label: 'Tez-tez verilən suallar' },
         ],
     },

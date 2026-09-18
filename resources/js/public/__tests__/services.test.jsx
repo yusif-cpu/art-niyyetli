@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getHomepage } from '../services/homepage.js';
-import { listPages, getPage } from '../services/pages.js';
+import { getPage } from '../services/pages.js';
+import { getNavigation } from '../services/navigation.js';
 import { getSiteSettings } from '../services/siteSettings.js';
 import { listSocialLinks } from '../services/socialLinks.js';
 import { listFaqs } from '../services/faqs.js';
@@ -23,14 +24,14 @@ describe('resource services', () => {
         expect(global.fetch).toHaveBeenCalledWith('/api/v1/homepage?locale=en', expect.anything());
     });
 
-    it('listPages calls GET /pages with locale', async () => {
-        await listPages('az');
-        expect(global.fetch).toHaveBeenCalledWith('/api/v1/pages?locale=az', expect.anything());
-    });
-
     it('getPage calls GET /pages/{slug} with locale', async () => {
         await getPage('az', 'about');
         expect(global.fetch).toHaveBeenCalledWith('/api/v1/pages/about?locale=az', expect.anything());
+    });
+
+    it('getNavigation calls GET /navigation with locale', async () => {
+        await getNavigation('az');
+        expect(global.fetch).toHaveBeenCalledWith('/api/v1/navigation?locale=az', expect.anything());
     });
 
     it('getSiteSettings calls GET /site-settings with locale', async () => {

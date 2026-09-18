@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exceptions\PageDeletionNotAllowedException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ReorderPagesRequest;
 use App\Http\Requests\Admin\StorePageRequest;
 use App\Http\Requests\Admin\UpdatePageRequest;
 use App\Http\Resources\Admin\PageResource;
@@ -26,18 +25,10 @@ class PageController extends Controller
                 'sections.translations',
                 'sections.image.variants',
             ])
-            ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
 
         return PageResource::collection($pages);
-    }
-
-    public function reorder(ReorderPagesRequest $request): JsonResponse
-    {
-        $this->pages->reorder($request->validated()['items']);
-
-        return response()->json(['message' => 'Pages reordered.']);
     }
 
     public function store(StorePageRequest $request): PageResource

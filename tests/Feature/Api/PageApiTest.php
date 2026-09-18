@@ -75,24 +75,21 @@ class PageApiTest extends TestCase
         $this->assertSame('EN content', $response->json('data.content'));
     }
 
-    public function test_index_orders_pages_by_persisted_sort_order_and_exposes_nav_placement(): void
+    public function test_index_orders_pages_by_id_and_does_not_expose_navigation_fields(): void
     {
-        $second = Page::factory()->create(['type' => 'about', 'is_active' => true, 'nav_placement' => 'header', 'sort_order' => 1]);
-        $second->translations()->create(['locale' => 'az', 'slug' => 'about', 'title' => 'Haqqımızda', 'content' => 'C']);
+        $createdFirst = Page::factory()->create(['type' => 'about', 'is_active' => true]);
+        $createdFirst->translations()->create(['locale' => 'az', 'slug' => 'about', 'title' => 'Haqqımızda', 'content' => 'C']);
 
-        $first = Page::factory()->create(['type' => 'home', 'is_active' => true, 'nav_placement' => 'header', 'sort_order' => 0]);
-        $first->translations()->create(['locale' => 'az', 'slug' => 'home', 'title' => 'Ana səhifə', 'content' => 'C']);
-
-        $unlisted = Page::factory()->create(['type' => 'custom', 'is_active' => true, 'nav_placement' => 'none', 'sort_order' => 5]);
-        $unlisted->translations()->create(['locale' => 'az', 'slug' => 'draft', 'title' => 'Draft', 'content' => 'C']);
+        $createdSecond = Page::factory()->create(['type' => 'home', 'is_active' => true]);
+        $createdSecond->translations()->create(['locale' => 'az', 'slug' => 'home', 'title' => 'Ana səhifə', 'content' => 'C']);
 
         $response = $this->getJson('/api/v1/pages');
 
         $response->assertOk();
         $items = $response->json('data');
-        $this->assertSame(['home', 'about', 'draft'], array_column($items, 'slug'));
-        $this->assertSame('header', $items[0]['nav_placement']);
-        $this->assertSame('none', $items[2]['nav_placement']);
+        $this->assertSame(['about', 'home'], array_column($items, 'slug'));
+        $this->assertArrayNotHasKey('nav_placement', $items[0]);
+        $this->assertArrayNotHasKey('sort_order', $items[0]);
     }
 
     public function test_section_image_url_resolves_when_media_attached(): void

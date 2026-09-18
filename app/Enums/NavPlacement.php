@@ -2,9 +2,8 @@
 
 namespace App\Enums;
 
-enum PageNavPlacement: string
+enum NavPlacement: string
 {
     case Header = 'header';
     case Footer = 'footer';
-    case None = 'none';
 }

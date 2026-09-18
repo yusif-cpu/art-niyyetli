@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\Locale;
 use App\Enums\PageType;
 use App\Models\Page;
+use App\Models\PageTranslation;
 use Illuminate\Database\Seeder;
 
 class PageSeeder extends Seeder
@@ -16,9 +17,37 @@ class PageSeeder extends Seeder
         'contact' => ['az' => 'Əlaqə', 'en' => 'Contact'],
     ];
 
+    /**
+     * Legal/content pages: unlike the singleton types above, `custom` is not
+     * looped as a single page — it supports any number of pages, each
+     * identified by its own slug rather than by `type`.
+     */
+    private const LEGAL_PAGES = [
+        'privacy-policy' => [
+            'az' => ['title' => 'Məxfilik siyasəti', 'content' => '[PLACEHOLDER] Bu səhifənin son hüquqi mətni müştəri tərəfindən təmin ediləcək.'],
+            'en' => ['title' => 'Privacy Policy', 'content' => '[PLACEHOLDER] Final legal copy for this page will be supplied by the client.'],
+        ],
+        'terms' => [
+            'az' => ['title' => 'İstifadə şərtləri', 'content' => '[PLACEHOLDER] Bu səhifənin son hüquqi mətni müştəri tərəfindən təmin ediləcək.'],
+            'en' => ['title' => 'Terms & Conditions', 'content' => '[PLACEHOLDER] Final legal copy for this page will be supplied by the client.'],
+        ],
+        'shipping-returns' => [
+            'az' => ['title' => 'Çatdırılma və qaytarılma', 'content' => '[PLACEHOLDER] Bu səhifənin son hüquqi mətni müştəri tərəfindən təmin ediləcək.'],
+            'en' => ['title' => 'Shipping & Returns', 'content' => '[PLACEHOLDER] Final legal copy for this page will be supplied by the client.'],
+        ],
+        'copyright' => [
+            'az' => ['title' => 'Müəllif hüquqları', 'content' => '[PLACEHOLDER] Bu səhifənin son hüquqi mətni müştəri tərəfindən təmin ediləcək.'],
+            'en' => ['title' => 'Copyright', 'content' => '[PLACEHOLDER] Final legal copy for this page will be supplied by the client.'],
+        ],
+    ];
+
     public function run(): void
     {
         foreach (PageType::cases() as $type) {
+            if ($type === PageType::Custom) {
+                continue;
+            }
+
             $page = Page::query()->updateOrCreate(['type' => $type->value], ['is_active' => true]);
 
             foreach (Locale::cases() as $locale) {
@@ -34,6 +63,29 @@ class PageSeeder extends Seeder
 
             if ($type === PageType::Home) {
                 $this->seedHomeSections($page);
+            }
+        }
+
+        $this->seedLegalPages();
+    }
+
+    private function seedLegalPages(): void
+    {
+        foreach (self::LEGAL_PAGES as $slug => $locales) {
+            $existing = PageTranslation::query()->where('slug', $slug)->first();
+            $page = $existing
+                ? Page::query()->find($existing->page_id)
+                : Page::query()->create(['type' => PageType::Custom->value, 'is_active' => true]);
+
+            foreach (Locale::cases() as $locale) {
+                $page->translations()->updateOrCreate(
+                    ['locale' => $locale->value],
+                    [
+                        'slug' => $slug,
+                        'title' => $locales[$locale->value]['title'],
+                        'content' => $locales[$locale->value]['content'],
+                    ]
+                );
             }
         }
     }

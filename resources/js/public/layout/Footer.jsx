@@ -1,7 +1,15 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
+import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { getSiteSettings } from '../services/siteSettings.js';
 import { listSocialLinks } from '../services/socialLinks.js';
+
+const LEGAL_LINKS = [
+    { href: '/privacy-policy', key: 'privacyPolicy' },
+    { href: '/terms', key: 'terms' },
+    { href: '/shipping-returns', key: 'shippingReturns' },
+    { href: '/copyright', key: 'copyright' },
+];
 
 export default function Footer() {
     const { locale } = useLocale();
@@ -25,6 +33,14 @@ export default function Footer() {
                     ))}
                 </div>
             )}
+
+            <nav className="mt-4 flex flex-wrap gap-4" aria-label="Legal">
+                {LEGAL_LINKS.map((link) => (
+                    <a key={link.href} href={link.href} className="underline">
+                        {t(locale, `footer.${link.key}`)}
+                    </a>
+                ))}
+            </nav>
         </footer>
     );
 }

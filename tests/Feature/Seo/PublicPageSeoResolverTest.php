@@ -67,6 +67,20 @@ class PublicPageSeoResolverTest extends TestCase
         $this->assertNull($seo->jsonLd);
     }
 
+    public function test_static_page_applies_the_same_indexable_policy_to_a_custom_type_legal_page(): void
+    {
+        $page = Page::create(['type' => PageType::Custom, 'is_active' => true]);
+        $page->translations()->create(['locale' => 'az', 'slug' => 'privacy-policy', 'title' => 'Məxfilik siyasəti', 'content' => '[PLACEHOLDER] Mətn.']);
+
+        $seo = $this->resolver()->resolve(['privacy-policy'], Locale::Az);
+
+        $this->assertSame('Məxfilik siyasəti — ArtNiyyətli', $seo->title);
+        $this->assertSame('http://localhost:8080/privacy-policy', $seo->canonicalUrl);
+        $this->assertTrue($seo->index);
+        $this->assertTrue($seo->follow);
+        $this->assertSame(200, $seo->httpStatus);
+    }
+
     public function test_static_page_is_not_found_for_an_unresolvable_slug(): void
     {
         $seo = $this->resolver()->resolve(['nonexistent'], Locale::Az);

@@ -33,6 +33,16 @@ describe('useRouter', () => {
         expect(result.current.params).toEqual({ slug: 'about' });
     });
 
+    it.each(['/privacy-policy', '/terms', '/shipping-returns', '/copyright'])(
+        'resolves the legal route %s to static-page',
+        (path) => {
+            window.history.pushState(null, '', path);
+            const { result } = renderHook(() => useRouter());
+            expect(result.current.page).toBe('static-page');
+            expect(result.current.params).toEqual({ slug: path.slice(1) });
+        }
+    );
+
     it('resolves not-found for an unmatched multi-segment path', () => {
         window.history.pushState(null, '', '/a/b/c');
         const { result } = renderHook(() => useRouter());

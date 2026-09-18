@@ -51,4 +51,31 @@ describe('StaticPage', () => {
 
         await waitFor(() => expect(screen.getAllByText('Haqqımızda').length).toBeGreaterThan(0));
     });
+
+    it('re-fetches and updates a legal page title and content when the locale changes', async () => {
+        localStorage.setItem('public-locale', 'az');
+        global.fetch = vi.fn((url) => {
+            const isEn = url.includes('locale=en');
+            return Promise.resolve(jsonResponse(200, {
+                data: {
+                    slug: 'privacy-policy',
+                    type: 'custom',
+                    title: isEn ? 'Privacy Policy' : 'Məxfilik siyasəti',
+                    content: isEn ? '[PLACEHOLDER] English legal copy.' : '[PLACEHOLDER] Azərbaycanca hüquqi mətn.',
+                    sections: [],
+                },
+            }));
+        });
+
+        render(<LocaleProvider><LocaleSwitcher /><StaticPage params={{ slug: 'privacy-policy' }} /></LocaleProvider>);
+
+        await screen.findByText('Məxfilik siyasəti');
+        expect(screen.getByText('[PLACEHOLDER] Azərbaycanca hüquqi mətn.')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+
+        await screen.findByText('Privacy Policy');
+        expect(screen.getByText('[PLACEHOLDER] English legal copy.')).toBeInTheDocument();
+        expect(screen.queryByText('Məxfilik siyasəti')).not.toBeInTheDocument();
+    });
 });

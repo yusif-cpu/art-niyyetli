@@ -77,6 +77,12 @@ export const dictionary = {
             title: 'Əlaqə',
             subjectLabel: 'Mövzu',
         },
+        footer: {
+            privacyPolicy: 'Məxfilik siyasəti',
+            terms: 'İstifadə şərtləri',
+            shippingReturns: 'Çatdırılma və qaytarılma',
+            copyright: 'Müəllif hüquqları',
+        },
     },
     en: {
         nav: {
@@ -155,6 +161,12 @@ export const dictionary = {
         contact: {
             title: 'Contact',
             subjectLabel: 'Subject',
+        },
+        footer: {
+            privacyPolicy: 'Privacy Policy',
+            terms: 'Terms & Conditions',
+            shippingReturns: 'Shipping & Returns',
+            copyright: 'Copyright',
         },
     },
 };

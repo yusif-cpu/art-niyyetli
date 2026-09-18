@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { submitEnquiry } from '../services/enquiries.js';
+import { submitEnquiry, getEnquirySubjects } from '../services/enquiries.js';
 import { PublicApiError } from '../lib/api.js';
 
 function jsonResponse(status, body) {
@@ -38,5 +38,16 @@ describe('submitEnquiry', () => {
             expect(err).toBeInstanceOf(PublicApiError);
             expect(err.isRateLimited).toBe(true);
         }
+    });
+});
+
+describe('getEnquirySubjects', () => {
+    it('fetches the public subject list', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: [{ key: 'buy', label: 'Əsər almaq' }] }));
+
+        const result = await getEnquirySubjects();
+
+        expect(global.fetch).toHaveBeenCalledWith('/api/v1/enquiry-subjects', expect.objectContaining({ headers: expect.anything() }));
+        expect(result).toEqual({ data: [{ key: 'buy', label: 'Əsər almaq' }] });
     });
 });

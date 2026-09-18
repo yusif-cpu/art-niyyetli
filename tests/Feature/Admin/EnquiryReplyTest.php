@@ -180,7 +180,7 @@ class EnquiryReplyTest extends TestCase
 
         $html = (new EnquiryReplyMail($enquiry, 'Re: Sorğunuz', 'Salam.'))->render();
 
-        $this->assertStringContainsString('images/logo-horizontal-ivory.png', $html);
+        $this->assertMatchesRegularExpression('/<img src="data:image\/png;base64,[^"]+"[^>]*alt="ArtNiyyətli"/', $html);
         $this->assertStringContainsString('Salam, '.$enquiry->name, $html);
     }
 

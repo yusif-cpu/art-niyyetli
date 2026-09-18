@@ -78,7 +78,7 @@ class NewEnquiryReceivedTest extends TestCase
 
         $html = (new NewEnquiryReceived($enquiry))->render();
 
-        $this->assertStringContainsString('images/logo-horizontal-ivory.png', $html);
+        $this->assertMatchesRegularExpression('/<img src="data:image\/png;base64,[^"]+"[^>]*alt="ArtNiyyətli"/', $html);
     }
 
     public function test_message_line_breaks_are_preserved_and_html_is_escaped(): void

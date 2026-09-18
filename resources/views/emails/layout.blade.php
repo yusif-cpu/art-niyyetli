@@ -32,7 +32,7 @@
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="width:600px;max-width:600px;">
 <tr>
 <td class="email-padding" style="background-color:#171717;border-radius:8px 8px 0 0;padding:28px 32px;text-align:center;">
-<img src="{{ asset('images/logo-horizontal-ivory.png') }}" width="180" alt="{{ \App\Support\Seo\SeoText::SITE_NAME }}" style="display:inline-block;width:180px;max-width:180px;height:auto;border:0;outline:none;text-decoration:none;">
+<img src="{{ $message->embed(public_path('images/logo-horizontal-ivory.png')) }}" width="180" alt="{{ \App\Support\Seo\SeoText::SITE_NAME }}" style="display:inline-block;width:180px;max-width:180px;height:auto;border:0;outline:none;text-decoration:none;">
 </td>
 </tr>
 <tr>

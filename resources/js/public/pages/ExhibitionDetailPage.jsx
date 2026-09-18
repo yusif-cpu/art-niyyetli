@@ -1,6 +1,7 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
+import { usePageMeta } from '../lib/usePageMeta.js';
 import { getExhibition } from '../services/exhibitions.js';
 import ArtworkCard from '../components/ArtworkCard.jsx';
 import ImageWithFallback from '../components/ImageWithFallback.jsx';
@@ -11,6 +12,8 @@ import NotFoundPage from './NotFoundPage.jsx';
 export default function ExhibitionDetailPage({ params }) {
     const { locale } = useLocale();
     const { data, loading, error } = useApiData(() => getExhibition(locale, params.slug), [locale, params.slug]);
+
+    usePageMeta(data ? { title: `${data.title} — ArtNiyyətli`, description: data.short_text } : {});
 
     if (loading) return <LoadingState />;
     if (error?.status === 404) return <NotFoundPage />;

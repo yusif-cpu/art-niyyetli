@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
+import { usePageMeta } from '../lib/usePageMeta.js';
 import { listExhibitions } from '../services/exhibitions.js';
 import ExhibitionCard from '../components/ExhibitionCard.jsx';
 import Pagination from '../components/Pagination.jsx';
@@ -21,6 +22,8 @@ export default function ExhibitionsPage() {
     const [filter, setFilter] = useState(undefined);
     const [page, setPage] = useState(1);
     const { data, meta, loading, error } = useApiData(() => listExhibitions(locale, { filter, page }), [locale, filter, page]);
+
+    usePageMeta({ title: `${t(locale, 'nav.exhibitions')} — ArtNiyyətli` });
 
     return (
         <div className="px-6 py-8">

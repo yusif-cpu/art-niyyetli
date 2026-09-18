@@ -28,4 +28,12 @@ describe('ExhibitionsPage', () => {
             expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('filter=archive'), expect.anything());
         });
     });
+
+    it('sets a static exhibitions document title', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [exhibition], meta: { current_page: 1, last_page: 1, total: 1 } }));
+
+        render(<LocaleProvider><ExhibitionsPage /></LocaleProvider>);
+
+        await waitFor(() => expect(document.title).toBe('Sərgilər — ArtNiyyətli'));
+    });
 });

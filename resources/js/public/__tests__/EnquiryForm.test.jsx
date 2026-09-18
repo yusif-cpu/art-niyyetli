@@ -10,7 +10,7 @@ function jsonResponse(status, body) {
 
 describe('EnquiryForm', () => {
     it('renders a visually-hidden but present honeypot field', () => {
-        render(<LocaleProvider><EnquiryForm artworkCode="AN-1" /></LocaleProvider>);
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
         const honeypot = document.querySelector('input[name="website"]');
         expect(honeypot).toBeInTheDocument();
         expect(honeypot).not.toHaveAttribute('type', 'hidden');
@@ -20,7 +20,7 @@ describe('EnquiryForm', () => {
     it('submits the form and shows the success message, disabling the submit button', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' }));
 
-        render(<LocaleProvider><EnquiryForm artworkCode="AN-1" /></LocaleProvider>);
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
 
         await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
         await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
@@ -34,7 +34,7 @@ describe('EnquiryForm', () => {
     it('shows a friendly rate-limit message on 429 and keeps the button disabled', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(429, { message: 'Too Many Attempts.' }));
 
-        render(<LocaleProvider><EnquiryForm artworkCode="AN-1" /></LocaleProvider>);
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
 
         await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
         await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
@@ -48,7 +48,7 @@ describe('EnquiryForm', () => {
     it('shows field-level errors on a 422 and leaves the button enabled', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(422, { message: 'The given data was invalid.', errors: { email: ['The email field is required.'] } }));
 
-        render(<LocaleProvider><EnquiryForm artworkCode="AN-1" /></LocaleProvider>);
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
 
         await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
         await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
@@ -61,7 +61,7 @@ describe('EnquiryForm', () => {
     it('recovers to an enabled, retryable state on a non-API failure (e.g. network error)', async () => {
         global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
 
-        render(<LocaleProvider><EnquiryForm artworkCode="AN-1" /></LocaleProvider>);
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
 
         await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
         await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
@@ -70,5 +70,23 @@ describe('EnquiryForm', () => {
 
         expect(await screen.findByText('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
+    });
+
+    it('includes subject and omits artwork_code when no artworkCode is provided', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' }));
+
+        render(<LocaleProvider><EnquiryForm subject="general_contact" /></LocaleProvider>);
+
+        await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
+        await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
+        await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+
+        await screen.findByText('Sorğunuz qeydə alındı.');
+
+        const [, options] = global.fetch.mock.calls[0];
+        const body = JSON.parse(options.body);
+        expect(body.subject).toBe('general_contact');
+        expect(body).not.toHaveProperty('artwork_code');
     });
 });

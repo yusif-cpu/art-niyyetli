@@ -4,7 +4,7 @@ import { t } from '../i18n/dictionary.js';
 import { submitEnquiry } from '../services/enquiries.js';
 import { PublicApiError } from '../lib/api.js';
 
-export default function EnquiryForm({ artworkCode }) {
+export default function EnquiryForm({ subject, artworkCode }) {
     const { locale } = useLocale();
     const [fields, setFields] = useState({ name: '', email: '', phone: '', message: '', website: '' });
     const [errors, setErrors] = useState({});
@@ -18,7 +18,7 @@ export default function EnquiryForm({ artworkCode }) {
         setBanner('');
 
         try {
-            await submitEnquiry({ ...fields, artwork_code: artworkCode });
+            await submitEnquiry({ ...fields, subject, artwork_code: artworkCode });
             setStatus('success');
             setBanner(t(locale, 'enquiryForm.success'));
         } catch (err) {

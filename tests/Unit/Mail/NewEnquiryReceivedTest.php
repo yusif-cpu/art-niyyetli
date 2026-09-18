@@ -61,4 +61,64 @@ class NewEnquiryReceivedTest extends TestCase
         $mailable->assertDontSeeInHtml('İnventar kodu:');
         $mailable->assertSeeInHtml('Ümumi əlaqə');
     }
+
+    public function test_email_is_branded_with_the_artniyyetli_logo(): void
+    {
+        $subject = $this->makeSubject('general_contact', 'Ümumi əlaqə');
+        $enquiry = Enquiry::query()->create([
+            'enquiry_subject_id' => $subject->id,
+            'submitted_at' => now(),
+            'name' => 'Aysel',
+            'contact' => 'aysel@example.com',
+            'email' => 'aysel@example.com',
+            'message' => 'Salam.',
+            'status' => 'new',
+        ]);
+        $enquiry->load('artwork.translations', 'subject.translations');
+
+        $html = (new NewEnquiryReceived($enquiry))->render();
+
+        $this->assertStringContainsString('images/logo-horizontal-ivory.png', $html);
+    }
+
+    public function test_message_line_breaks_are_preserved_and_html_is_escaped(): void
+    {
+        $subject = $this->makeSubject('general_contact', 'Ümumi əlaqə');
+        $enquiry = Enquiry::query()->create([
+            'enquiry_subject_id' => $subject->id,
+            'submitted_at' => now(),
+            'name' => 'Aysel',
+            'contact' => 'aysel@example.com',
+            'email' => 'aysel@example.com',
+            'message' => "Salam,\n<script>alert(1)</script>",
+            'status' => 'new',
+        ]);
+        $enquiry->load('artwork.translations', 'subject.translations');
+
+        $html = (new NewEnquiryReceived($enquiry))->render();
+
+        $this->assertStringContainsString('Salam,<br', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+    }
+
+    public function test_phone_row_is_hidden_when_not_provided(): void
+    {
+        $subject = $this->makeSubject('general_contact', 'Ümumi əlaqə');
+        $enquiry = Enquiry::query()->create([
+            'enquiry_subject_id' => $subject->id,
+            'submitted_at' => now(),
+            'name' => 'Aysel',
+            'contact' => 'aysel@example.com',
+            'email' => 'aysel@example.com',
+            'phone' => null,
+            'message' => 'Salam.',
+            'status' => 'new',
+        ]);
+        $enquiry->load('artwork.translations', 'subject.translations');
+
+        $mailable = new NewEnquiryReceived($enquiry);
+
+        $mailable->assertDontSeeInHtml('Telefon');
+    }
 }

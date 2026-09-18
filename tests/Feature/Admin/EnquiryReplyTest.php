@@ -174,6 +174,42 @@ class EnquiryReplyTest extends TestCase
         $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
     }
 
+    public function test_mail_is_branded_with_the_artniyyetli_logo_and_greets_the_customer(): void
+    {
+        $enquiry = $this->makeEnquiry();
+
+        $html = (new EnquiryReplyMail($enquiry, 'Re: Sorğunuz', 'Salam.'))->render();
+
+        $this->assertStringContainsString('images/logo-horizontal-ivory.png', $html);
+        $this->assertStringContainsString('Salam, '.$enquiry->name, $html);
+    }
+
+    public function test_mail_shows_artwork_context_for_a_purchase_enquiry(): void
+    {
+        $enquiry = $this->makeEnquiry();
+
+        $html = (new EnquiryReplyMail($enquiry, 'Re: Sorğunuz', 'Salam.'))->render();
+
+        $this->assertStringContainsString($enquiry->inventory_code, $html);
+    }
+
+    public function test_mail_does_not_show_an_empty_inventory_code_row_for_a_non_purchase_enquiry(): void
+    {
+        $generalSubject = EnquirySubject::query()->create(['key' => 'general_contact', 'sort_order' => 1, 'is_active' => true]);
+        $generalSubject->translations()->create(['locale' => 'az', 'name' => 'Ümumi əlaqə']);
+
+        $enquiry = $this->makeEnquiry([
+            'enquiry_subject_id' => $generalSubject->id,
+            'artwork_id' => null,
+            'inventory_code' => null,
+        ]);
+
+        $html = (new EnquiryReplyMail($enquiry, 'Re: Sualınız', 'Salam.'))->render();
+
+        $this->assertStringNotContainsString('İnventar kodu:', $html);
+        $this->assertStringContainsString('Ümumi əlaqə', $html);
+    }
+
     public function test_reply_persists_failed_status_when_mail_send_throws(): void
     {
         Mail::shouldReceive('to')->once()->andThrow(new \Exception('boom'));

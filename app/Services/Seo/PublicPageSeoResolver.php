@@ -2,9 +2,12 @@
 
 namespace App\Services\Seo;
 
+use App\Enums\ArticleStatus;
 use App\Enums\Locale;
 use App\Enums\PageType;
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
+use App\Models\Article;
+use App\Models\ArticleTranslation;
 use App\Models\Artist;
 use App\Models\ArtistTranslation;
 use App\Models\Artwork;
@@ -34,6 +37,8 @@ class PublicPageSeoResolver
             count($segments) === 2 && $segments[0] === 'artists' => $this->artistDetail($segments[1], $locale),
             $segments === ['exhibitions'] => $this->exhibitions($locale),
             count($segments) === 2 && $segments[0] === 'exhibitions' => $this->exhibitionDetail($segments[1], $locale),
+            $segments === ['articles'] => $this->articles($locale),
+            count($segments) === 2 && $segments[0] === 'articles' => $this->articleDetail($segments[1], $locale),
             count($segments) === 1 => $this->staticPage($segments[0], $locale),
             default => $this->notFound($locale),
         };
@@ -326,6 +331,84 @@ class PublicPageSeoResolver
                         'itemListElement' => [
                             ['@type' => 'ListItem', 'position' => 1, 'name' => SeoLabels::label($locale, 'home'), 'item' => SeoText::absoluteUrl('/')],
                             ['@type' => 'ListItem', 'position' => 2, 'name' => SeoLabels::label($locale, 'exhibitions'), 'item' => SeoText::absoluteUrl('/exhibitions')],
+                            ['@type' => 'ListItem', 'position' => 3, 'name' => $title, 'item' => $canonical],
+                        ],
+                    ],
+                ],
+            ],
+        );
+    }
+
+    private function articles(Locale $locale): PageSeo
+    {
+        $canonical = SeoText::absoluteUrl('/articles');
+        $count = Article::query()
+            ->where('status', ArticleStatus::Published)->where('is_active', true)
+            ->whereNotNull('published_at')->where('published_at', '<=', now())
+            ->count();
+        $description = $locale === Locale::En
+            ? "Read {$count} journal articles."
+            : "{$count} jurnal yazısını oxuyun.";
+
+        return new PageSeo(
+            title: SeoText::pageTitle(SeoLabels::label($locale, 'articles')),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'website',
+            ogImageUrl: null,
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: null,
+        );
+    }
+
+    private function articleDetail(string $slug, Locale $locale): PageSeo
+    {
+        $translation = ArticleTranslation::query()->where('slug', $slug)->first();
+        $article = $translation
+            ? Article::query()->where('id', $translation->article_id)
+                ->where('status', ArticleStatus::Published)->where('is_active', true)
+                ->whereNotNull('published_at')->where('published_at', '<=', now())
+                ->with('translations')->first()
+            : null;
+
+        if (! $article) {
+            return $this->notFound($locale);
+        }
+
+        $fields = LocalizedFields::resolve($article->translations, $locale, ['title', 'short_text']);
+        $override = $article->seoOverride($locale);
+
+        $ogImageUrl = $override?->ogImage ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail') : null;
+        $title = $override?->title ?? $fields['title'];
+        $description = SeoText::description($override?->description ?? $fields['short_text']);
+        $canonical = SeoText::absoluteUrl("/articles/{$slug}");
+
+        return new PageSeo(
+            title: SeoText::pageTitle($title),
+            description: $description,
+            canonicalUrl: $canonical,
+            index: true,
+            follow: true,
+            ogType: 'article',
+            ogImageUrl: $ogImageUrl,
+            ogLocale: SeoText::ogLocale($locale),
+            jsonLd: [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    array_filter([
+                        '@type' => 'Article',
+                        'headline' => $title,
+                        'description' => $description,
+                        'image' => $ogImageUrl,
+                        'datePublished' => $article->published_at?->toIso8601String(),
+                    ]),
+                    [
+                        '@type' => 'BreadcrumbList',
+                        'itemListElement' => [
+                            ['@type' => 'ListItem', 'position' => 1, 'name' => SeoLabels::label($locale, 'home'), 'item' => SeoText::absoluteUrl('/')],
+                            ['@type' => 'ListItem', 'position' => 2, 'name' => SeoLabels::label($locale, 'articles'), 'item' => SeoText::absoluteUrl('/articles')],
                             ['@type' => 'ListItem', 'position' => 3, 'name' => $title, 'item' => $canonical],
                         ],
                     ],

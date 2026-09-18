@@ -4,6 +4,7 @@ namespace Tests\Feature\Seo;
 
 use App\Enums\Locale;
 use App\Enums\PageType;
+use App\Models\Article;
 use App\Models\Artist;
 use App\Models\Artwork;
 use App\Models\Exhibition;
@@ -300,5 +301,74 @@ class PublicPageSeoResolverTest extends TestCase
         $seo = $this->resolver()->resolve(['exhibitions', 'hidden-show'], Locale::Az);
 
         $this->assertSame(404, $seo->httpStatus);
+    }
+
+    private function makePublishedArticle(string $slug, array $overrides = []): Article
+    {
+        $article = Article::create(array_merge([
+            'type' => 'news', 'status' => 'published', 'is_active' => true, 'published_at' => now()->subDay(),
+        ], $overrides));
+        $article->translations()->create([
+            'locale' => 'az', 'slug' => $slug, 'title' => 'An Interview', 'short_text' => 'A short teaser.', 'content' => 'Full content.',
+        ]);
+
+        return $article;
+    }
+
+    public function test_articles_list_uses_a_live_published_count(): void
+    {
+        $this->makePublishedArticle('article-1');
+        Article::create(['type' => 'news', 'status' => 'draft', 'is_active' => true]); // not counted
+
+        $seo = $this->resolver()->resolve(['articles'], Locale::Az);
+
+        $this->assertSame('Jurnal — ArtNiyyətli', $seo->title);
+        $this->assertSame('1 jurnal yazısını oxuyun.', $seo->description);
+        $this->assertTrue($seo->index);
+    }
+
+    public function test_article_detail_resolves_title_and_type(): void
+    {
+        $this->makePublishedArticle('an-interview');
+
+        $seo = $this->resolver()->resolve(['articles', 'an-interview'], Locale::Az);
+
+        $this->assertSame('An Interview — ArtNiyyətli', $seo->title);
+        $this->assertSame('A short teaser.', $seo->description);
+        $this->assertSame('http://localhost:8080/articles/an-interview', $seo->canonicalUrl);
+        $this->assertSame('article', $seo->ogType);
+        $this->assertTrue($seo->index);
+        $this->assertSame('Article', $seo->jsonLd['@graph'][0]['@type']);
+        $this->assertSame('BreadcrumbList', $seo->jsonLd['@graph'][1]['@type']);
+    }
+
+    public function test_article_detail_is_not_found_for_a_draft(): void
+    {
+        $this->makePublishedArticle('draft-article', ['status' => 'draft']);
+
+        $seo = $this->resolver()->resolve(['articles', 'draft-article'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+        $this->assertFalse($seo->index);
+    }
+
+    public function test_article_detail_is_not_found_for_a_future_scheduled_article(): void
+    {
+        $this->makePublishedArticle('future-article', ['published_at' => now()->addWeek()]);
+
+        $seo = $this->resolver()->resolve(['articles', 'future-article'], Locale::Az);
+
+        $this->assertSame(404, $seo->httpStatus);
+    }
+
+    public function test_article_detail_content_never_appears_as_raw_html_in_jsonld(): void
+    {
+        $article = $this->makePublishedArticle('safe-article');
+        $article->translations()->first()->update(['short_text' => '<b>not bold</b>']);
+
+        $seo = $this->resolver()->resolve(['articles', 'safe-article'], Locale::Az);
+
+        $this->assertSame('not bold', $seo->description);
+        $this->assertStringNotContainsString('<b>', json_encode($seo->jsonLd));
     }
 }

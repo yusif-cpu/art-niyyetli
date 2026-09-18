@@ -29,6 +29,9 @@ class EnquiryController extends Controller
         if ($request->filled('artwork_id')) {
             $query->where('artwork_id', $request->integer('artwork_id'));
         }
+        if ($request->filled('subject')) {
+            $query->whereHas('subject', fn ($q) => $q->where('key', $request->query('subject')));
+        }
         if ($request->filled('from')) {
             $query->whereDate('created_at', '>=', $request->query('from'));
         }

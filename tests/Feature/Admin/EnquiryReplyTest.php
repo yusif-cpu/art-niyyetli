@@ -11,6 +11,7 @@ use App\Models\Genre;
 use App\Models\Medium;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Admin\SiteSettingService;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -87,6 +88,24 @@ class EnquiryReplyTest extends TestCase
         ]);
 
         Mail::assertSent(EnquiryReplyMail::class, fn ($mail) => $mail->hasTo($enquiry->email));
+    }
+
+    public function test_reply_headers_use_from_config_and_reply_to_gallery_contact_email(): void
+    {
+        app(SiteSettingService::class)->update(['contact_email' => 'gallery@example.com']);
+
+        $enquiry = $this->makeEnquiry();
+
+        $this->actingAs($this->admin)->postJson("/admin/enquiries/{$enquiry->id}/reply", [
+            'subject' => 'Re: Sorğunuz',
+            'message' => 'Salam',
+        ])->assertSuccessful();
+
+        $message = Mail::getSymfonyTransport()->messages()->last()->getOriginalMessage();
+
+        $this->assertSame(config('mail.from.address'), $message->getFrom()[0]->getAddress());
+        $this->assertSame($enquiry->email, $message->getTo()[0]->getAddress());
+        $this->assertSame('gallery@example.com', $message->getReplyTo()[0]->getAddress());
     }
 
     public function test_editor_can_send_reply(): void

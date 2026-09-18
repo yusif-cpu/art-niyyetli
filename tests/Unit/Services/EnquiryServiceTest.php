@@ -70,6 +70,20 @@ class EnquiryServiceTest extends TestCase
         Mail::assertSent(NewEnquiryReceived::class, fn ($mail) => $mail->hasTo('fallback@example.com'));
     }
 
+    public function test_notification_headers_use_from_config_and_reply_to_customer(): void
+    {
+        $artwork = Artwork::factory()->create();
+        SiteSetting::query()->create(['key' => 'contact_email', 'value' => 'gallery@example.com', 'type' => 'string']);
+
+        app(EnquiryService::class)->createFromPublicSubmission($artwork, $this->validData(), null, null);
+
+        $message = Mail::getSymfonyTransport()->messages()->last()->getOriginalMessage();
+
+        $this->assertSame(config('mail.from.address'), $message->getFrom()[0]->getAddress());
+        $this->assertSame('gallery@example.com', $message->getTo()[0]->getAddress());
+        $this->assertSame('aysel@example.com', $message->getReplyTo()[0]->getAddress());
+    }
+
     public function test_skips_notification_silently_when_no_recipient_configured(): void
     {
         Mail::fake();

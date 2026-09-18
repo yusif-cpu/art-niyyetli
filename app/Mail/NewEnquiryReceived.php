@@ -15,11 +15,17 @@ class NewEnquiryReceived extends Mailable
 
     public function build(): self
     {
-        return $this->subject('Yeni sorğu: '.$this->enquiry->inventory_code)
+        $mail = $this->subject('Yeni sorğu: '.$this->enquiry->inventory_code)
             ->view('emails.new-enquiry')
             ->with([
                 'enquiry' => $this->enquiry,
                 'adminUrl' => rtrim(config('app.url'), '/').'/admin#enquiries',
             ]);
+
+        if (filled($this->enquiry->email)) {
+            $mail->replyTo($this->enquiry->email);
+        }
+
+        return $mail;
     }
 }

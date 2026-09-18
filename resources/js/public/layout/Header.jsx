@@ -8,6 +8,7 @@ const NAV_ITEMS = [
     { href: '/artists', key: 'artists' },
     { href: '/exhibitions', key: 'exhibitions' },
     { href: '/articles', key: 'articles' },
+    { href: '/contact', key: 'contact' },
 ];
 
 export default function Header() {

@@ -27,7 +27,7 @@ describe('ArtworkDetailPage', () => {
 
         expect(await screen.findByText('Sunset Over Baku')).toBeInTheDocument();
         expect(screen.getByText('A description.')).toBeInTheDocument();
-        expect(screen.getByRole('img', { name: 'Sunset Over Baku' })).toHaveAttribute('src', 'https://example.test/full.webp');
+        expect(screen.getByRole('img', { name: 'Sunset Over Baku by Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/full.webp');
     });
 
     it('does not render a WhatsApp link when whatsapp_link is null', async () => {
@@ -55,6 +55,14 @@ describe('ArtworkDetailPage', () => {
         render(<LocaleProvider><ArtworkDetailPage params={{ code: detail.inventory_code }} /></LocaleProvider>);
 
         await waitFor(() => expect(document.title).toBe(`${detail.title} — ArtNiyyətli`));
+    });
+
+    it('includes the artist name in the detail image alt text', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
+
+        render(<LocaleProvider><ArtworkDetailPage params={{ code: detail.inventory_code }} /></LocaleProvider>);
+
+        expect(await screen.findByAltText(`${detail.title} by ${detail.artist.name}`)).toBeInTheDocument();
     });
 
     it('does not crash when the locale changes after the page has already loaded', async () => {

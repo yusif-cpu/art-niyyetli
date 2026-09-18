@@ -46,4 +46,16 @@ describe('ArtworkCard', () => {
         render(withLocale(<ArtworkCard artwork={baseArtwork} />));
         expect(screen.queryByText('Mövcuddur')).not.toBeInTheDocument();
     });
+
+    it('includes the artist name in the image alt text', () => {
+        render(withLocale(<ArtworkCard artwork={{ ...baseArtwork, title: 'Sunset Over Baku', artist: { id: 1, name: 'Aygün Məmmədova' } }} />));
+
+        expect(screen.getByAltText('Sunset Over Baku by Aygün Məmmədova')).toBeInTheDocument();
+    });
+
+    it('falls back to the title alone when there is no artist', () => {
+        render(withLocale(<ArtworkCard artwork={{ ...baseArtwork, title: 'Untitled', artist: null }} />));
+
+        expect(screen.getByAltText('Untitled')).toBeInTheDocument();
+    });
 });

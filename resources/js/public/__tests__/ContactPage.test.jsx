@@ -57,6 +57,30 @@ describe('ContactPage', () => {
         expect(body).not.toHaveProperty('artwork_code');
     });
 
+    it('never renders a blank option when a subject is missing its translated label', async () => {
+        const subjectsWithGap = [
+            { key: 'buy', label: 'Əsər almaq' },
+            { key: 'general_contact', label: null },
+            { key: 'artist_submission', label: 'Rəssam müraciəti' },
+            { key: 'media', label: 'Media sorğusu' },
+            { key: 'exhibition_invitation', label: 'Sərgi / dəvət' },
+            { key: 'collaboration', label: 'Əməkdaşlıq' },
+        ];
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: subjectsWithGap }));
+
+        render(<LocaleProvider><ContactPage /></LocaleProvider>);
+
+        await screen.findByText('Əlaqə');
+
+        const select = screen.getByLabelText('Mövzu');
+        const options = Array.from(select.querySelectorAll('option'));
+
+        expect(options).toHaveLength(5);
+        expect(options.every((option) => option.textContent.trim() !== '')).toBe(true);
+        expect(options[0]).toHaveTextContent('Əsər almaq');
+        expect(select).toHaveValue('buy');
+    });
+
     it('switches the entire contact form to English, including subjects, when the locale changes', async () => {
         global.fetch = vi.fn((url, options) => {
             if (url.startsWith('/api/v1/enquiry-subjects')) {

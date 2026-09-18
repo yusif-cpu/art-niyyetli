@@ -18,7 +18,8 @@ export default function ContactPage() {
     if (loading) return <LoadingState />;
     if (error) return <ErrorState error={error} />;
 
-    const subject = selectedSubject || subjects?.[0]?.key || '';
+    const labeledSubjects = subjects.filter((item) => item.label);
+    const subject = selectedSubject || labeledSubjects[0]?.key || '';
 
     return (
         <div className="mx-auto max-w-xl px-6 py-8">
@@ -31,7 +32,7 @@ export default function ContactPage() {
                     onChange={(e) => setSelectedSubject(e.target.value)}
                     className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
                 >
-                    {subjects.map((item) => (
+                    {labeledSubjects.map((item) => (
                         <option key={item.key} value={item.key}>
                             {item.label}
                         </option>

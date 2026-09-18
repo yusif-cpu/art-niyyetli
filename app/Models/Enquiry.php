@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'enquiry_subject_id', 'artwork_id', 'inventory_code', 'submitted_at', 'name',
-    'contact', 'email', 'phone', 'message', 'status', 'internal_note', 'ip_address', 'user_agent',
+    'contact', 'email', 'phone', 'message', 'status', 'internal_note', 'meta', 'ip_address', 'user_agent',
 ])]
 class Enquiry extends Model
 {
@@ -19,6 +19,7 @@ class Enquiry extends Model
         return [
             'submitted_at' => 'datetime',
             'status' => EnquiryStatus::class,
+            'meta' => 'array',
         ];
     }
 

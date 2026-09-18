@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Locale;
+use App\Http\Controllers\RobotsController;
 use App\Services\Seo\PublicPageSeoResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,8 @@ Route::get('/admin', function () {
 })->name('admin.app');
 
 require __DIR__.'/admin.php';
+
+Route::get('/robots.txt', [RobotsController::class, 'index']);
 
 // Serves the public SPA shell for any client-side route (e.g. /artworks/AN-2026-014)
 // so a hard refresh/deep link works. Registered last, after /admin and admin.php's

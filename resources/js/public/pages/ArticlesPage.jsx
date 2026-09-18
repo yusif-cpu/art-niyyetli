@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
+import { usePageMeta } from '../lib/usePageMeta.js';
 import { listArticles } from '../services/articles.js';
 import ArticleCard from '../components/ArticleCard.jsx';
 import Pagination from '../components/Pagination.jsx';
@@ -13,6 +14,8 @@ export default function ArticlesPage() {
     const { locale } = useLocale();
     const [page, setPage] = useState(1);
     const { data, meta, loading, error } = useApiData(() => listArticles(locale, { page }), [locale, page]);
+
+    usePageMeta({ title: `${t(locale, 'nav.articles')} — ArtNiyyətli` });
 
     if (loading) return <LoadingState />;
     if (error) return <ErrorState error={error} />;

@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
 import ArticleDetailPage from '../pages/ArticleDetailPage.jsx';
 
 function jsonResponse(status, body) {
@@ -23,5 +25,29 @@ describe('ArticleDetailPage', () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(404, { message: 'Not found.' }));
         render(<LocaleProvider><ArticleDetailPage params={{ slug: 'nope' }} /></LocaleProvider>);
         expect(await screen.findByText('Səhifə tapılmadı')).toBeInTheDocument();
+    });
+
+    it('sets document.title from the article title', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, {
+            data: { slug: 'a', title: 'An Interview', type: 'interview', short_text: 'Teaser.', content: '...', published_at: '2026-01-05T10:00:00+00:00', media: [] },
+        }));
+
+        render(<LocaleProvider><ArticleDetailPage params={{ slug: 'a' }} /></LocaleProvider>);
+
+        await waitFor(() => expect(document.title).toBe('An Interview — ArtNiyyətli'));
+    });
+
+    it('does not crash when the locale changes after the page has already loaded', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, {
+            data: { slug: 'a', title: 'An Interview', type: 'interview', short_text: 'Teaser.', content: '...', published_at: '2026-01-05T10:00:00+00:00', media: [] },
+        }));
+
+        render(<LocaleProvider><LocaleSwitcher /><ArticleDetailPage params={{ slug: 'a' }} /></LocaleProvider>);
+
+        await screen.findByText('An Interview');
+
+        await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+
+        await waitFor(() => expect(screen.getAllByText('An Interview').length).toBeGreaterThan(0));
     });
 });

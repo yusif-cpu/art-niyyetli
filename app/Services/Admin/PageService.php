@@ -2,6 +2,9 @@
 
 namespace App\Services\Admin;
 
+use App\Enums\PageNavPlacement;
+use App\Enums\PageType;
+use App\Exceptions\PageDeletionNotAllowedException;
 use App\Models\Page;
 use App\Models\PageSection;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +17,8 @@ class PageService
         unset($data['translations']);
 
         return DB::transaction(function () use ($data, $translations) {
+            $data['sort_order'] = $this->nextSortOrder($data['nav_placement'] ?? PageNavPlacement::None->value);
+
             $page = Page::create($data);
 
             $this->syncTranslations($page, $translations);
@@ -28,6 +33,10 @@ class PageService
         unset($data['translations']);
 
         return DB::transaction(function () use ($page, $data, $translations) {
+            if (isset($data['nav_placement']) && $data['nav_placement'] !== $page->nav_placement->value) {
+                $data['sort_order'] = $this->nextSortOrder($data['nav_placement']);
+            }
+
             $page->update($data);
 
             if ($translations !== null) {
@@ -36,6 +45,20 @@ class PageService
 
             return $page->fresh();
         });
+    }
+
+    public function delete(Page $page): void
+    {
+        if ($page->type !== PageType::Custom) {
+            throw new PageDeletionNotAllowedException('Structural pages (home, about, collectors, contact) cannot be deleted; deactivate or unlist it instead.');
+        }
+
+        $page->delete();
+    }
+
+    private function nextSortOrder(string $navPlacement): int
+    {
+        return ((int) Page::where('nav_placement', $navPlacement)->max('sort_order')) + 1;
     }
 
     public function createSection(Page $page, array $data): PageSection

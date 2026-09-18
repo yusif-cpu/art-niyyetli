@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Exceptions\ArtistDeletionNotAllowedException;
 use App\Models\Artist;
 use Illuminate\Support\Facades\DB;
 
@@ -48,6 +49,15 @@ class ArtistService
 
             return $artist->fresh();
         });
+    }
+
+    public function delete(Artist $artist): void
+    {
+        if ($artist->artworks()->exists()) {
+            throw new ArtistDeletionNotAllowedException('This artist has associated artworks and cannot be deleted; deactivate it instead.');
+        }
+
+        $artist->delete();
     }
 
     private function syncTranslations(Artist $artist, array $translations): void

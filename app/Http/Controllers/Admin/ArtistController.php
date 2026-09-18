@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\ArtistDeletionNotAllowedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreArtistRequest;
 use App\Http\Requests\Admin\UpdateArtistRequest;
 use App\Http\Resources\Admin\ArtistResource;
 use App\Models\Artist;
 use App\Services\Admin\ArtistService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -61,5 +63,16 @@ class ArtistController extends Controller
         $artist = $this->artists->update($artist, $request->validated());
 
         return $this->show($artist, $request);
+    }
+
+    public function destroy(Artist $artist): JsonResponse
+    {
+        try {
+            $this->artists->delete($artist);
+        } catch (ArtistDeletionNotAllowedException $e) {
+            return response()->json(['message' => $e->getMessage()], 409);
+        }
+
+        return response()->json(['message' => 'Artist archived.']);
     }
 }

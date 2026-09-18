@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\PageDeletionNotAllowedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReorderPagesRequest;
 use App\Http\Requests\Admin\StorePageRequest;
@@ -63,5 +64,16 @@ class PageController extends Controller
         $page = $this->pages->update($page, $request->validated());
 
         return $this->show($page);
+    }
+
+    public function destroy(Page $page): JsonResponse
+    {
+        try {
+            $this->pages->delete($page);
+        } catch (PageDeletionNotAllowedException $e) {
+            return response()->json(['message' => $e->getMessage()], 409);
+        }
+
+        return response()->json(['message' => 'Page archived.']);
     }
 }

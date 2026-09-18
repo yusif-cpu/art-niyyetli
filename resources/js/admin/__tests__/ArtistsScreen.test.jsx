@@ -122,4 +122,39 @@ describe('ArtistsScreen', () => {
             expect(screen.getByText('Dəyişikliklər yadda saxlanıldı')).toBeInTheDocument();
         });
     });
+
+    it('deletes an artist after confirmation', async () => {
+        setupFetch();
+        await openEditor();
+
+        global.fetch.mockImplementationOnce((url, options) => {
+            expect(url).toBe('/admin/artists/7');
+            expect(options.method).toBe('DELETE');
+            return Promise.resolve(jsonResponse(200, { message: 'Artist archived.' }));
+        });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Sil' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
+
+        await waitFor(() => {
+            expect(screen.getByText('Rəssam silindi')).toBeInTheDocument();
+        });
+    });
+
+    it('shows a friendly error and keeps the editor open when the artist has related artworks', async () => {
+        setupFetch();
+        await openEditor();
+
+        global.fetch.mockImplementationOnce(() =>
+            Promise.resolve(jsonResponse(409, { message: 'This artist has associated artworks and cannot be deleted; deactivate it instead.' }))
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Sil' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
+
+        await waitFor(() => {
+            expect(screen.getByText('Bu rəssamın əsərləri olduğu üçün silinə bilməz. Onun yerinə deaktiv edin.')).toBeInTheDocument();
+        });
+        expect(screen.getByDisplayValue('Əliyev')).toBeInTheDocument();
+    });
 });

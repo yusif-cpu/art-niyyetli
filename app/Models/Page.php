@@ -10,12 +10,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['type', 'is_active', 'nav_placement', 'sort_order'])]
 class Page extends Model
 {
     /** @use HasFactory<PageFactory> */
-    use HasFactory, HasSeoOverride;
+    use HasFactory, HasSeoOverride, SoftDeletes;
 
     protected function casts(): array
     {

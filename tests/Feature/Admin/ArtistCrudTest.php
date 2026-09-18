@@ -2,7 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Artist;
+use App\Models\Artwork;
+use App\Models\Genre;
 use App\Models\Media;
+use App\Models\Medium;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -138,5 +142,40 @@ class ArtistCrudTest extends TestCase
         $editor->roles()->attach(Role::query()->firstOrCreate(['name' => 'editor']));
 
         $this->actingAs($editor)->postJson('/admin/artists', $this->artistPayload())->assertOk();
+    }
+
+    public function test_administrator_can_delete_an_artist_without_artworks(): void
+    {
+        $artistId = $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload())->json('data.id');
+
+        $response = $this->actingAs($this->admin)->deleteJson("/admin/artists/{$artistId}");
+
+        $response->assertOk();
+        $this->assertSoftDeleted('artists', ['id' => $artistId]);
+        $this->actingAs($this->admin)->getJson('/admin/artists')->assertJsonMissing(['id' => $artistId]);
+    }
+
+    public function test_deleting_an_artist_with_artworks_is_rejected(): void
+    {
+        $artistId = $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload())->json('data.id');
+
+        Artwork::factory()->create([
+            'artist_id' => $artistId,
+            'genre_id' => Genre::factory()->create(['slug' => 'genre-'.uniqid()])->id,
+            'medium_id' => Medium::factory()->create(['slug' => 'medium-'.uniqid()])->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->deleteJson("/admin/artists/{$artistId}");
+
+        $response->assertStatus(409);
+        $this->assertNull(Artist::find($artistId)->deleted_at);
+    }
+
+    public function test_unauthenticated_request_cannot_delete_an_artist(): void
+    {
+        $artist = Artist::factory()->create();
+
+        $this->deleteJson("/admin/artists/{$artist->id}")->assertStatus(401);
+        $this->assertNull($artist->fresh()->deleted_at);
     }
 }

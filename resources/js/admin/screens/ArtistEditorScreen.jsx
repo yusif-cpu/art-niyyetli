@@ -8,8 +8,15 @@ import Toggle from '../components/Toggle.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 import MediaPicker from '../components/MediaPicker.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 const EMPTY_CORE = { birth_year: '', sort_order: 0, is_active: true, representation_image_id: null };
+
+function explainDeleteError(message) {
+    if (message?.includes('associated artworks')) return 'Bu rəssamın əsərləri olduğu üçün silinə bilməz. Onun yerinə deaktiv edin.';
+
+    return 'Bu rəssamı silmək mümkün olmadı.';
+}
 
 function translationsToState(translations) {
     const byLocale = {};
@@ -69,6 +76,7 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
     const [banner, setBanner] = useState('');
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
 
     function load() {
         if (isNew) {
@@ -144,6 +152,20 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
             }
         } finally {
             setSaving(false);
+        }
+    }
+
+    async function confirmDelete() {
+        try {
+            await apiFetch(`/artists/${artistId}`, { method: 'DELETE' });
+            show('Rəssam silindi', 'success');
+            onBack();
+        } catch (err) {
+            if (err instanceof ApiError) {
+                show(explainDeleteError(err.message), 'error');
+            }
+        } finally {
+            setDeleteConfirm(false);
         }
     }
 
@@ -261,15 +283,30 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
                     ))}
                 </section>
 
-                <div className="flex justify-end gap-2">
-                    <Button type="button" variant="secondary" onClick={onBack}>
-                        Ləğv et
-                    </Button>
-                    <Button type="submit" loading={saving}>
-                        Yadda saxla
-                    </Button>
+                <div className="flex items-center justify-between">
+                    {!isNew && (
+                        <Button type="button" variant="danger" onClick={() => setDeleteConfirm(true)}>
+                            Sil
+                        </Button>
+                    )}
+                    <div className="ml-auto flex gap-2">
+                        <Button type="button" variant="secondary" onClick={onBack}>
+                            Ləğv et
+                        </Button>
+                        <Button type="submit" loading={saving}>
+                            Yadda saxla
+                        </Button>
+                    </div>
                 </div>
             </form>
+
+            <ConfirmDialog
+                open={deleteConfirm}
+                title="Bu rəssamı silmək istədiyinizə əminsiniz?"
+                body="Bu əməliyyat geri qaytarıla bilməz."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteConfirm(false)}
+            />
         </div>
     );
 }

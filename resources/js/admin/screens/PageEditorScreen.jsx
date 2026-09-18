@@ -8,6 +8,7 @@ import Toggle from '../components/Toggle.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import PageSectionForm from './PageSectionForm.jsx';
 
 function translationsToState(translations) {
@@ -22,6 +23,12 @@ function translationsToState(translations) {
     };
 }
 
+function explainDeleteError(message) {
+    if (message?.includes('Structural pages')) return 'Struktur səhifələr (Ana səhifə, Haqqımızda, Kolleksionerlər, Əlaqə) silinə bilməz. Onun yerinə deaktiv edin.';
+
+    return 'Bu səhifəni silmək mümkün olmadı.';
+}
+
 export default function PageEditorScreen({ pageId, onBack }) {
     const { show } = useToast();
     const [page, setPage] = useState(null);
@@ -32,6 +39,7 @@ export default function PageEditorScreen({ pageId, onBack }) {
     const [errors, setErrors] = useState({});
     const [banner, setBanner] = useState('');
     const [sectionForm, setSectionForm] = useState(null); // null | 'new' | section object
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
 
     function load() {
         apiFetch(`/pages/${pageId}`).then((res) => {
@@ -106,6 +114,20 @@ export default function PageEditorScreen({ pageId, onBack }) {
         load();
     }
 
+    async function confirmDelete() {
+        try {
+            await apiFetch(`/pages/${pageId}`, { method: 'DELETE' });
+            show('Səhifə silindi', 'success');
+            onBack();
+        } catch (err) {
+            if (err instanceof ApiError) {
+                show(explainDeleteError(err.message), 'error');
+            }
+        } finally {
+            setDeleteConfirm(false);
+        }
+    }
+
     if (!page || !fields) {
         return <p className="text-sm text-neutral-500 dark:text-neutral-400">Yüklənir...</p>;
     }
@@ -128,12 +150,23 @@ export default function PageEditorScreen({ pageId, onBack }) {
                 <TextField label="Başlıq" value={fields[locale].title} onChange={(v) => updateField('title', v)} error={errors?.[`translations.0.title`]?.[0]} />
                 <TextArea label="Məzmun" rows={6} value={fields[locale].content} onChange={(v) => updateField('content', v)} />
 
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                    <Button type="button" variant="danger" onClick={() => setDeleteConfirm(true)}>
+                        Sil
+                    </Button>
                     <Button type="submit" loading={saving}>
                         Yadda saxla
                     </Button>
                 </div>
             </form>
+
+            <ConfirmDialog
+                open={deleteConfirm}
+                title="Bu səhifəni silmək istədiyinizə əminsiniz?"
+                body="Bu əməliyyat geri qaytarıla bilməz."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteConfirm(false)}
+            />
 
             <div>
                 <div className="mb-2 flex items-center justify-between">

@@ -67,6 +67,7 @@ class EnquiryController extends Controller
         return response()->json(['data' => [
             'latest_id' => Enquiry::max('id'),
             'new_count' => Enquiry::where('status', EnquiryStatus::New)->count(),
+            'total_count' => Enquiry::count(),
         ]]);
     }
 

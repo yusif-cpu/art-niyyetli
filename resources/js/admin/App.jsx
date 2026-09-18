@@ -37,7 +37,8 @@ const SCREENS = {
 function AuthenticatedApp({ session, onLogout }) {
     const [route, navigate] = useHashRoute();
     const Screen = SCREENS[route] || DashboardScreen;
-    const { newCount, refreshSignal } = useEnquiryPolling(session.stats?.enquiries_new);
+    const { newCount, totalCount, refreshSignal } = useEnquiryPolling(session.stats?.enquiries_new, session.stats?.enquiries);
+    const stats = { ...session.stats, enquiries: totalCount, enquiries_new: newCount };
 
     return (
         <AdminShell
@@ -48,7 +49,7 @@ function AuthenticatedApp({ session, onLogout }) {
             badges={{ enquiries: newCount }}
         >
             <Screen
-                stats={session.stats}
+                stats={stats}
                 recentEnquiries={session.recent_enquiries}
                 upcomingExhibitions={session.upcoming_exhibitions}
                 recentArtworks={session.recent_artworks}

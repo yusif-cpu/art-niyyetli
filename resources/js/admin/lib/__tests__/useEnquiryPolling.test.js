@@ -20,18 +20,19 @@ describe('useEnquiryPolling', () => {
         vi.useRealTimers();
     });
 
-    it('fetches status on mount and updates the new-enquiry count', async () => {
+    it('fetches status on mount and updates the new-enquiry and total counts', async () => {
         global.fetch = vi.fn(() =>
-            Promise.resolve(jsonResponse(200, { data: { latest_id: 5, new_count: 2 } }))
+            Promise.resolve(jsonResponse(200, { data: { latest_id: 5, new_count: 2, total_count: 9 } }))
         );
 
-        const { result } = renderHook(() => useEnquiryPolling(0));
+        const { result } = renderHook(() => useEnquiryPolling(0, 0));
 
         await act(async () => {
             await vi.advanceTimersByTimeAsync(0);
         });
 
         expect(result.current.newCount).toBe(2);
+        expect(result.current.totalCount).toBe(9);
         expect(global.fetch).toHaveBeenCalledWith('/admin/enquiries/status', expect.anything());
     });
 

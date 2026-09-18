@@ -141,6 +141,68 @@ describe('PagesScreen', () => {
         await screen.findByDisplayValue('Yeni səhifə başlığı');
     });
 
+    it('deletes a custom page after confirmation', async () => {
+        const customPageDetail = {
+            id: 2,
+            type: 'custom',
+            is_active: true,
+            translations: [{ locale: 'az', slug: 'yeni-sehife', title: 'Yeni səhifə başlığı', content: 'Yeni məzmun' }],
+            sections: [],
+        };
+
+        global.fetch = vi.fn((url, options) => {
+            if (url === '/admin/pages' && (!options || options.method === 'GET')) {
+                return Promise.resolve(jsonResponse(200, {
+                    data: [{ id: 2, type: 'custom', is_active: true, nav_placement: 'none', sort_order: 0, translation: { title: 'Yeni səhifə başlığı' } }],
+                }));
+            }
+            if (url === '/admin/pages/2' && (!options || options.method === 'GET')) {
+                return Promise.resolve(jsonResponse(200, { data: customPageDetail }));
+            }
+            return Promise.resolve(jsonResponse(200, { data: {} }));
+        });
+
+        render(
+            <ToastProvider>
+                <PagesScreen />
+            </ToastProvider>
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Redaktə et' }));
+        await screen.findByDisplayValue('Yeni səhifə başlığı');
+
+        global.fetch.mockImplementationOnce((url, options) => {
+            expect(url).toBe('/admin/pages/2');
+            expect(options.method).toBe('DELETE');
+            return Promise.resolve(jsonResponse(200, { message: 'Page archived.' }));
+        });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Sil' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
+
+        await waitFor(() => {
+            expect(screen.getByText('Səhifə silindi')).toBeInTheDocument();
+        });
+    });
+
+    it('shows a friendly error and keeps the editor open when deleting a structural page', async () => {
+        await openEditor();
+
+        global.fetch.mockImplementationOnce(() =>
+            Promise.resolve(jsonResponse(409, { message: 'Structural pages (home, about, collectors, contact) cannot be deleted; deactivate or unlist it instead.' }))
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Sil' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
+
+        await waitFor(() => {
+            expect(
+                screen.getByText('Struktur səhifələr (Ana səhifə, Haqqımızda, Kolleksionerlər, Əlaqə) silinə bilməz. Onun yerinə deaktiv edin.')
+            ).toBeInTheDocument();
+        });
+        expect(screen.getByDisplayValue('Ana səhifə başlığı')).toBeInTheDocument();
+    });
+
     it('shows an image preview for a section that has one, and no broken preview for a section without one (regression check)', async () => {
         global.fetch = vi.fn((url) => {
             if (url === '/admin/pages') {

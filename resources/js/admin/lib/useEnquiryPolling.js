@@ -3,8 +3,9 @@ import { apiFetch } from './api.js';
 
 const POLL_INTERVAL_MS = 15000;
 
-export function useEnquiryPolling(initialCount) {
-    const [newCount, setNewCount] = useState(initialCount ?? 0);
+export function useEnquiryPolling(initialNewCount, initialTotalCount) {
+    const [newCount, setNewCount] = useState(initialNewCount ?? 0);
+    const [totalCount, setTotalCount] = useState(initialTotalCount ?? 0);
     const [refreshSignal, setRefreshSignal] = useState(0);
     const latestIdRef = useRef(null);
 
@@ -18,8 +19,9 @@ export function useEnquiryPolling(initialCount) {
                 .then((res) => {
                     if (cancelled) return;
 
-                    const { latest_id, new_count } = res.data;
+                    const { latest_id, new_count, total_count } = res.data;
                     setNewCount(new_count);
+                    setTotalCount(total_count);
 
                     if (latestIdRef.current !== null && latest_id !== latestIdRef.current) {
                         setRefreshSignal((n) => n + 1);
@@ -38,5 +40,5 @@ export function useEnquiryPolling(initialCount) {
         };
     }, []);
 
-    return { newCount, refreshSignal };
+    return { newCount, totalCount, refreshSignal };
 }

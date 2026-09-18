@@ -30,7 +30,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('artworks/reorder', [ArtworkController::class, 'reorder'])->name('artworks.reorder');
             Route::apiResource('artworks', ArtworkController::class)->except(['create', 'edit']);
 
-            Route::apiResource('artists', ArtistController::class)->only(['index', 'store', 'show', 'update']);
+            Route::apiResource('artists', ArtistController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
             Route::get('genres', [GenreController::class, 'index'])->name('genres.index');
             Route::get('mediums', [MediumController::class, 'index'])->name('mediums.index');
 
@@ -47,7 +47,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
             Route::post('pages/reorder', [PageController::class, 'reorder'])->name('pages.reorder');
-            Route::apiResource('pages', PageController::class)->only(['index', 'show', 'store', 'update']);
+            Route::apiResource('pages', PageController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 
             Route::get('pages/{page}/sections', [PageSectionController::class, 'index'])->name('pages.sections.index');
             Route::post('pages/{page}/sections', [PageSectionController::class, 'store'])->name('pages.sections.store');

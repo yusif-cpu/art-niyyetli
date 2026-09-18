@@ -273,6 +273,7 @@ class EnquiryCrudTest extends TestCase
         $response->assertOk();
         $this->assertSame($latest->id, $response->json('data.latest_id'));
         $this->assertSame(1, $response->json('data.new_count'));
+        $this->assertSame(2, $response->json('data.total_count'));
     }
 
     public function test_status_endpoint_changes_after_a_new_enquiry_is_created(): void

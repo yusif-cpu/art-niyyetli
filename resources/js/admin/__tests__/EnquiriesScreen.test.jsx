@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import EnquiriesScreen from '../screens/EnquiriesScreen.jsx';
@@ -23,6 +23,7 @@ const listItems = [
         status: 'new',
         internal_note: null,
         artwork: { id: 1, inventory_code: 'AN-000001', title: 'Yaz mənzərəsi' },
+        subject: 'Almaq',
         created_at: '2026-09-16T10:00:00Z',
     },
     {
@@ -68,6 +69,36 @@ describe('EnquiriesScreen', () => {
 
         await screen.findByText('Aysel Məmmədova — aysel@example.com');
         expect(screen.getByText('Elvin Quliyev — elvin@example.com')).toBeInTheDocument();
+    });
+
+    it('shows the enquiry subject in the list row', async () => {
+        render(
+            <ToastProvider>
+                <EnquiriesScreen />
+            </ToastProvider>
+        );
+
+        const row = (await screen.findByText('Aysel Məmmədova — aysel@example.com')).closest('li');
+        expect(within(row).getByText((text) => text.includes('Almaq'))).toBeInTheDocument();
+    });
+
+    it('reloads the list when enquiryRefreshSignal changes', async () => {
+        const { rerender } = render(
+            <ToastProvider>
+                <EnquiriesScreen enquiryRefreshSignal={0} />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Aysel Məmmədova — aysel@example.com');
+        const callsBefore = global.fetch.mock.calls.length;
+
+        rerender(
+            <ToastProvider>
+                <EnquiriesScreen enquiryRefreshSignal={1} />
+            </ToastProvider>
+        );
+
+        await waitFor(() => expect(global.fetch.mock.calls.length).toBeGreaterThan(callsBefore));
     });
 
     it('renders the empty state when no enquiries match', async () => {

@@ -17,6 +17,8 @@ class PageResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type->value,
             'is_active' => $this->is_active,
+            'nav_placement' => $this->nav_placement->value,
+            'sort_order' => $this->sort_order,
             'translation' => $translation ? [
                 'locale' => $translation->locale->value,
                 'slug' => $translation->slug,

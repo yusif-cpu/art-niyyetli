@@ -1,13 +1,11 @@
 export const dictionary = {
     az: {
         nav: {
-            home: 'Ana səhifə',
             artworks: 'Əsərlər',
             artists: 'Rəssamlar',
             exhibitions: 'Sərgilər',
             articles: 'Jurnal',
             faqs: 'Suallar',
-            contact: 'Əlaqə',
         },
         common: {
             loading: 'Yüklənir...',
@@ -77,22 +75,14 @@ export const dictionary = {
             title: 'Əlaqə',
             subjectLabel: 'Mövzu',
         },
-        footer: {
-            privacyPolicy: 'Məxfilik siyasəti',
-            terms: 'İstifadə şərtləri',
-            shippingReturns: 'Çatdırılma və qaytarılma',
-            copyright: 'Müəllif hüquqları',
-        },
     },
     en: {
         nav: {
-            home: 'Home',
             artworks: 'Artworks',
             artists: 'Artists',
             exhibitions: 'Exhibitions',
             articles: 'Journal',
             faqs: 'FAQ',
-            contact: 'Contact',
         },
         common: {
             loading: 'Loading...',
@@ -161,12 +151,6 @@ export const dictionary = {
         contact: {
             title: 'Contact',
             subjectLabel: 'Subject',
-        },
-        footer: {
-            privacyPolicy: 'Privacy Policy',
-            terms: 'Terms & Conditions',
-            shippingReturns: 'Shipping & Returns',
-            copyright: 'Copyright',
         },
     },
 };

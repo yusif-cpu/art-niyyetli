@@ -46,6 +46,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::match(['put', 'patch'], 'media/{media}', [MediaController::class, 'update'])->name('media.update');
             Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
+            Route::post('pages/reorder', [PageController::class, 'reorder'])->name('pages.reorder');
             Route::apiResource('pages', PageController::class)->only(['index', 'show', 'store', 'update']);
 
             Route::get('pages/{page}/sections', [PageSectionController::class, 'index'])->name('pages.sections.index');
@@ -62,6 +63,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('social-links/reorder', [SocialLinkController::class, 'reorder'])->name('social-links.reorder');
             Route::apiResource('social-links', SocialLinkController::class)->except(['create', 'edit']);
 
+            Route::get('enquiries/status', [EnquiryController::class, 'status'])->name('enquiries.status');
             Route::apiResource('enquiries', EnquiryController::class)->only(['index', 'show', 'update']);
             Route::post('enquiries/{enquiry}/reply', [EnquiryController::class, 'reply']);
 

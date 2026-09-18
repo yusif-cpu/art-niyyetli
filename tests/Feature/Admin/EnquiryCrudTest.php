@@ -253,6 +253,47 @@ class EnquiryCrudTest extends TestCase
         $this->actingAs($this->admin)->deleteJson("/admin/enquiries/{$enquiry->id}")->assertStatus(405);
     }
 
+    public function test_index_includes_subject_name(): void
+    {
+        $this->makeEnquiry();
+
+        $response = $this->actingAs($this->admin)->getJson('/admin/enquiries');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.0.subject', 'Almaq');
+    }
+
+    public function test_status_endpoint_reports_latest_id_and_new_count(): void
+    {
+        $this->makeEnquiry(['status' => 'new']);
+        $latest = $this->makeEnquiry(['status' => 'closed']);
+
+        $response = $this->actingAs($this->admin)->getJson('/admin/enquiries/status');
+
+        $response->assertOk();
+        $this->assertSame($latest->id, $response->json('data.latest_id'));
+        $this->assertSame(1, $response->json('data.new_count'));
+    }
+
+    public function test_status_endpoint_changes_after_a_new_enquiry_is_created(): void
+    {
+        $this->makeEnquiry();
+
+        $before = $this->actingAs($this->admin)->getJson('/admin/enquiries/status')->json('data.latest_id');
+
+        $created = $this->makeEnquiry();
+
+        $after = $this->actingAs($this->admin)->getJson('/admin/enquiries/status')->json('data.latest_id');
+
+        $this->assertNotSame($before, $after);
+        $this->assertSame($created->id, $after);
+    }
+
+    public function test_status_endpoint_requires_authentication(): void
+    {
+        $this->getJson('/admin/enquiries/status')->assertStatus(401);
+    }
+
     public function test_dashboard_enquiries_new_reflects_only_new_status(): void
     {
         $this->makeEnquiry(['status' => 'new']);

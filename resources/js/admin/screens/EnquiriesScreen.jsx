@@ -19,7 +19,7 @@ const SUBJECT_LABELS = {
     other: 'Digər',
 };
 
-export default function EnquiriesScreen() {
+export default function EnquiriesScreen({ enquiryRefreshSignal } = {}) {
     const [enquiries, setEnquiries] = useState(null);
     const [meta, setMeta] = useState(null);
     const [page, setPage] = useState(1);
@@ -44,7 +44,7 @@ export default function EnquiriesScreen() {
             .catch(() => setError('Sorğuları yükləmək mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.'));
     }
 
-    useEffect(load, [page, status, subject, search]);
+    useEffect(load, [page, status, subject, search, enquiryRefreshSignal]);
 
     if (openId) {
         return (
@@ -130,6 +130,7 @@ export default function EnquiriesScreen() {
                                         )}
                                     </p>
                                     <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                        {enquiry.subject && <>{enquiry.subject} · </>}
                                         {enquiry.artwork?.inventory_code} · {STATUS_LABELS[enquiry.status]} · {new Date(enquiry.created_at).toLocaleDateString('az')}
                                     </p>
                                 </div>

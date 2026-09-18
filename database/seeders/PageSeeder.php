@@ -18,6 +18,17 @@ class PageSeeder extends Seeder
     ];
 
     /**
+     * Default header order for the singleton pages, matching the site's
+     * established navigation sequence. Admins can reorder these afterward.
+     */
+    private const HEADER_ORDER = [
+        'home' => 0,
+        'about' => 1,
+        'collectors' => 2,
+        'contact' => 3,
+    ];
+
+    /**
      * Legal/content pages: unlike the singleton types above, `custom` is not
      * looped as a single page — it supports any number of pages, each
      * identified by its own slug rather than by `type`.
@@ -48,7 +59,11 @@ class PageSeeder extends Seeder
                 continue;
             }
 
-            $page = Page::query()->updateOrCreate(['type' => $type->value], ['is_active' => true]);
+            $page = Page::query()->updateOrCreate(['type' => $type->value], [
+                'is_active' => true,
+                'nav_placement' => 'header',
+                'sort_order' => self::HEADER_ORDER[$type->value],
+            ]);
 
             foreach (Locale::cases() as $locale) {
                 $page->translations()->updateOrCreate(
@@ -71,11 +86,19 @@ class PageSeeder extends Seeder
 
     private function seedLegalPages(): void
     {
+        $sortOrder = 0;
+
         foreach (self::LEGAL_PAGES as $slug => $locales) {
             $existing = PageTranslation::query()->where('slug', $slug)->first();
             $page = $existing
                 ? Page::query()->find($existing->page_id)
-                : Page::query()->create(['type' => PageType::Custom->value, 'is_active' => true]);
+                : Page::query()->create([
+                    'type' => PageType::Custom->value,
+                    'is_active' => true,
+                    'nav_placement' => 'footer',
+                    'sort_order' => $sortOrder,
+                ]);
+            $sortOrder++;
 
             foreach (Locale::cases() as $locale) {
                 $page->translations()->updateOrCreate(

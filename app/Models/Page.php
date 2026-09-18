@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PageNavPlacement;
 use App\Enums\PageType;
 use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\PageFactory;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['type', 'is_active'])]
+#[Fillable(['type', 'is_active', 'nav_placement', 'sort_order'])]
 class Page extends Model
 {
     /** @use HasFactory<PageFactory> */
@@ -18,7 +19,11 @@ class Page extends Model
 
     protected function casts(): array
     {
-        return ['type' => PageType::class, 'is_active' => 'boolean'];
+        return [
+            'type' => PageType::class,
+            'is_active' => 'boolean',
+            'nav_placement' => PageNavPlacement::class,
+        ];
     }
 
     public function translations(): HasMany

@@ -28,7 +28,7 @@ describe('PagesScreen', () => {
     beforeEach(() => {
         global.fetch = vi.fn((url) => {
             if (url === '/admin/pages') {
-                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, translation: { title: 'Ana səhifə başlığı' } }] }));
+                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, nav_placement: 'header', sort_order: 0, translation: { title: 'Ana səhifə başlığı' } }] }));
             }
             if (url === '/admin/pages/1') {
                 return Promise.resolve(jsonResponse(200, { data: pageDetail }));
@@ -113,7 +113,7 @@ describe('PagesScreen', () => {
                 return Promise.resolve(jsonResponse(201, { data: { id: 2 } }));
             }
             if (url === '/admin/pages' && options?.method === 'GET') {
-                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, translation: { title: 'Ana səhifə başlığı' } }] }));
+                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, nav_placement: 'header', sort_order: 0, translation: { title: 'Ana səhifə başlığı' } }] }));
             }
             if (url === '/admin/pages/2') {
                 return Promise.resolve(jsonResponse(200, { data: newPageDetail }));
@@ -144,7 +144,7 @@ describe('PagesScreen', () => {
     it('shows an image preview for a section that has one, and no broken preview for a section without one (regression check)', async () => {
         global.fetch = vi.fn((url) => {
             if (url === '/admin/pages') {
-                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, translation: { title: 'Ana səhifə başlığı' } }] }));
+                return Promise.resolve(jsonResponse(200, { data: [{ id: 1, type: 'home', is_active: true, nav_placement: 'header', sort_order: 0, translation: { title: 'Ana səhifə başlığı' } }] }));
             }
             if (url === '/admin/pages/1') {
                 return Promise.resolve(
@@ -169,5 +169,102 @@ describe('PagesScreen', () => {
 
         const aboutRow = screen.getByText('about').closest('li');
         expect(within(aboutRow).queryByRole('img')).not.toBeInTheDocument();
+    });
+
+    it('changes a page nav_placement via the select and reloads the list', async () => {
+        global.fetch = vi.fn((url, options) => {
+            if (url === '/admin/pages' && (!options || options.method === 'GET')) {
+                return Promise.resolve(jsonResponse(200, {
+                    data: [{ id: 1, type: 'home', is_active: true, nav_placement: 'header', sort_order: 0, translation: { title: 'Ana səhifə başlığı' } }],
+                }));
+            }
+            if (url === '/admin/pages/1' && options?.method === 'PUT') {
+                return Promise.resolve(jsonResponse(200, { data: { id: 1 } }));
+            }
+            return Promise.resolve(jsonResponse(200, { data: {} }));
+        });
+
+        render(
+            <ToastProvider>
+                <PagesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Ana səhifə başlığı');
+
+        await userEvent.selectOptions(screen.getByLabelText('Naviqasiya yeri'), 'footer');
+
+        await waitFor(() => {
+            const putCall = global.fetch.mock.calls.find(([callUrl, callOptions]) => callUrl === '/admin/pages/1' && callOptions?.method === 'PUT');
+            expect(putCall).toBeTruthy();
+            expect(JSON.parse(putCall[1].body)).toEqual({ nav_placement: 'footer' });
+        });
+    });
+
+    it('shows an error toast and does not reload the list when reordering fails', async () => {
+        global.fetch = vi.fn((url, options) => {
+            if (url === '/admin/pages' && (!options || options.method === 'GET')) {
+                return Promise.resolve(jsonResponse(200, {
+                    data: [
+                        { id: 1, type: 'home', is_active: true, nav_placement: 'header', sort_order: 0, translation: { title: 'Ana səhifə' } },
+                        { id: 2, type: 'about', is_active: true, nav_placement: 'header', sort_order: 1, translation: { title: 'Haqqımızda' } },
+                    ],
+                }));
+            }
+            if (url === '/admin/pages/reorder' && options?.method === 'POST') {
+                return Promise.resolve(jsonResponse(422, { message: 'Sıralama uğursuz oldu.', errors: {} }));
+            }
+            return Promise.resolve(jsonResponse(200, { data: {} }));
+        });
+
+        render(
+            <ToastProvider>
+                <PagesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Haqqımızda');
+
+        await userEvent.click(screen.getAllByRole('button', { name: 'Yuxarı' })[1]);
+
+        await screen.findByText('Sıralama uğursuz oldu.');
+    });
+
+    it('moves a page up within its placement group using the reorder endpoint', async () => {
+        global.fetch = vi.fn((url, options) => {
+            if (url === '/admin/pages' && (!options || options.method === 'GET')) {
+                return Promise.resolve(jsonResponse(200, {
+                    data: [
+                        { id: 1, type: 'home', is_active: true, nav_placement: 'header', sort_order: 0, translation: { title: 'Ana səhifə' } },
+                        { id: 2, type: 'about', is_active: true, nav_placement: 'header', sort_order: 1, translation: { title: 'Haqqımızda' } },
+                    ],
+                }));
+            }
+            if (url === '/admin/pages/reorder' && options?.method === 'POST') {
+                return Promise.resolve(jsonResponse(200, { message: 'Pages reordered.' }));
+            }
+            return Promise.resolve(jsonResponse(200, { data: {} }));
+        });
+
+        render(
+            <ToastProvider>
+                <PagesScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('Haqqımızda');
+
+        await userEvent.click(screen.getAllByRole('button', { name: 'Yuxarı' })[1]);
+
+        await waitFor(() => {
+            const reorderCall = global.fetch.mock.calls.find(([callUrl]) => callUrl === '/admin/pages/reorder');
+            expect(reorderCall).toBeTruthy();
+            expect(JSON.parse(reorderCall[1].body)).toEqual({
+                items: [
+                    { id: 2, sort_order: 0 },
+                    { id: 1, sort_order: 1 },
+                ],
+            });
+        });
     });
 });

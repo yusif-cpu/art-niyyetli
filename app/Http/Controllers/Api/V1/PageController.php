@@ -15,6 +15,7 @@ class PageController extends Controller
         $pages = Page::query()
             ->where('is_active', true)
             ->with('translations')
+            ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
 

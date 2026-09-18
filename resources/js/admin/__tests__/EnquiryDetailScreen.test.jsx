@@ -116,6 +116,45 @@ describe('EnquiryDetailScreen', () => {
         expect(screen.queryByLabelText('Mesaj')).not.toBeInTheDocument();
     });
 
+    it('shows the recipient and the original message inside the reply form', async () => {
+        renderScreen();
+
+        await screen.findByText('Bu əsər haqqında məlumat almaq istəyirəm.');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Müştəriyə cavab yaz' }));
+
+        expect(screen.getByText('Orijinal mesaj:')).toBeInTheDocument();
+        expect(screen.getAllByText('Bu əsər haqqında məlumat almaq istəyirəm.')).toHaveLength(2);
+        expect(screen.getByText((_, node) => node.textContent === 'Alıcı: Aysel Məmmədova <aysel@example.com>')).toBeInTheDocument();
+    });
+
+    it('disables the send button while a reply is in flight to prevent duplicate submission', async () => {
+        renderScreen();
+
+        await screen.findByText('Bu əsər haqqında məlumat almaq istəyirəm.');
+        await userEvent.click(screen.getByRole('button', { name: 'Müştəriyə cavab yaz' }));
+        await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam.');
+
+        let resolveReply;
+        global.fetch.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveReply = resolve;
+                })
+        );
+
+        const sendButton = screen.getByRole('button', { name: 'Cavab göndər' });
+        await userEvent.click(sendButton);
+
+        await waitFor(() => expect(sendButton).toBeDisabled());
+
+        resolveReply(
+            jsonResponse(200, {
+                data: { id: 5, recipient: 'aysel@example.com', subject: 'Re: AN-000001', message: 'Salam.', status: 'sent', sent_at: null, created_at: null },
+            })
+        );
+    });
+
     it('shows the real backend error message in the form banner when sending fails', async () => {
         renderScreen();
 

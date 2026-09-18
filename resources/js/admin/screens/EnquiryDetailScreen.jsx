@@ -61,6 +61,8 @@ export default function EnquiryDetailScreen({ enquiryId, onBack }) {
     }
 
     async function sendReply() {
+        if (replySending) return;
+
         setReplySending(true);
         setReplyError('');
         try {
@@ -170,9 +172,13 @@ export default function EnquiryDetailScreen({ enquiryId, onBack }) {
 
                 {replyOpen && (
                     <div className="space-y-3">
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                            <strong>Alıcı:</strong> {enquiry.email}
-                        </p>
+                        <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-800">
+                            <p>
+                                <strong>Alıcı:</strong> {enquiry.name} &lt;{enquiry.email}&gt;
+                            </p>
+                            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Orijinal mesaj:</p>
+                            <p className="whitespace-pre-wrap text-neutral-600 dark:text-neutral-300">{enquiry.message}</p>
+                        </div>
                         <TextField label="Mövzu" value={replySubject} onChange={setReplySubject} />
                         <TextArea label="Mesaj" value={replyMessage} onChange={setReplyMessage} rows={5} />
                         <Banner>{replyError}</Banner>
@@ -180,7 +186,7 @@ export default function EnquiryDetailScreen({ enquiryId, onBack }) {
                             <Button variant="secondary" onClick={closeReplyForm} disabled={replySending}>
                                 Ləğv et
                             </Button>
-                            <Button loading={replySending} onClick={sendReply}>
+                            <Button loading={replySending} disabled={replySending} onClick={sendReply}>
                                 Cavab göndər
                             </Button>
                         </div>

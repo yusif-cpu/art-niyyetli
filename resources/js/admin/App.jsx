@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from './lib/api.js';
 import { useHashRoute } from './lib/useHashRoute.js';
+import { useEnquiryPolling } from './lib/useEnquiryPolling.js';
 import { ThemeProvider } from './components/ThemeContext.jsx';
 import { ToastProvider } from './components/ToastContext.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
@@ -36,6 +37,7 @@ const SCREENS = {
 function AuthenticatedApp({ session, onLogout }) {
     const [route, navigate] = useHashRoute();
     const Screen = SCREENS[route] || DashboardScreen;
+    const { newCount, refreshSignal } = useEnquiryPolling(session.stats?.enquiries_new);
 
     return (
         <AdminShell
@@ -43,13 +45,14 @@ function AuthenticatedApp({ session, onLogout }) {
             current={route}
             onNavigate={navigate}
             onLogout={onLogout}
-            badges={{ enquiries: session.stats?.enquiries_new }}
+            badges={{ enquiries: newCount }}
         >
             <Screen
                 stats={session.stats}
                 recentEnquiries={session.recent_enquiries}
                 upcomingExhibitions={session.upcoming_exhibitions}
                 recentArtworks={session.recent_artworks}
+                enquiryRefreshSignal={refreshSignal}
             />
         </AdminShell>
     );

@@ -21,7 +21,7 @@ class EnquiryController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Enquiry::query()->with(['artwork.translations']);
+        $query = Enquiry::query()->with(['artwork.translations', 'subject.translations']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
@@ -55,6 +55,19 @@ class EnquiryController extends Controller
             ->withQueryString();
 
         return EnquiryResource::collection($enquiries);
+    }
+
+    /**
+     * Minimal polling endpoint for the admin's live new-enquiry notification.
+     * Deliberately exposes only enough to detect newly created enquiries —
+     * no names, emails, or messages — so it stays cheap to poll frequently.
+     */
+    public function status(): JsonResponse
+    {
+        return response()->json(['data' => [
+            'latest_id' => Enquiry::max('id'),
+            'new_count' => Enquiry::where('status', EnquiryStatus::New)->count(),
+        ]]);
     }
 
     public function show(Enquiry $enquiry): EnquiryResource

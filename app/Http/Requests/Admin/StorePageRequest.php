@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\Locale;
+use App\Enums\PageNavPlacement;
 use App\Enums\PageType;
 use App\Http\Requests\Admin\Concerns\ValidatesPagePayload;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,6 +31,7 @@ class StorePageRequest extends FormRequest
                 ),
             ],
             'is_active' => ['required', 'boolean'],
+            'nav_placement' => ['sometimes', Rule::enum(PageNavPlacement::class)],
 
             'translations' => ['required', 'array', 'min:1'],
             'translations.*.locale' => ['required', Rule::enum(Locale::class)],

@@ -8,6 +8,26 @@ function jsonResponse(body) {
     return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body };
 }
 
+const PAGES_AZ = [
+    { slug: 'home', type: 'home', nav_placement: 'header', title: 'Ana səhifə' },
+    { slug: 'about', type: 'about', nav_placement: 'header', title: 'Haqqımızda' },
+    { slug: 'collectors', type: 'collectors', nav_placement: 'header', title: 'Kolleksionerlər üçün' },
+    { slug: 'contact', type: 'contact', nav_placement: 'header', title: 'Əlaqə' },
+    { slug: 'privacy-policy', type: 'custom', nav_placement: 'footer', title: 'Məxfilik siyasəti' },
+    { slug: 'terms', type: 'custom', nav_placement: 'footer', title: 'İstifadə şərtləri' },
+    { slug: 'unlisted', type: 'custom', nav_placement: 'none', title: 'Unlisted draft' },
+];
+
+const PAGES_EN = [
+    { slug: 'home', type: 'home', nav_placement: 'header', title: 'Home' },
+    { slug: 'about', type: 'about', nav_placement: 'header', title: 'About' },
+    { slug: 'collectors', type: 'collectors', nav_placement: 'header', title: 'For collectors' },
+    { slug: 'contact', type: 'contact', nav_placement: 'header', title: 'Contact' },
+    { slug: 'privacy-policy', type: 'custom', nav_placement: 'footer', title: 'Privacy Policy' },
+    { slug: 'terms', type: 'custom', nav_placement: 'footer', title: 'Terms & Conditions' },
+    { slug: 'unlisted', type: 'custom', nav_placement: 'none', title: 'Unlisted draft' },
+];
+
 describe('SiteShell', () => {
     beforeEach(() => {
         global.fetch = vi.fn((url) => {
@@ -17,11 +37,14 @@ describe('SiteShell', () => {
             if (url.includes('/social-links')) {
                 return Promise.resolve(jsonResponse({ data: [{ platform: 'instagram', url: 'https://instagram.com/artniyyetli', sort_order: 0 }] }));
             }
+            if (url.includes('/pages')) {
+                return Promise.resolve(jsonResponse({ data: url.includes('locale=en') ? PAGES_EN : PAGES_AZ }));
+            }
             return Promise.resolve(jsonResponse({ data: {} }));
         });
     });
 
-    it('renders nav links, footer contact info, and social links, guarding null fields', async () => {
+    it('renders header pages, catalogue links, footer pages, and social links, guarding null fields', async () => {
         render(
             <LocaleProvider>
                 <SiteShell>
@@ -30,9 +53,12 @@ describe('SiteShell', () => {
             </LocaleProvider>
         );
 
+        expect(await screen.findByRole('link', { name: 'Ana səhifə' })).toHaveAttribute('href', '/');
+        expect(screen.getByRole('link', { name: 'Haqqımızda' })).toHaveAttribute('href', '/about');
+        expect(screen.getByRole('link', { name: 'Kolleksionerlər üçün' })).toHaveAttribute('href', '/collectors');
+        expect(screen.getByRole('link', { name: 'Əlaqə' })).toHaveAttribute('href', '/contact');
         expect(screen.getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
         expect(screen.getByRole('link', { name: 'Rəssamlar' })).toHaveAttribute('href', '/artists');
-        expect(screen.getByRole('link', { name: 'Əlaqə' })).toHaveAttribute('href', '/contact');
         expect(screen.getByText('Page content')).toBeInTheDocument();
 
         expect(await screen.findByText('hello@artniyyetli.az')).toBeInTheDocument();
@@ -42,11 +68,10 @@ describe('SiteShell', () => {
 
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toHaveAttribute('href', '/privacy-policy');
         expect(screen.getByRole('link', { name: 'İstifadə şərtləri' })).toHaveAttribute('href', '/terms');
-        expect(screen.getByRole('link', { name: 'Çatdırılma və qaytarılma' })).toHaveAttribute('href', '/shipping-returns');
-        expect(screen.getByRole('link', { name: 'Müəllif hüquqları' })).toHaveAttribute('href', '/copyright');
+        expect(screen.queryByText('Unlisted draft')).not.toBeInTheDocument();
     });
 
-    it('switches nav and footer legal labels to English, keeping the Contact link intact', async () => {
+    it('switches header and footer page labels to English on locale change', async () => {
         render(
             <LocaleProvider>
                 <SiteShell>
@@ -59,11 +84,11 @@ describe('SiteShell', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'EN' }));
 
-        await waitFor(() => expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy-policy'));
-        expect(screen.getByRole('link', { name: 'Terms & Conditions' })).toHaveAttribute('href', '/terms');
-        expect(screen.getByRole('link', { name: 'Shipping & Returns' })).toHaveAttribute('href', '/shipping-returns');
-        expect(screen.getByRole('link', { name: 'Copyright' })).toHaveAttribute('href', '/copyright');
+        await waitFor(() => expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/'));
+        expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
         expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
+        expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy-policy');
+        expect(screen.getByRole('link', { name: 'Terms & Conditions' })).toHaveAttribute('href', '/terms');
         expect(screen.queryByText('Məxfilik siyasəti')).not.toBeInTheDocument();
     });
 });

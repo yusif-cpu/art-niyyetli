@@ -83,6 +83,15 @@ class PageService
         });
     }
 
+    public function reorder(array $items): void
+    {
+        DB::transaction(function () use ($items) {
+            foreach ($items as $item) {
+                Page::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
+            }
+        });
+    }
+
     private function syncTranslations(Page $page, array $translations): void
     {
         foreach ($translations as $translation) {

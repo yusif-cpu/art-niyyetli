@@ -42,7 +42,12 @@ describe('SiteShell', () => {
     beforeEach(() => {
         global.fetch = vi.fn((url) => {
             if (url.includes('/site-settings')) {
-                return Promise.resolve(jsonResponse({ data: { contact_email: 'hello@artniyyetli.az', phone: null, address: null, opening_hours: null, footer_text: 'ArtNiyyətli qalereyası' } }));
+                return Promise.resolve(jsonResponse({
+                    data: {
+                        contact_email: 'hello@artniyyetli.az', phone: null, address: null, opening_hours: null, footer_text: 'ArtNiyyətli qalereyası',
+                        brand_text: 'ArtNiyyətli', logo_display_mode: 'logo_only', logo_media_id: 3, logo_url: 'https://example.test/logo.webp',
+                    },
+                }));
             }
             if (url.includes('/social-links')) {
                 return Promise.resolve(jsonResponse({ data: [{ platform: 'instagram', url: 'https://instagram.com/artniyyetli', sort_order: 0 }] }));
@@ -78,6 +83,20 @@ describe('SiteShell', () => {
 
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toHaveAttribute('href', '/privacy-policy');
         expect(screen.getByRole('link', { name: 'İstifadə şərtləri' })).toHaveAttribute('href', '/terms');
+    });
+
+    it('renders the branding logo from site settings in both the header and the footer', async () => {
+        render(
+            <LocaleProvider>
+                <SiteShell>
+                    <p>Page content</p>
+                </SiteShell>
+            </LocaleProvider>
+        );
+
+        const logos = await screen.findAllByRole('img', { name: 'ArtNiyyətli' });
+        expect(logos).toHaveLength(2);
+        logos.forEach((logo) => expect(logo).toHaveAttribute('src', 'https://example.test/logo.webp'));
     });
 
     it('switches header and footer labels to English on locale change', async () => {

@@ -21,6 +21,14 @@ const settings = {
     footer_text: 'ArtNiyyətli © 2026',
 };
 
+const brandedSettings = {
+    ...settings,
+    brand_text: 'ArtNiyyətli',
+    logo_display_mode: 'logo_text',
+    logo_media_id: null,
+    logo_url: null,
+};
+
 describe('SettingsScreen', () => {
     it('pre-fills the form with the current settings', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: settings }));
@@ -64,6 +72,43 @@ describe('SettingsScreen', () => {
 
         await waitFor(() => {
             expect(screen.getByText('Ayarlar yadda saxlanıldı')).toBeInTheDocument();
+        });
+    });
+
+    it('pre-fills brand text and display mode, and shows a logo preview when one is set', async () => {
+        global.fetch = vi.fn().mockResolvedValue(
+            jsonResponse(200, { data: { ...brandedSettings, logo_media_id: 7, logo_url: 'https://example.test/logo.webp' } })
+        );
+
+        render(
+            <ToastProvider>
+                <SettingsScreen />
+            </ToastProvider>
+        );
+
+        expect(await screen.findByDisplayValue('ArtNiyyətli')).toBeInTheDocument();
+        expect(screen.getByRole('combobox')).toHaveValue('logo_text');
+        expect(screen.getByRole('img', { name: 'Seçilmiş şəkil' })).toHaveAttribute('src', 'https://example.test/logo.webp');
+    });
+
+    it('changing the display mode and saving includes the new value in the request body', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: brandedSettings }));
+
+        render(
+            <ToastProvider>
+                <SettingsScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByDisplayValue('ArtNiyyətli');
+        await userEvent.selectOptions(screen.getByRole('combobox'), 'logo_only');
+
+        global.fetch.mockResolvedValueOnce(jsonResponse(200, { data: { ...brandedSettings, logo_display_mode: 'logo_only' } }));
+        await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+
+        await waitFor(() => {
+            const [, options] = global.fetch.mock.calls.at(-1);
+            expect(JSON.parse(options.body)).toMatchObject({ logo_display_mode: 'logo_only' });
         });
     });
 });

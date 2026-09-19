@@ -5,6 +5,13 @@ import TextField from '../components/TextField.jsx';
 import TextArea from '../components/TextArea.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
+import MediaPicker from '../components/MediaPicker.jsx';
+
+const DISPLAY_MODE_LABELS = {
+    logo_text: 'Loqo + mətn',
+    logo_only: 'Yalnız loqo',
+    text_only: 'Yalnız mətn',
+};
 
 const SECTIONS = [
     {
@@ -36,6 +43,10 @@ export default function SettingsScreen() {
         apiFetch('/settings').then((res) => setValues(res.data));
     }, []);
 
+    function updateValue(key, value) {
+        setValues((current) => ({ ...current, [key]: value }));
+    }
+
     async function submit(e) {
         e.preventDefault();
         setSaving(true);
@@ -62,6 +73,38 @@ export default function SettingsScreen() {
         <form onSubmit={submit} className="max-w-xl space-y-4">
             <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Sayt ayarları</h1>
             <Banner type="error">{Object.values(errors)[0]?.[0]}</Banner>
+
+            <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Brendinq</h2>
+                <div>
+                    <span className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Loqo</span>
+                    <MediaPicker
+                        value={values.logo_media_id}
+                        previewUrl={values.logo_url}
+                        onChange={(id, url) => setValues((current) => ({ ...current, logo_media_id: id, logo_url: url }))}
+                    />
+                </div>
+                <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Görünüş rejimi</span>
+                    <select
+                        value={values.logo_display_mode || 'logo_text'}
+                        onChange={(e) => updateValue('logo_display_mode', e.target.value)}
+                        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
+                    >
+                        {Object.entries(DISPLAY_MODE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                <TextField
+                    label="Brend mətni"
+                    value={values.brand_text}
+                    onChange={(v) => updateValue('brand_text', v)}
+                    error={errors.brand_text?.[0]}
+                />
+            </div>
 
             {SECTIONS.map((section) => (
                 <div key={section.label} className="space-y-4">

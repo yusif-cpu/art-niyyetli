@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\LogoDisplayMode;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateSiteSettingsRequest extends FormRequest
 {
@@ -20,6 +22,10 @@ class UpdateSiteSettingsRequest extends FormRequest
             'opening_hours' => ['sometimes', 'nullable', 'string', 'max:255'],
             'footer_text' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'whatsapp_number' => ['sometimes', 'nullable', 'string', 'max:50'],
+
+            'brand_text' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'logo_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists('media', 'id')->whereNull('deleted_at')],
+            'logo_display_mode' => ['sometimes', 'nullable', Rule::enum(LogoDisplayMode::class)],
         ];
     }
 }

@@ -4,6 +4,7 @@ import { useApiData } from '../lib/useApiData.js';
 import { getSiteSettings } from '../services/siteSettings.js';
 import { listSocialLinks } from '../services/socialLinks.js';
 import { getNavigation } from '../services/navigation.js';
+import BrandMark from '../components/BrandMark.jsx';
 
 function itemLabel(locale, item) {
     return item.type === 'page' ? item.title : t(locale, `nav.${item.route_key}`);
@@ -18,6 +19,15 @@ export default function Footer() {
 
     return (
         <footer className="border-t border-neutral-200 px-6 py-8 text-sm text-neutral-600">
+            <div className="mb-4">
+                <BrandMark
+                    logoUrl={settings.data?.logo_url}
+                    displayMode={settings.data?.logo_display_mode || 'logo_text'}
+                    brandText={settings.data?.brand_text || 'ArtNiyyətli'}
+                    imgClassName="h-6 w-auto"
+                    textClassName="text-base font-semibold"
+                />
+            </div>
             {settings.data?.footer_text && <p className="mb-3">{settings.data.footer_text}</p>}
             {settings.data?.contact_email && <p>{settings.data.contact_email}</p>}
             {settings.data?.phone && <p>{settings.data.phone}</p>}

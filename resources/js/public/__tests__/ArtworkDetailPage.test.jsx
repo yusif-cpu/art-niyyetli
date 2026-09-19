@@ -16,7 +16,7 @@ const detail = {
     year_created: 2023, short_description: 'A description.', provenance: 'Provenance text.', certificate: true,
     frame_condition: 'Good', delivery_note: 'Ships in 5 days',
     images: [{ type: 'main', sort_order: 0, is_main: true, url: 'https://example.test/full.webp' }],
-    similar: [], whatsapp_link: null,
+    similar: [], whatsapp_link: null, video: null,
 };
 
 describe('ArtworkDetailPage', () => {
@@ -75,5 +75,22 @@ describe('ArtworkDetailPage', () => {
         await userEvent.click(screen.getByRole('button', { name: 'EN' }));
 
         await waitFor(() => expect(screen.getAllByText('Sunset Over Baku').length).toBeGreaterThan(0));
+    });
+
+    it('does not render a YouTube embed when video is null', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
+        render(<LocaleProvider><ArtworkDetailPage params={{ code: detail.inventory_code }} /></LocaleProvider>);
+        await screen.findByText('Sunset Over Baku');
+        expect(screen.queryByTitle(detail.title)).not.toBeInTheDocument();
+    });
+
+    it('renders a responsive YouTube embed when video is present', async () => {
+        const withVideo = { ...detail, video: { id: 'dQw4w9WgXcQ', embed_url: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ' } };
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: withVideo }));
+
+        render(<LocaleProvider><ArtworkDetailPage params={{ code: detail.inventory_code }} /></LocaleProvider>);
+
+        const iframe = await screen.findByTitle(detail.title);
+        expect(iframe).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
     });
 });

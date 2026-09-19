@@ -74,6 +74,37 @@ class ExhibitionApiTest extends TestCase
         $this->getJson("/api/v1/exhibitions/exhibition-{$inactive->id}")->assertStatus(404);
     }
 
+    public function test_video_is_null_when_exhibition_has_no_youtube_video(): void
+    {
+        $exhibition = $this->makeExhibition();
+
+        $response = $this->getJson("/api/v1/exhibitions/exhibition-{$exhibition->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.video', null);
+    }
+
+    public function test_video_block_is_exposed_on_show_when_exhibition_has_a_youtube_video(): void
+    {
+        $exhibition = $this->makeExhibition(['youtube_video_id' => 'dQw4w9WgXcQ']);
+
+        $response = $this->getJson("/api/v1/exhibitions/exhibition-{$exhibition->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.video.id', 'dQw4w9WgXcQ');
+        $response->assertJsonPath('data.video.embed_url', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    }
+
+    public function test_video_block_is_exposed_on_index_when_exhibition_has_a_youtube_video(): void
+    {
+        $this->makeExhibition(['youtube_video_id' => 'dQw4w9WgXcQ']);
+
+        $response = $this->getJson('/api/v1/exhibitions');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.0.video.id', 'dQw4w9WgXcQ');
+    }
+
     public function test_show_includes_artists_and_excludes_inactive_artworks(): void
     {
         $exhibition = $this->makeExhibition();

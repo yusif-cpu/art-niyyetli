@@ -5,6 +5,7 @@ import { usePageMeta } from '../lib/usePageMeta.js';
 import { getExhibition } from '../services/exhibitions.js';
 import ArtworkCard from '../components/ArtworkCard.jsx';
 import ImageWithFallback from '../components/ImageWithFallback.jsx';
+import YoutubeEmbed from '../components/YoutubeEmbed.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import NotFoundPage from './NotFoundPage.jsx';
@@ -28,6 +29,12 @@ export default function ExhibitionDetailPage({ params }) {
             {data.media.length > 0 && (
                 <div className="mt-6 grid grid-cols-2 gap-4">
                     {data.media.map((item) => <ImageWithFallback key={item.url} src={item.url} alt={data.title} className="aspect-video w-full object-cover" />)}
+                </div>
+            )}
+
+            {data.video && (
+                <div className="mt-6">
+                    <YoutubeEmbed video={data.video} title={data.title} />
                 </div>
             )}
 

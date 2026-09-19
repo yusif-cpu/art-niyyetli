@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'artist_id', 'medium_id', 'genre_id', 'year_created', 'width_cm', 'height_cm',
     'price', 'show_price', 'availability', 'year_sold', 'inventory_code', 'certificate',
     'frame_condition', 'delivery_note', 'featured', 'show_on_wall', 'sort_order', 'is_active',
+    'youtube_video_id',
 ])]
 class Artwork extends Model
 {

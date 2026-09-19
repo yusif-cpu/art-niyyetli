@@ -6,6 +6,7 @@ use App\Enums\ArtworkAvailability;
 use App\Enums\ArtworkImageType;
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesArtworkPayload;
+use App\Http\Requests\Admin\Concerns\ValidatesYoutubeVideoPayload;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -13,10 +14,16 @@ use Illuminate\Validation\Validator;
 class StoreArtworkRequest extends FormRequest
 {
     use ValidatesArtworkPayload;
+    use ValidatesYoutubeVideoPayload;
 
     public function authorize(): bool
     {
         return true; // route-level `can:admin.access` already gates this
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->deriveYoutubeVideoId();
     }
 
     public function rules(): array
@@ -58,6 +65,9 @@ class StoreArtworkRequest extends FormRequest
             'images.*.type' => ['required', Rule::enum(ArtworkImageType::class)],
             'images.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'images.*.is_main' => ['nullable', 'boolean'],
+
+            'youtube_url' => ['nullable', 'string', 'max:500'],
+            'youtube_video_id' => ['sometimes', 'nullable', 'string', 'regex:/^[A-Za-z0-9_-]{11}$/'],
         ];
     }
 
@@ -76,6 +86,7 @@ class StoreArtworkRequest extends FormRequest
             $this->rejectDuplicateSlugPerLocaleWithinRequest($validator);
             $this->rejectSlugCollisionsWithOtherArtworks($validator);
             $this->rejectMultipleMainImages($validator);
+            $this->rejectInvalidYoutubeUrl($validator);
         });
     }
 }

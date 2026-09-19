@@ -17,7 +17,7 @@ class ExhibitionService
         $artists = $data['artists'] ?? [];
         $artworks = $data['artworks'] ?? [];
         $media = $data['media'] ?? [];
-        unset($data['translations'], $data['artists'], $data['artworks'], $data['media']);
+        unset($data['translations'], $data['artists'], $data['artworks'], $data['media'], $data['youtube_url']);
 
         return DB::transaction(function () use ($data, $translations, $artists, $artworks, $media) {
             $exhibition = Exhibition::create($data);
@@ -37,7 +37,7 @@ class ExhibitionService
         $artists = array_key_exists('artists', $data) ? $data['artists'] : null;
         $artworks = array_key_exists('artworks', $data) ? $data['artworks'] : null;
         $media = array_key_exists('media', $data) ? $data['media'] : null;
-        unset($data['translations'], $data['artists'], $data['artworks'], $data['media']);
+        unset($data['translations'], $data['artists'], $data['artworks'], $data['media'], $data['youtube_url']);
 
         return DB::transaction(function () use ($exhibition, $data, $translations, $artists, $artworks, $media) {
             $exhibition->update($data);

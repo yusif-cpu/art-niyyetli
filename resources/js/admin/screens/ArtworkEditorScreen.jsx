@@ -9,6 +9,7 @@ import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import ArtworkImageManager from '../components/ArtworkImageManager.jsx';
+import YoutubeVideoField from '../components/YoutubeVideoField.jsx';
 
 const AVAILABILITY_LABELS = { available: 'Satışda', reserved: 'Rezerv edilib', sold: 'Satılıb' };
 
@@ -31,6 +32,7 @@ const EMPTY_CORE = {
     show_on_wall: false,
     sort_order: 0,
     is_active: true,
+    youtube_url: '',
 };
 
 function translationsToState(translations) {
@@ -61,6 +63,7 @@ export default function ArtworkEditorScreen({ artworkId, onBack }) {
     const [fields, setFields] = useState(translationsToState(null));
     const [core, setCore] = useState(EMPTY_CORE);
     const [images, setImages] = useState([]);
+    const [youtubeVideoId, setYoutubeVideoId] = useState(null);
     const [artists, setArtists] = useState([]);
     const [genres, setGenres] = useState([]);
     const [mediums, setMediums] = useState([]);
@@ -104,8 +107,10 @@ export default function ArtworkEditorScreen({ artworkId, onBack }) {
                 show_on_wall: data.show_on_wall,
                 sort_order: data.sort_order,
                 is_active: data.is_active,
+                youtube_url: data.youtube_url ?? '',
             });
             setImages(data.images || []);
+            setYoutubeVideoId(data.youtube_video_id ?? null);
             setLoaded(true);
         });
     }
@@ -302,6 +307,16 @@ export default function ArtworkEditorScreen({ artworkId, onBack }) {
                 <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                     <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Şəkillər</h2>
                     <ArtworkImageManager images={images} onChange={setImages} />
+                </section>
+
+                <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                    <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">YouTube video</h2>
+                    <YoutubeVideoField
+                        url={core.youtube_url}
+                        onChange={(v) => updateCore('youtube_url', v)}
+                        videoId={youtubeVideoId}
+                        error={errors.youtube_url?.[0]}
+                    />
                 </section>
 
                 <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">

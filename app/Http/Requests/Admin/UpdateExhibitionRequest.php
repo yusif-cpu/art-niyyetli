@@ -7,6 +7,7 @@ use App\Enums\ExhibitionStatus;
 use App\Enums\ExhibitionType;
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesExhibitionPayload;
+use App\Http\Requests\Admin\Concerns\ValidatesYoutubeVideoPayload;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -14,10 +15,16 @@ use Illuminate\Validation\Validator;
 class UpdateExhibitionRequest extends FormRequest
 {
     use ValidatesExhibitionPayload;
+    use ValidatesYoutubeVideoPayload;
 
     public function authorize(): bool
     {
         return true; // route-level `can:admin.access` already gates this
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->deriveYoutubeVideoId();
     }
 
     public function rules(): array
@@ -50,6 +57,9 @@ class UpdateExhibitionRequest extends FormRequest
             'media.*.media_id' => ['required', 'integer', Rule::exists('media', 'id')->whereNull('deleted_at')],
             'media.*.type' => ['required', Rule::enum(ExhibitionMediaType::class)],
             'media.*.sort_order' => ['nullable', 'integer', 'min:0'],
+
+            'youtube_url' => ['nullable', 'string', 'max:500'],
+            'youtube_video_id' => ['sometimes', 'nullable', 'string', 'regex:/^[A-Za-z0-9_-]{11}$/'],
         ];
     }
 
@@ -63,6 +73,7 @@ class UpdateExhibitionRequest extends FormRequest
             $this->rejectDuplicateArtworkIds($validator);
             $this->rejectDuplicateMediaEntries($validator);
             $this->rejectEndDateBeforeStartDate($validator);
+            $this->rejectInvalidYoutubeUrl($validator);
         });
     }
 }

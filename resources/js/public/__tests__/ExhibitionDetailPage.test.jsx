@@ -15,6 +15,7 @@ const detail = {
     artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova' }],
     artworks: [{ inventory_code: 'AN-1', title: 'A Piece', artist: { id: 5, name: 'Aygün Məmmədova' }, image_url: null, genre: { slug: 'p', name: 'P' }, medium: { slug: 'o', name: 'O' }, price: 100, currency: 'AZN', availability: 'available', width_cm: 1, height_cm: 1 }],
     media: [{ type: 'photo', url: 'https://example.test/ex.webp' }],
+    video: null,
 };
 
 describe('ExhibitionDetailPage', () => {
@@ -46,5 +47,22 @@ describe('ExhibitionDetailPage', () => {
         await userEvent.click(screen.getByRole('button', { name: 'EN' }));
 
         await waitFor(() => expect(screen.getAllByText('Full concept text.').length).toBeGreaterThan(0));
+    });
+
+    it('does not render a YouTube embed when video is null', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
+        render(<LocaleProvider><ExhibitionDetailPage params={{ slug: detail.slug }} /></LocaleProvider>);
+        await screen.findByText('Full concept text.');
+        expect(screen.queryByTitle(detail.title)).not.toBeInTheDocument();
+    });
+
+    it('renders a responsive YouTube embed when video is present', async () => {
+        const withVideo = { ...detail, video: { id: 'dQw4w9WgXcQ', embed_url: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ' } };
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: withVideo }));
+
+        render(<LocaleProvider><ExhibitionDetailPage params={{ slug: detail.slug }} /></LocaleProvider>);
+
+        const iframe = await screen.findByTitle(detail.title);
+        expect(iframe).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
     });
 });

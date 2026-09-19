@@ -22,7 +22,7 @@ class ArtworkService
         $year = (int) $data['year_created'];
         $translations = $data['translations'];
         $images = $data['images'] ?? [];
-        unset($data['translations'], $data['images'], $data['inventory_code']);
+        unset($data['translations'], $data['images'], $data['inventory_code'], $data['youtube_url']);
 
         $sequence = $this->inventoryCodeGenerator->suggestSequenceStart($year);
         $attempt = 0;
@@ -57,7 +57,7 @@ class ArtworkService
     {
         $translations = $data['translations'] ?? null;
         $images = array_key_exists('images', $data) ? $data['images'] : null;
-        unset($data['translations'], $data['images']);
+        unset($data['translations'], $data['images'], $data['youtube_url']);
 
         return DB::transaction(function () use ($artwork, $data, $translations, $images) {
             $artwork->update($data);

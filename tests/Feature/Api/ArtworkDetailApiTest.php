@@ -142,6 +142,27 @@ class ArtworkDetailApiTest extends TestCase
         $this->assertStringNotContainsString('"path"', $body);
     }
 
+    public function test_video_is_null_when_artwork_has_no_youtube_video(): void
+    {
+        $artwork = $this->makeArtwork();
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.video', null);
+    }
+
+    public function test_video_block_is_exposed_when_artwork_has_a_youtube_video(): void
+    {
+        $artwork = $this->makeArtwork(['youtube_video_id' => 'dQw4w9WgXcQ']);
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.video.id', 'dQw4w9WgXcQ');
+        $response->assertJsonPath('data.video.embed_url', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    }
+
     public function test_whatsapp_link_is_null_when_not_configured(): void
     {
         config(['gallery.whatsapp_number' => null]);

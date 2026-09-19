@@ -9,15 +9,15 @@ import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import MediaListManager from '../components/MediaListManager.jsx';
+import YoutubeVideoField from '../components/YoutubeVideoField.jsx';
 
 const STATUS_LABELS = { current: 'Cari', past: 'Keçmiş', upcoming: 'Gələcək' };
 const TYPE_LABELS = { exhibition: 'Sərgi', news: 'Xəbər', announcement: 'Elan' };
 const MEDIA_TYPE_OPTIONS = [
     { value: 'photo', label: 'Foto' },
-    { value: 'video', label: 'Video' },
 ];
 
-const EMPTY_CORE = { type: 'exhibition', status: 'upcoming', start_date: '', end_date: '', is_active: true };
+const EMPTY_CORE = { type: 'exhibition', status: 'upcoming', start_date: '', end_date: '', is_active: true, youtube_url: '' };
 
 function translationsToState(translations) {
     const byLocale = {};
@@ -40,6 +40,7 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
     const [participants, setParticipants] = useState([]);
     const [artworks, setArtworks] = useState([]);
     const [media, setMedia] = useState([]);
+    const [youtubeVideoId, setYoutubeVideoId] = useState(null);
     const [allArtists, setAllArtists] = useState([]);
     const [allArtworks, setAllArtworks] = useState([]);
     const [addArtistId, setAddArtistId] = useState('');
@@ -64,10 +65,18 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
         apiFetch(`/exhibitions/${exhibitionId}`).then((res) => {
             const data = res.data;
             setFields(translationsToState(data.translations || [data.translation].filter(Boolean)));
-            setCore({ type: data.type, status: data.status, start_date: data.start_date, end_date: data.end_date, is_active: data.is_active });
+            setCore({
+                type: data.type,
+                status: data.status,
+                start_date: data.start_date,
+                end_date: data.end_date,
+                is_active: data.is_active,
+                youtube_url: data.youtube_url ?? '',
+            });
             setParticipants(data.artists || []);
             setArtworks(data.artworks || []);
             setMedia(data.media || []);
+            setYoutubeVideoId(data.youtube_video_id ?? null);
             setLoaded(true);
         });
     }
@@ -261,6 +270,16 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
                 <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                     <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Media</h2>
                     <MediaListManager items={media} onChange={setMedia} typeOptions={MEDIA_TYPE_OPTIONS} />
+                </section>
+
+                <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                    <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">YouTube video</h2>
+                    <YoutubeVideoField
+                        url={core.youtube_url}
+                        onChange={(v) => updateCore('youtube_url', v)}
+                        videoId={youtubeVideoId}
+                        error={errors.youtube_url?.[0]}
+                    />
                 </section>
 
                 <div className="flex items-center justify-between">

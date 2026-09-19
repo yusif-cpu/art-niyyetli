@@ -4,6 +4,7 @@ import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
 import { getArtwork } from '../services/artworks.js';
 import ImageWithFallback from '../components/ImageWithFallback.jsx';
+import YoutubeEmbed from '../components/YoutubeEmbed.jsx';
 import ArtworkCard from '../components/ArtworkCard.jsx';
 import EnquiryForm from '../components/EnquiryForm.jsx';
 import LoadingState from '../components/LoadingState.jsx';
@@ -31,6 +32,7 @@ export default function ArtworkDetailPage({ params }) {
                         className="w-full object-cover"
                     />
                 ))}
+                {data.video && <YoutubeEmbed video={data.video} title={data.title} />}
             </div>
 
             <div>

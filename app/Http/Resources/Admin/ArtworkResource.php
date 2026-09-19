@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Support\Youtube;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
@@ -65,6 +66,8 @@ class ArtworkResource extends JsonResource
                 ->sortBy('sort_order')
                 ->map(fn ($image) => $this->imageResource($image))
                 ->values()),
+            'youtube_video_id' => $this->youtube_video_id,
+            'youtube_url' => $this->youtube_video_id ? Youtube::watchUrl($this->youtube_video_id) : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

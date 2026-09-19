@@ -3,8 +3,10 @@ import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { getNavigation } from '../services/navigation.js';
 import { getSiteSettings } from '../services/siteSettings.js';
+import { listSocialLinks } from '../services/socialLinks.js';
 import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
 import BrandMark from '../components/BrandMark.jsx';
+import SocialLinks from '../components/SocialLinks.jsx';
 
 function itemLabel(locale, item) {
     return item.type === 'page' ? item.title : t(locale, `nav.${item.route_key}`);
@@ -14,6 +16,7 @@ export default function Header() {
     const { locale } = useLocale();
     const navigation = useApiData(() => getNavigation(locale), [locale]);
     const settings = useApiData(() => getSiteSettings(locale), [locale]);
+    const socialLinks = useApiData(() => listSocialLinks(locale), [locale]);
     const headerItems = Array.isArray(navigation.data?.header) ? navigation.data.header : [];
 
     return (
@@ -31,6 +34,7 @@ export default function Header() {
                         {itemLabel(locale, item)}
                     </a>
                 ))}
+                <SocialLinks links={socialLinks.data} className="gap-3 text-sm text-neutral-700" textClassName="capitalize hover:text-neutral-900" />
                 <LocaleSwitcher />
             </nav>
         </header>

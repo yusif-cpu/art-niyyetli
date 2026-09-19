@@ -9,6 +9,7 @@ use App\Models\ExhibitionMedium;
 use App\Models\Media;
 use App\Models\Role;
 use App\Models\SeoMetadata;
+use App\Models\SocialLink;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -82,6 +83,15 @@ class MediaDeletionTest extends TestCase
         $media = Media::factory()->create();
         $exhibition = Exhibition::factory()->create();
         ExhibitionMedium::create(['exhibition_id' => $exhibition->id, 'media_id' => $media->id, 'type' => 'photo', 'sort_order' => 0]);
+
+        $this->actingAs($this->admin)->deleteJson("/admin/media/{$media->id}")->assertStatus(409);
+        $this->assertDatabaseHas('media', ['id' => $media->id, 'deleted_at' => null]);
+    }
+
+    public function test_media_used_as_a_social_link_logo_cannot_be_deleted(): void
+    {
+        $media = Media::factory()->create();
+        SocialLink::factory()->create(['logo_media_id' => $media->id]);
 
         $this->actingAs($this->admin)->deleteJson("/admin/media/{$media->id}")->assertStatus(409);
         $this->assertDatabaseHas('media', ['id' => $media->id, 'deleted_at' => null]);

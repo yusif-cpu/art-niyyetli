@@ -7,6 +7,8 @@ import EmptyState from '../components/EmptyState.jsx';
 import Banner from '../components/Banner.jsx';
 import Card from '../components/Card.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
+import { DISPLAY_MODE_LABELS } from '../lib/displayModes.js';
 import SocialLinkForm from './SocialLinkForm.jsx';
 
 export default function SocialLinksScreen() {
@@ -75,6 +77,7 @@ export default function SocialLinksScreen() {
             {formOpen && (
                 <div className="mb-4">
                     <SocialLinkForm
+                        key={formOpen === 'new' ? 'new' : formOpen.id}
                         link={formOpen === 'new' ? null : formOpen}
                         errors={formErrors}
                         onSave={saveLink}
@@ -96,9 +99,20 @@ export default function SocialLinksScreen() {
                     <ul className="-m-4 divide-y divide-neutral-200 dark:divide-neutral-800">
                         {links.map((link, index) => (
                             <li key={link.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                                <div>
-                                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{link.platform}</p>
-                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{link.url}</p>
+                                <div className="flex min-w-0 items-center gap-3">
+                                    {link.logo_url ? (
+                                        <img src={link.logo_url} alt="" className="h-8 w-8 shrink-0 rounded object-contain" />
+                                    ) : (
+                                        <span className="h-8 w-8 shrink-0 rounded border border-dashed border-neutral-300 dark:border-neutral-700" aria-hidden="true" />
+                                    )}
+                                    <div className="min-w-0">
+                                        <p className="flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                            {link.platform}
+                                            <StatusBadge active={link.is_active} />
+                                        </p>
+                                        <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{link.url}</p>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{DISPLAY_MODE_LABELS[link.display_mode]}</p>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button type="button" disabled={index === 0} onClick={() => moveLink(link, -1)} className="text-sm disabled:opacity-30">

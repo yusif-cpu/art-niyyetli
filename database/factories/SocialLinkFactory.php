@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\LogoDisplayMode;
 use App\Models\SocialLink;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,6 +18,8 @@ class SocialLinkFactory extends Factory
         return [
             'platform' => 'instagram',
             'url' => 'https://instagram.com/'.fake()->userName(),
+            'logo_media_id' => null,
+            'display_mode' => LogoDisplayMode::LogoText,
             'sort_order' => 0,
             'is_active' => true,
         ];

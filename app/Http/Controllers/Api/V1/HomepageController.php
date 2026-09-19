@@ -71,7 +71,8 @@ class HomepageController extends Controller
             ? Faq::query()->where('page_id', $homePage->id)->where('is_active', true)->with('translations')->orderBy('sort_order')->get()
             : collect();
 
-        $socialLinks = SocialLink::query()->where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
+        $socialLinks = SocialLink::query()->with('logoMedia.variants')
+            ->where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
 
         return response()->json(['data' => [
             'page' => $homePage ? [

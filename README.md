@@ -101,7 +101,7 @@ A read-only, versioned, locale-aware JSON API for a future separate public front
 | GET | `/articles/{slug}` | One published article |
 | GET | `/faqs` | Active FAQs |
 | GET | `/site-settings` | Allowlisted business settings only |
-| GET | `/social-links` | Active social links |
+| GET | `/social-links` | Active social links (`platform`, `url`, `display_mode`: `logo_text`/`logo_only`/`text_only`, `logo_url`, `sort_order`) |
 | POST | `/enquiries` | Submit an artwork enquiry (Phase 10) — the only write route on the public API |
 
 **Common query parameters:** `locale`, `per_page` (default 24, max 60 — out-of-range or non-numeric values silently normalize to 24), `page`.

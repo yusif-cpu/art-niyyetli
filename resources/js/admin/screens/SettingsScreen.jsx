@@ -6,12 +6,7 @@ import TextArea from '../components/TextArea.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 import MediaPicker from '../components/MediaPicker.jsx';
-
-const DISPLAY_MODE_LABELS = {
-    logo_text: 'Loqo + mətn',
-    logo_only: 'Yalnız loqo',
-    text_only: 'Yalnız mətn',
-};
+import { DISPLAY_MODE_LABELS } from '../lib/displayModes.js';
 
 const SECTIONS = [
     {

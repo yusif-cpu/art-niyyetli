@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\LogoDisplayMode;
 use App\Http\Requests\Admin\Concerns\ValidatesSocialLinkPayload;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreSocialLinkRequest extends FormRequest
@@ -20,6 +22,8 @@ class StoreSocialLinkRequest extends FormRequest
         return [
             'platform' => ['required', 'string', 'max:100'],
             'url' => ['required', 'string', 'max:2048', 'url'],
+            'logo_media_id' => ['nullable', 'integer', $this->logoMediaExistsRule()],
+            'display_mode' => ['sometimes', Rule::enum(LogoDisplayMode::class)],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['required', 'boolean'],
         ];
@@ -29,6 +33,7 @@ class StoreSocialLinkRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->rejectDangerousUrlScheme($validator);
+            $this->requireLogoForLogoOnlyMode($validator);
         });
     }
 }

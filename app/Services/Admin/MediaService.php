@@ -83,7 +83,7 @@ class MediaService
     {
         if ($this->isReferenced($media)) {
             throw new MediaDeletionNotAllowedException(
-                'This media file is still attached to an artwork, artist, exhibition, or SEO record and cannot be deleted.'
+                'This media file is still attached to an artwork, artist, exhibition, social link, or SEO record and cannot be deleted.'
             );
         }
 
@@ -95,6 +95,7 @@ class MediaService
         return $media->artworkImages()->exists()
             || $media->representingArtists()->exists()
             || $media->exhibitionMedia()->exists()
+            || $media->socialLinks()->exists()
             || $media->seoMetadata()->exists();
     }
 

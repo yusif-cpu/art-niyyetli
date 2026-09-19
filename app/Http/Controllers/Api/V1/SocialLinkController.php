@@ -12,6 +12,7 @@ class SocialLinkController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $links = SocialLink::query()
+            ->with('logoMedia.variants')
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('id')

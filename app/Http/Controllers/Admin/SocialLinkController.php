@@ -18,7 +18,11 @@ class SocialLinkController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        $links = SocialLink::query()->orderBy('sort_order')->orderBy('id')->get();
+        $links = SocialLink::query()
+            ->with(SocialLinkService::LOGO_RELATIONS)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
 
         return SocialLinkResource::collection($links);
     }
@@ -32,7 +36,7 @@ class SocialLinkController extends Controller
 
     public function show(SocialLink $socialLink): SocialLinkResource
     {
-        return new SocialLinkResource($socialLink);
+        return new SocialLinkResource($socialLink->load(SocialLinkService::LOGO_RELATIONS));
     }
 
     public function update(UpdateSocialLinkRequest $request, SocialLink $socialLink): SocialLinkResource

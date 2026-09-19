@@ -78,7 +78,10 @@ describe('SiteShell', () => {
 
         expect(await screen.findByText('hello@artniyyetli.az')).toBeInTheDocument();
         expect(screen.getByText('ArtNiyyətli qalereyası')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'instagram' })).toHaveAttribute('href', 'https://instagram.com/artniyyetli');
+        // Social links render in both the header and the footer.
+        const instagramLinks = screen.getAllByRole('link', { name: 'instagram' });
+        expect(instagramLinks).toHaveLength(2);
+        instagramLinks.forEach((link) => expect(link).toHaveAttribute('href', 'https://instagram.com/artniyyetli'));
         expect(screen.queryByText('null')).not.toBeInTheDocument();
 
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toHaveAttribute('href', '/privacy-policy');
@@ -97,6 +100,42 @@ describe('SiteShell', () => {
         const logos = await screen.findAllByRole('img', { name: 'ArtNiyyətli' });
         expect(logos).toHaveLength(2);
         logos.forEach((logo) => expect(logo).toHaveAttribute('src', 'https://example.test/logo.webp'));
+    });
+
+    it('renders each social link in the header and the footer according to its saved display mode', async () => {
+        const defaultFetch = global.fetch;
+        global.fetch = vi.fn((url) => {
+            if (url.includes('/social-links')) {
+                return Promise.resolve(
+                    jsonResponse({
+                        data: [
+                            { platform: 'Instagram', url: 'https://instagram.com/a', display_mode: 'logo_only', logo_url: 'https://example.test/ig.webp', sort_order: 0 },
+                            { platform: 'Facebook', url: 'https://facebook.com/b', display_mode: 'logo_text', logo_url: 'https://example.test/fb.webp', sort_order: 1 },
+                            { platform: 'WhatsApp', url: 'https://wa.me/994500000000', display_mode: 'text_only', logo_url: 'https://example.test/wa.webp', sort_order: 2 },
+                        ],
+                    })
+                );
+            }
+            return defaultFetch(url);
+        });
+
+        render(
+            <LocaleProvider>
+                <SiteShell>
+                    <p>Page content</p>
+                </SiteShell>
+            </LocaleProvider>
+        );
+
+        // logo_only: image named by the platform, no visible text (x2: header + footer)
+        expect(await screen.findAllByRole('img', { name: 'Instagram' })).toHaveLength(2);
+        expect(screen.queryByText('Instagram')).not.toBeInTheDocument();
+        // logo_text: the link is named by its text; the icon is decorative
+        expect(screen.getAllByRole('link', { name: 'Facebook' })).toHaveLength(2);
+        expect(screen.queryByRole('img', { name: 'Facebook' })).not.toBeInTheDocument();
+        // text_only: text link, its logo is never rendered
+        expect(screen.getAllByRole('link', { name: 'WhatsApp' })).toHaveLength(2);
+        expect(document.querySelector('img[src="https://example.test/wa.webp"]')).toBeNull();
     });
 
     it('switches header and footer labels to English on locale change', async () => {

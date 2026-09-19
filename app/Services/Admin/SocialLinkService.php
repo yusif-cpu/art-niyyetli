@@ -6,20 +6,22 @@ use App\Models\SocialLink;
 
 class SocialLinkService
 {
+    public const LOGO_RELATIONS = ['logoMedia.variants'];
+
     public function create(array $data): SocialLink
     {
         if (! isset($data['sort_order'])) {
             $data['sort_order'] = ((int) SocialLink::max('sort_order')) + 1;
         }
 
-        return SocialLink::create($data)->fresh();
+        return SocialLink::create($data)->fresh(self::LOGO_RELATIONS);
     }
 
     public function update(SocialLink $link, array $data): SocialLink
     {
         $link->update($data);
 
-        return $link->fresh();
+        return $link->fresh(self::LOGO_RELATIONS);
     }
 
     public function delete(SocialLink $link): void

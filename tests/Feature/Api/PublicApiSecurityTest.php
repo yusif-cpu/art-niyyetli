@@ -101,6 +101,6 @@ class PublicApiSecurityTest extends TestCase
         $response = $this->getJson('/api/v1/social-links');
         $response->assertOk();
 
-        $this->assertSame(['platform', 'url', 'sort_order'], array_keys($response->json('data.0')));
+        $this->assertSame(['platform', 'url', 'display_mode', 'logo_url', 'sort_order'], array_keys($response->json('data.0')));
     }
 }

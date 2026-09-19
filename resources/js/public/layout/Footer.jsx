@@ -5,6 +5,7 @@ import { getSiteSettings } from '../services/siteSettings.js';
 import { listSocialLinks } from '../services/socialLinks.js';
 import { getNavigation } from '../services/navigation.js';
 import BrandMark from '../components/BrandMark.jsx';
+import SocialLinks from '../components/SocialLinks.jsx';
 
 function itemLabel(locale, item) {
     return item.type === 'page' ? item.title : t(locale, `nav.${item.route_key}`);
@@ -34,15 +35,7 @@ export default function Footer() {
             {settings.data?.address && <p>{settings.data.address}</p>}
             {settings.data?.opening_hours && <p>{settings.data.opening_hours}</p>}
 
-            {socialLinks.data && socialLinks.data.length > 0 && (
-                <div className="mt-4 flex gap-4">
-                    {socialLinks.data.map((link) => (
-                        <a key={link.platform} href={link.url} target="_blank" rel="noreferrer" className="capitalize underline">
-                            {link.platform}
-                        </a>
-                    ))}
-                </div>
-            )}
+            <SocialLinks links={socialLinks.data} className="mt-4 gap-4" />
 
             {footerItems.length > 0 && (
                 <nav className="mt-4 flex flex-wrap gap-4" aria-label="Legal">

@@ -21,6 +21,16 @@ class PageSeeder extends Seeder
     ];
 
     /**
+     * Neutral "coming soon" copy for the singleton pages, in each page's own
+     * language — final content is entered by the client from Admin → Pages.
+     * The `%s` is replaced with the page title.
+     */
+    private const PLACEHOLDER_CONTENT = [
+        'az' => '%s səhifəsinin məzmunu tezliklə əlavə olunacaq.',
+        'en' => 'Content for the "%s" page will be added soon.',
+    ];
+
+    /**
      * Default header order for the singleton pages, matching the site's
      * established navigation sequence. Admins can reorder these afterward.
      */
@@ -74,22 +84,26 @@ class PageSeeder extends Seeder
                 continue;
             }
 
-            $page = Page::query()->updateOrCreate(['type' => $type->value], [
+            // Create-if-missing only: once the client has edited these pages (content,
+            // active flag, navigation order/visibility) a re-run must not reset them.
+            $page = Page::query()->firstOrCreate(['type' => $type->value], [
                 'is_active' => true,
             ]);
 
-            NavigationItem::query()->updateOrCreate(
+            NavigationItem::query()->firstOrCreate(
                 ['placement' => 'header', 'page_id' => $page->id],
                 ['nav_type' => NavType::Page->value, 'route_key' => null, 'sort_order' => self::HEADER_ORDER[$type->value], 'is_visible' => true]
             );
 
             foreach (Locale::cases() as $locale) {
-                $page->translations()->updateOrCreate(
+                $title = self::TITLES[$type->value][$locale->value];
+
+                $page->translations()->firstOrCreate(
                     ['locale' => $locale->value],
                     [
                         'slug' => $type->value,
-                        'title' => self::TITLES[$type->value][$locale->value],
-                        'content' => self::TITLES[$type->value][$locale->value].' səhifəsinin məzmunu tezliklə əlavə olunacaq.',
+                        'title' => $title,
+                        'content' => sprintf(self::PLACEHOLDER_CONTENT[$locale->value], $title),
                     ]
                 );
             }

@@ -40,19 +40,29 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('admin.manage-users', fn (User $user) => $user->is_active && $user->hasRole('administrator'));
 
+        // The limits live in config/security.php (rate_limits) and their counters in the cache.limiter store.
+        // The closures read the config on every request so a test or a config change takes effect at once.
+
         // Separate from the login limiter (5/min per username+IP in
         // AuthController). 20/minute per admin user comfortably covers a
         // multi-image artwork-entry session while blocking scripted abuse.
-        RateLimiter::for('media-upload', fn (Request $request) => Limit::perMinute(20)->by(
+        RateLimiter::for('media-upload', fn (Request $request) => Limit::perMinute((int) config('security.rate_limits.media_upload'))->by(
             $request->user()?->id ?: $request->ip()
         ));
 
         // Public read-only API. 60/min/IP is generous for a browsing frontend
-        // while blocking scripted scraping/abuse; Phase 12 can tune further.
-        RateLimiter::for('public-api', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
+        // while blocking scripted scraping/abuse.
+        RateLimiter::for('public-api', fn (Request $request) => Limit::perMinute((int) config('security.rate_limits.public_api'))->by($request->ip()));
 
         // The only public write endpoint (enquiry submission). Much stricter
         // than the general read limit to blunt scripted spam per Phase 10 §11.
-        RateLimiter::for('enquiry-submission', fn (Request $request) => Limit::perHour(5)->by($request->ip()));
+        RateLimiter::for('enquiry-submission', fn (Request $request) => Limit::perHour((int) config('security.rate_limits.enquiry'))->by($request->ip()));
+
+        // Admin write endpoints (attached to the whole authenticated admin group). Only unsafe methods are
+        // counted: reads — list screens, polling the enquiry status badge — are never throttled by this limiter
+        // and take no counter work at all. Per admin user, so one editor cannot exhaust another's budget.
+        RateLimiter::for('admin-api', fn (Request $request) => $request->isMethodSafe()
+            ? Limit::none()
+            : Limit::perMinute((int) config('security.rate_limits.admin_api'))->by($request->user()?->id ?: $request->ip()));
     }
 }

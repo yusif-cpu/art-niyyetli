@@ -174,17 +174,46 @@ class PreflightCommand extends Command
         }
 
         return $store === 'database'
-            ? [self::WARN, 'CACHE_STORE', '"database" adds SQL to every cache read and rate-limit check under load']
+            ? [self::WARN, 'CACHE_STORE', '"database" adds SQL to every cache read under load']
             : [self::PASS, 'CACHE_STORE', $store];
     }
 
     private function limiterStore(): array
     {
+        // Resolved as the framework does: only an unset (null) limiter store means "the default store".
         $store = (string) (config('cache.limiter') ?? config('cache.default'));
 
-        return in_array($store, ['array', 'null'], true)
-            ? [self::FAIL, 'Rate limiter store', "\"{$store}\" is not shared between requests, so rate limits would not apply"]
+        if (in_array($store, ['array', 'null'], true)) {
+            return [self::FAIL, 'Rate limiter store', "\"{$store}\" is not shared between requests, so rate limits would not apply"];
+        }
+
+        // A store name that is not defined would fail every throttled request with a 500.
+        if (config("cache.stores.{$store}") === null) {
+            return [self::FAIL, 'Rate limiter store', "\"{$store}\" is not a defined cache store (CACHE_LIMITER_STORE): throttled requests would fail"];
+        }
+
+        if (config("cache.stores.{$store}.driver") === 'file') {
+            $path = (string) config("cache.stores.{$store}.path");
+
+            // A limiter that cannot write its counters would fail every throttled request with a 500.
+            if (! $this->isWritableDirectory($path)) {
+                return [self::FAIL, 'Rate limiter store', "\"{$store}\" path {$path} is not a writable directory: throttled requests (public API, enquiries, admin login) would fail"];
+            }
+        }
+
+        return $store === 'database'
+            ? [self::WARN, 'Rate limiter store', '"database" adds six SQL statements, including a row lock, to every throttled request; use "file" (CACHE_LIMITER_STORE=file) or a shared store']
             : [self::PASS, 'Rate limiter store', $store];
+    }
+
+    /** A directory that exists and is writable, or one that can be created because its nearest existing ancestor is. */
+    private function isWritableDirectory(string $path): bool
+    {
+        while ($path !== '' && ! file_exists($path) && dirname($path) !== $path) {
+            $path = dirname($path);
+        }
+
+        return is_dir($path) && is_writable($path);
     }
 
     private function corsOrigins(): array

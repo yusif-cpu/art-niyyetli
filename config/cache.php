@@ -19,6 +19,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rate Limiter Cache Store
+    |--------------------------------------------------------------------------
+    |
+    | The store behind Laravel's RateLimiter: the throttle middleware (public API,
+    | enquiry form, admin API, media upload) and the admin login attempt counters.
+    | It is deliberately not the default store: on "database" every throttled
+    | request costs six SQL statements, including a row lock, so the limiter runs
+    | on "file" and costs none. Unset or empty means "file"; to count in the
+    | default store instead, name it explicitly (e.g. CACHE_LIMITER_STORE=database).
+    |
+    | "file" is per host: with several application servers each one counts on its
+    | own, so a limit is effectively multiplied by the number of servers. Use a
+    | shared store (Redis) once the site runs on more than one server. Never "array"
+    | or "null": those are not shared between requests, so nothing would be limited
+    | (php artisan app:preflight fails on them).
+    |
+    */
+
+    'limiter' => env('CACHE_LIMITER_STORE', 'file') ?: 'file',
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------
     |

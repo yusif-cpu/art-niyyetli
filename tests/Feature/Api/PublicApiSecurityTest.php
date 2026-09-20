@@ -54,7 +54,8 @@ class PublicApiSecurityTest extends TestCase
     {
         $last = null;
 
-        for ($i = 0; $i < 61; $i++) {
+        // One request past the configured threshold (60/min by default).
+        for ($i = 0; $i < config('security.rate_limits.public_api') + 1; $i++) {
             $last = $this->getJson('/api/v1/social-links');
         }
 

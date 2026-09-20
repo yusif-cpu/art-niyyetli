@@ -43,4 +43,20 @@ return [
         'report_uri' => env('SECURITY_CSP_REPORT_URI'),
     ],
 
+    /*
+    | Request rate limits, registered in AppServiceProvider (the counters live in the cache.limiter store).
+    |   public_api:   requests per minute per client IP across the read-only /api/v1 endpoints.
+    |   enquiry:      enquiry form submissions per hour per client IP, on top of public_api. Deliberately not
+    |                 an environment setting: it is the spam protection for the only public write endpoint.
+    |   media_upload: uploads per minute per admin user.
+    |   admin_api:    admin write requests (POST/PUT/PATCH/DELETE) per minute per admin user; reads are not counted.
+    | The two tunable limits fall back to their default when the variable is empty, zero or not a number.
+    */
+    'rate_limits' => [
+        'public_api' => max(0, (int) env('RATE_LIMIT_PUBLIC_API', 60)) ?: 60,
+        'enquiry' => 5,
+        'media_upload' => 20,
+        'admin_api' => max(0, (int) env('RATE_LIMIT_ADMIN_API', 240)) ?: 240,
+    ],
+
 ];

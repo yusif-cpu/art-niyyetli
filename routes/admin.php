@@ -28,7 +28,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Runs after the access check, so an unauthenticated or unauthorised caller gets 401/403 and
         // cannot use it to probe validation.
-        Route::middleware(['can:admin.access', ValidatesAdminListQuery::class])->group(function () {
+        // The admin-api limiter throttles writes only, per user. Laravel's middleware priority runs it after
+        // `auth` but before `can`: an unauthenticated caller spends no budget, and a logged-in user without
+        // access can only exhaust their own.
+        Route::middleware(['can:admin.access', 'throttle:admin-api', ValidatesAdminListQuery::class])->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
             Route::post('artworks/reorder', [ArtworkController::class, 'reorder'])->name('artworks.reorder');

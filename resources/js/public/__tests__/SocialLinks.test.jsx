@@ -14,6 +14,7 @@ describe('SocialLinks', () => {
         expect(link).toHaveAttribute('href', 'https://instagram.com/artniyyetli');
         expect(link).toHaveAttribute('target', '_blank');
         expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'));
+        expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
         // Decorative image: the visible text already names the link.
         expect(container.querySelector('img')).toHaveAttribute('src', ICON);
         expect(container.querySelector('img')).toHaveAttribute('alt', '');
@@ -77,5 +78,50 @@ describe('SocialLinks', () => {
 
         rerender(<SocialLinks links={[]} />);
         expect(container).toBeEmptyDOMElement();
+    });
+    describe('address safety', () => {
+        const link = (url, platform = 'Instagram') => ({ platform, url, display_mode: 'text_only', logo_url: null });
+
+        it('renders both http and https addresses', () => {
+            render(<SocialLinks links={[link('https://instagram.com/a', 'Secure'), link('http://example.org/b', 'Plain')]} />);
+
+            expect(screen.getByRole('link', { name: 'Secure' })).toHaveAttribute('href', 'https://instagram.com/a');
+            expect(screen.getByRole('link', { name: 'Plain' })).toHaveAttribute('href', 'http://example.org/b');
+        });
+
+        it.each([
+            ['javascript:', 'javascript:alert(1)'],
+            ['javascript: in capitals', 'JAVASCRIPT:alert(1)'],
+            ['javascript: with a leading space', '  javascript:alert(1)'],
+            ['javascript: with an embedded tab', 'java	script:alert(1)'],
+            ['data:', 'data:text/html,<script>alert(1)</script>'],
+            ['vbscript:', 'vbscript:msgbox(1)'],
+            ['file:', 'file:///etc/passwd'],
+            ['mailto:', 'mailto:someone@example.org'],
+            ['a protocol-relative address', '//evil.example/x'],
+            ['a relative path', '/admin'],
+            ['not an address at all', 'instagram'],
+            ['an empty string', ''],
+            ['a missing address', undefined],
+            ['null', null],
+        ])('does not render a link for %s', (_label, url) => {
+            render(<SocialLinks links={[link(url, 'Unsafe'), link('https://instagram.com/ok', 'Safe')]} />);
+
+            expect(screen.queryByRole('link', { name: 'Unsafe' })).not.toBeInTheDocument();
+            expect(screen.getByRole('link', { name: 'Safe' })).toHaveAttribute('href', 'https://instagram.com/ok');
+            expect(screen.getAllByRole('link')).toHaveLength(1);
+        });
+
+        it('renders nothing at all when every address is unsafe', () => {
+            const { container } = render(<SocialLinks links={[link('javascript:alert(1)'), link('data:text/plain,x')]} />);
+
+            expect(container).toBeEmptyDOMElement();
+        });
+
+        it('tolerates an entry that is not an object', () => {
+            render(<SocialLinks links={[null, undefined, link('https://instagram.com/ok', 'Safe')]} />);
+
+            expect(screen.getAllByRole('link')).toHaveLength(1);
+        });
     });
 });

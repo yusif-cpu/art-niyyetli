@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -20,7 +21,8 @@ class UpdateUserRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255'],
             'username' => ['sometimes', 'string', 'max:255', Rule::unique('users', 'username')->ignore($userId)],
             'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'password' => ['sometimes', 'nullable', 'string', 'min:8'],
+            // Only a password that is being changed is checked; existing passwords are never re-validated.
+            'password' => ['sometimes', 'nullable', Password::min(12)->letters()->numbers(), 'max:255'],
             'roles' => ['sometimes', 'array', 'min:1'],
             'roles.*' => [Rule::in(['administrator', 'editor'])],
             'is_active' => ['sometimes', 'boolean'],

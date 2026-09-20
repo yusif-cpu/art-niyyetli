@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateArtworkRequest;
 use App\Http\Resources\Admin\ArtworkResource;
 use App\Models\Artwork;
 use App\Services\Admin\ArtworkService;
+use App\Support\Api\QueryParams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -36,10 +37,10 @@ class ArtworkController extends Controller
                 'images.media.variants',
             ]);
 
-        if ($search = $request->query('search')) {
+        if ($search = QueryParams::search($request)) {
             $query->where(function ($q) use ($search) {
-                $q->where('inventory_code', 'like', "%{$search}%")
-                    ->orWhereHas('translations', fn ($t) => $t->where('title', 'like', "%{$search}%"));
+                QueryParams::whereLike($q, 'inventory_code', $search);
+                $q->orWhereHas('translations', fn ($t) => QueryParams::whereLike($t, 'title', $search));
             });
         }
 

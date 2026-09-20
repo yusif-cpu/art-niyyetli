@@ -6,6 +6,7 @@ use App\Enums\ArticleStatus;
 use App\Enums\ArticleType;
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesArticlePayload;
+use App\Rules\Slug;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -29,7 +30,7 @@ class StoreArticleRequest extends FormRequest
 
             'translations' => ['required', 'array', 'min:1'],
             'translations.*.locale' => ['required', Rule::enum(Locale::class)],
-            'translations.*.slug' => ['required', 'string', 'max:255'],
+            'translations.*.slug' => ['required', 'string', new Slug],
             'translations.*.title' => ['required', 'string', 'max:255'],
             'translations.*.short_text' => ['required', 'string'],
             'translations.*.content' => ['required', 'string'],

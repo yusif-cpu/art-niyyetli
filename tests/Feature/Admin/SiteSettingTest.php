@@ -52,15 +52,16 @@ class SiteSettingTest extends TestCase
         $response->assertJsonPath('data.phone', '+994 50 000 00 00');
     }
 
-    public function test_whatsapp_number_round_trips_through_get_and_put(): void
+    public function test_whatsapp_number_round_trips_through_get_and_put_stored_as_digits(): void
     {
         $this->actingAs($this->admin)->putJson('/admin/settings', [
             'whatsapp_number' => '+994 55 123 45 67',
-        ])->assertOk()->assertJsonPath('data.whatsapp_number', '+994 55 123 45 67');
+        ])->assertOk()->assertJsonPath('data.whatsapp_number', '994551234567');
 
         $response = $this->actingAs($this->admin)->getJson('/admin/settings');
 
-        $response->assertJsonPath('data.whatsapp_number', '+994 55 123 45 67');
+        $response->assertJsonPath('data.whatsapp_number', '994551234567');
+        $this->assertDatabaseHas('site_settings', ['key' => 'whatsapp_number', 'value' => '994551234567']);
     }
 
     public function test_arbitrary_key_in_the_request_body_never_creates_a_setting_row(): void
@@ -107,5 +108,50 @@ class SiteSettingTest extends TestCase
 
         $response->assertJsonMissingPath('data.internal_secret');
         $this->assertStringNotContainsString('shh', $response->getContent());
+    }
+
+    // -- WhatsApp number ---------------------------------------------------------------------------------
+
+    public function test_a_whatsapp_number_is_stored_as_bare_digits_whatever_punctuation_was_typed(): void
+    {
+        // Pairs, not an array keyed by the typed value: PHP would turn the all-digit key into an integer.
+        foreach ([
+            ['+994 50 123 45 67', '994501234567'],
+            ['+994 (50) 123-45-67', '994501234567'],
+            ['994.50.123.45.67', '994501234567'],
+            ['  0501234567  ', '0501234567'],
+            ['994501234567', '994501234567'],
+        ] as [$typed, $stored]) {
+            $this->actingAs($this->admin)->putJson('/admin/settings', ['whatsapp_number' => $typed])
+                ->assertOk()
+                ->assertJsonPath('data.whatsapp_number', $stored);
+        }
+    }
+
+    public function test_a_whatsapp_number_that_is_not_a_phone_number_is_refused(): void
+    {
+        foreach (['abc', '12', 'call 994501234567', '<script>alert(1)</script>', '994501234567; drop', 'https://evil.example', str_repeat('9', 31), ['994501234567']] as $bad) {
+            $this->actingAs($this->admin)->putJson('/admin/settings', ['whatsapp_number' => $bad])
+                ->assertStatus(422)
+                ->assertJsonValidationErrors(['whatsapp_number']);
+        }
+
+        $this->assertDatabaseMissing('site_settings', ['key' => 'whatsapp_number']);
+    }
+
+    public function test_the_whatsapp_number_can_be_cleared(): void
+    {
+        $this->actingAs($this->admin)->putJson('/admin/settings', ['whatsapp_number' => '+994 50 123 45 67'])->assertOk();
+
+        $this->actingAs($this->admin)->putJson('/admin/settings', ['whatsapp_number' => null])
+            ->assertOk()
+            ->assertJsonPath('data.whatsapp_number', '');
+    }
+
+    public function test_other_settings_are_not_normalised(): void
+    {
+        $this->actingAs($this->admin)->putJson('/admin/settings', ['phone' => '+994 50 000 00 00'])
+            ->assertOk()
+            ->assertJsonPath('data.phone', '+994 50 000 00 00');
     }
 }

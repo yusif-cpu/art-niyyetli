@@ -10,6 +10,7 @@ use App\Http\Resources\Admin\EnquiryReplyResource;
 use App\Http\Resources\Admin\EnquiryResource;
 use App\Mail\EnquiryReplyMail;
 use App\Models\Enquiry;
+use App\Support\Api\QueryParams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -38,11 +39,11 @@ class EnquiryController extends Controller
         if ($request->filled('to')) {
             $query->whereDate('created_at', '<=', $request->query('to'));
         }
-        if ($search = $request->query('search')) {
+        if ($search = QueryParams::search($request)) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('inventory_code', 'like', "%{$search}%");
+                QueryParams::whereLike($q, 'name', $search);
+                QueryParams::whereLike($q, 'email', $search, 'or');
+                QueryParams::whereLike($q, 'inventory_code', $search, 'or');
             });
         }
 

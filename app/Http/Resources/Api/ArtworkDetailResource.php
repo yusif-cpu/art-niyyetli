@@ -45,8 +45,15 @@ class ArtworkDetailResource extends JsonResource
 
     private function buildWhatsAppLink(?string $title): ?string
     {
-        $number = app(SiteSettingService::class)->all()['whatsapp_number'] ?? config('gallery.whatsapp_number');
-        if (! $number) {
+        // Digits only, from the admin setting when it holds a usable number, otherwise from the env config.
+        // (An emptied setting is stored as '', which `??` used to treat as "set", hiding the env fallback.)
+        $number = SiteSettingService::whatsappDigits(app(SiteSettingService::class)->all()['whatsapp_number'] ?? null);
+
+        if ($number === '') {
+            $number = SiteSettingService::whatsappDigits(config('gallery.whatsapp_number'));
+        }
+
+        if ($number === '') {
             return null;
         }
 

@@ -42,6 +42,11 @@ class SiteSettingService
         // only the allowlisted keys can ever be written through this method.
         $allowed = array_intersect_key($data, array_flip(self::ALLOWED_KEYS));
 
+        // Stored as bare digits, the form wa.me links need, whatever punctuation the admin typed.
+        if (array_key_exists('whatsapp_number', $allowed)) {
+            $allowed['whatsapp_number'] = self::whatsappDigits($allowed['whatsapp_number']);
+        }
+
         DB::transaction(function () use ($allowed) {
             foreach ($allowed as $key => $value) {
                 SiteSetting::query()->updateOrCreate(
@@ -52,6 +57,15 @@ class SiteSettingService
         });
 
         return $this->all();
+    }
+
+    /**
+     * A phone number reduced to its digits ("+994 50 123-45-67" => "994501234567"): the only form that is
+     * safe to put into a https://wa.me/ link. Empty when there is nothing usable.
+     */
+    public static function whatsappDigits(?string $value): string
+    {
+        return preg_replace('/\D+/', '', (string) $value);
     }
 
     private function resolveLogoUrl(?string $mediaId): ?string

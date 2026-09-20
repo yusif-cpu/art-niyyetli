@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\UpdateExhibitionRequest;
 use App\Http\Resources\Admin\ExhibitionResource;
 use App\Models\Exhibition;
 use App\Services\Admin\ExhibitionService;
+use App\Support\Api\QueryParams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -32,8 +33,8 @@ class ExhibitionController extends Controller
                 'media.media.variants',
             ]);
 
-        if ($search = $request->query('search')) {
-            $query->whereHas('translations', fn ($t) => $t->where('title', 'like', "%{$search}%"));
+        if ($search = QueryParams::search($request)) {
+            $query->whereHas('translations', fn ($t) => QueryParams::whereLike($t, 'title', $search));
         }
 
         if ($request->filled('status')) {

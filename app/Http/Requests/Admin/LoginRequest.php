@@ -14,8 +14,10 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            // Bounded: both values are hashed, compared and used in rate-limiter keys. The limits are far above
+            // any real credential (usernames are validated to 255 characters when an account is created).
+            'username' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'max:1024'],
         ];
     }
 }

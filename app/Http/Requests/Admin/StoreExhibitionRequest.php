@@ -8,6 +8,7 @@ use App\Enums\ExhibitionType;
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesExhibitionPayload;
 use App\Http\Requests\Admin\Concerns\ValidatesYoutubeVideoPayload;
+use App\Rules\Slug;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -38,7 +39,7 @@ class StoreExhibitionRequest extends FormRequest
 
             'translations' => ['required', 'array', 'min:1'],
             'translations.*.locale' => ['required', Rule::enum(Locale::class)],
-            'translations.*.slug' => ['required', 'string', 'max:255'],
+            'translations.*.slug' => ['required', 'string', new Slug],
             'translations.*.title' => ['required', 'string', 'max:255'],
             'translations.*.venue' => ['required', 'string', 'max:255'],
             'translations.*.short_text' => ['required', 'string'],

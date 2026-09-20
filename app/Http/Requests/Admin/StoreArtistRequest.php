@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesArtistPayload;
+use App\Rules\Slug;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -29,7 +30,7 @@ class StoreArtistRequest extends FormRequest
 
             'translations' => ['required', 'array', 'min:1'],
             'translations.*.locale' => ['required', Rule::enum(Locale::class)],
-            'translations.*.slug' => ['required', 'string', 'max:255'],
+            'translations.*.slug' => ['required', 'string', new Slug],
             'translations.*.first_name' => ['required', 'string', 'max:255'],
             'translations.*.last_name' => ['required', 'string', 'max:255'],
             'translations.*.birth_place' => ['nullable', 'string', 'max:255'],

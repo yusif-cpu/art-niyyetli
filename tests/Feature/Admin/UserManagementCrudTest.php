@@ -36,7 +36,7 @@ class UserManagementCrudTest extends TestCase
             'name' => 'New User',
             'username' => 'new.user',
             'email' => 'new.user@example.com',
-            'password' => 'secret123',
+            'password' => 'a-long-passphrase-42',
             'roles' => ['editor'],
             'is_active' => true,
         ], $overrides);
@@ -58,7 +58,7 @@ class UserManagementCrudTest extends TestCase
 
         $user = User::where('username', 'new.user')->first();
         $this->assertNotNull($user);
-        $this->assertTrue(Hash::check('secret123', $user->password));
+        $this->assertTrue(Hash::check('a-long-passphrase-42', $user->password));
         $this->assertTrue($user->hasRole('editor'));
     }
 
@@ -220,5 +220,67 @@ class UserManagementCrudTest extends TestCase
         $target->refresh();
         $this->assertSame($originalHash, $target->password);
         $this->assertTrue(Hash::check('original-password', $target->password));
+    }
+
+    // -- Password policy for new and changed passwords ---------------------------------------------------
+
+    public function test_a_new_users_password_must_be_at_least_12_characters(): void
+    {
+        $this->actingAs($this->admin)->postJson('/admin/users', $this->validUserPayload(['password' => 'abcdefgh123']))
+            ->assertStatus(422)->assertJsonValidationErrors(['password']);
+
+        $this->actingAs($this->admin)->postJson('/admin/users', $this->validUserPayload(['password' => 'abcdefghij12']))
+            ->assertCreated();
+    }
+
+    public function test_a_new_users_password_needs_letters_and_numbers(): void
+    {
+        foreach (['onlylettersnonumbers', '123456789012345'] as $weak) {
+            $this->actingAs($this->admin)->postJson('/admin/users', $this->validUserPayload(['password' => $weak]))
+                ->assertStatus(422)->assertJsonValidationErrors(['password']);
+        }
+
+        $this->assertDatabaseMissing('users', ['username' => 'new.user']);
+    }
+
+    public function test_a_password_longer_than_255_characters_or_an_array_is_refused(): void
+    {
+        $this->actingAs($this->admin)->postJson('/admin/users', $this->validUserPayload(['password' => str_repeat('a1', 128)]))
+            ->assertStatus(422)->assertJsonValidationErrors(['password']);
+
+        $this->actingAs($this->admin)->postJson('/admin/users', $this->validUserPayload(['password' => ['a-long-passphrase-42']]))
+            ->assertStatus(422)->assertJsonValidationErrors(['password']);
+    }
+
+    public function test_changing_a_password_is_held_to_the_same_policy(): void
+    {
+        $target = User::factory()->create(['username' => 'target.user', 'password' => 'original-password']);
+        $hash = $target->password;
+
+        $this->actingAs($this->admin)->putJson("/admin/users/{$target->id}", ['password' => 'short1'])
+            ->assertStatus(422)->assertJsonValidationErrors(['password']);
+        $this->actingAs($this->admin)->putJson("/admin/users/{$target->id}", ['password' => 'lettersonlylettersonly'])
+            ->assertStatus(422)->assertJsonValidationErrors(['password']);
+
+        $this->assertSame($hash, $target->fresh()->password, 'a refused change leaves the password alone');
+
+        $this->actingAs($this->admin)->putJson("/admin/users/{$target->id}", ['password' => 'a-new-passphrase-77'])->assertOk();
+
+        $this->assertTrue(Hash::check('a-new-passphrase-77', $target->fresh()->password));
+    }
+
+    public function test_an_existing_user_with_a_weak_password_is_not_forced_to_change_it(): void
+    {
+        // The policy applies to a password that is being set, never retroactively.
+        $target = User::factory()->create(['username' => 'target.user', 'password' => 'short']);
+        $hash = $target->password;
+
+        foreach ([['name' => 'Renamed User'], ['password' => null], ['password' => ''], ['is_active' => true]] as $payload) {
+            $this->actingAs($this->admin)->putJson("/admin/users/{$target->id}", $payload)->assertOk();
+        }
+
+        $this->assertSame($hash, $target->fresh()->password);
+
+        $this->postJson('/admin/login', ['username' => 'target.user', 'password' => 'short'])->assertOk();
     }
 }

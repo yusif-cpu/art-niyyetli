@@ -21,7 +21,9 @@ class UpdateSiteSettingsRequest extends FormRequest
             'address' => ['sometimes', 'nullable', 'string', 'max:500'],
             'opening_hours' => ['sometimes', 'nullable', 'string', 'max:255'],
             'footer_text' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'whatsapp_number' => ['sometimes', 'nullable', 'string', 'max:50'],
+            // A phone number as people write it (optional +, digits, spaces, brackets, dots, hyphens); the
+            // service stores only the digits.
+            'whatsapp_number' => ['sometimes', 'nullable', 'string', 'regex:/^\+?[0-9\s().-]{5,30}$/'],
 
             'brand_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'logo_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists('media', 'id')->whereNull('deleted_at')],

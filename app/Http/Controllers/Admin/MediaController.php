@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateMediaRequest;
 use App\Http\Resources\Admin\MediaResource;
 use App\Models\Media;
 use App\Services\Admin\MediaService;
+use App\Support\Api\QueryParams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -26,8 +27,8 @@ class MediaController extends Controller
             $query->where('type', $type);
         }
 
-        if ($search = $request->query('search')) {
-            $query->where('original_filename', 'like', "%{$search}%");
+        if ($search = QueryParams::search($request)) {
+            QueryParams::whereLike($query, 'original_filename', $search);
         }
 
         if ($artworkId = $request->query('artwork_id')) {

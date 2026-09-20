@@ -275,4 +275,47 @@ class AdminAuthTest extends TestCase
 
         $this->getJson('/admin/dashboard')->assertStatus(401);
     }
+
+    // -- Input bounds -----------------------------------------------------------------------------------
+
+    public function test_an_oversized_username_is_a_validation_error_not_a_server_error(): void
+    {
+        $response = $this->postJson('/admin/login', ['username' => str_repeat('u', 10000), 'password' => 'whatever']);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['username']);
+        $this->assertStringContainsString('255', $response->json('errors.username.0'));
+        $this->assertFalse(Auth::check());
+    }
+
+    public function test_an_oversized_password_is_a_validation_error_not_a_server_error(): void
+    {
+        $response = $this->postJson('/admin/login', ['username' => 'jane.admin', 'password' => str_repeat('p', 1025)]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['password']);
+        $this->assertStringContainsString('1024', $response->json('errors.password.0'));
+    }
+
+    public function test_the_longest_allowed_values_reach_the_credential_check_and_fail_generically(): void
+    {
+        $response = $this->postJson('/admin/login', ['username' => str_repeat('u', 255), 'password' => str_repeat('p', 1024)]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['username']);
+        $this->assertSame('These credentials do not match our records.', $response->json('errors.username.0'));
+    }
+
+    public function test_array_valued_credentials_are_a_validation_error(): void
+    {
+        $this->postJson('/admin/login', ['username' => ['jane.admin'], 'password' => 'x'])->assertStatus(422)->assertJsonValidationErrors(['username']);
+        $this->postJson('/admin/login', ['username' => 'jane.admin', 'password' => ['x']])->assertStatus(422)->assertJsonValidationErrors(['password']);
+    }
+
+    public function test_a_user_with_a_long_but_valid_password_can_still_log_in(): void
+    {
+        $password = str_repeat('a1', 200); // 400 characters, far beyond any sensible password, within the 1024 bound
+        $this->createUserWithRole('editor', 'jane.admin', $password);
+
+        $this->postJson('/admin/login', ['username' => 'jane.admin', 'password' => $password])
+            ->assertOk()
+            ->assertJson(['message' => 'Authenticated.']);
+    }
 }

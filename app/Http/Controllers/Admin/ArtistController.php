@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\UpdateArtistRequest;
 use App\Http\Resources\Admin\ArtistResource;
 use App\Models\Artist;
 use App\Services\Admin\ArtistService;
+use App\Support\Api\QueryParams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -28,9 +29,11 @@ class ArtistController extends Controller
                 'representationImage.variants',
             ]);
 
-        if ($search = $request->query('search')) {
-            $query->whereHas('translations', fn ($t) => $t->where('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%"));
+        if ($search = QueryParams::search($request)) {
+            $query->whereHas('translations', function ($t) use ($search) {
+                QueryParams::whereLike($t, 'first_name', $search);
+                QueryParams::whereLike($t, 'last_name', $search, 'or');
+            });
         }
 
         if ($request->has('is_active')) {

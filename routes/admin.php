@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\SocialLinkController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Middleware\ValidatesAdminListQuery;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -25,7 +26,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
 
-        Route::middleware('can:admin.access')->group(function () {
+        // Runs after the access check, so an unauthenticated or unauthorised caller gets 401/403 and
+        // cannot use it to probe validation.
+        Route::middleware(['can:admin.access', ValidatesAdminListQuery::class])->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
             Route::post('artworks/reorder', [ArtworkController::class, 'reorder'])->name('artworks.reorder');

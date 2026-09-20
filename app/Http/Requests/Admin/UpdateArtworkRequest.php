@@ -7,6 +7,7 @@ use App\Enums\ArtworkImageType;
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesArtworkPayload;
 use App\Http\Requests\Admin\Concerns\ValidatesYoutubeVideoPayload;
+use App\Rules\Slug;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -56,7 +57,7 @@ class UpdateArtworkRequest extends FormRequest
 
             'translations' => ['sometimes', 'array', 'min:1'],
             'translations.*.locale' => ['required', Rule::enum(Locale::class)],
-            'translations.*.slug' => ['required', 'string', 'max:255'],
+            'translations.*.slug' => ['required', 'string', new Slug($this->route('artwork'))],
             'translations.*.title' => ['required', 'string', 'max:255'],
             'translations.*.short_description' => ['required', 'string'],
             'translations.*.provenance' => ['required', 'string'],

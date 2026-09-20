@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\UpdateArticleRequest;
 use App\Http\Resources\Admin\ArticleResource;
 use App\Models\Article;
 use App\Services\Admin\ArticleService;
+use App\Support\Api\QueryParams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -27,8 +28,8 @@ class ArticleController extends Controller
                 'media.variants',
             ]);
 
-        if ($search = $request->query('search')) {
-            $query->whereHas('translations', fn ($t) => $t->where('title', 'like', "%{$search}%"));
+        if ($search = QueryParams::search($request)) {
+            $query->whereHas('translations', fn ($t) => QueryParams::whereLike($t, 'title', $search));
         }
 
         if ($request->filled('type')) {

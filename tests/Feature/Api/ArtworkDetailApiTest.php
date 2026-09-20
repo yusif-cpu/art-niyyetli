@@ -200,4 +200,50 @@ class ArtworkDetailApiTest extends TestCase
         $response->assertOk();
         $this->assertStringStartsWith('https://wa.me/994509876543?text=', $response->json('data.whatsapp_link'));
     }
+
+    private function whatsappLinkFor(Artwork $artwork): ?string
+    {
+        return $this->getJson("/api/v1/artworks/{$artwork->inventory_code}")->assertOk()->json('data.whatsapp_link');
+    }
+
+    public function test_an_emptied_whatsapp_setting_falls_back_to_the_env_number(): void
+    {
+        // Clearing the setting in the admin stores '', which used to hide the env fallback.
+        config(['gallery.whatsapp_number' => '994501234567']);
+        SiteSetting::query()->create(['key' => 'whatsapp_number', 'value' => '', 'type' => 'string']);
+
+        $this->assertStringStartsWith('https://wa.me/994501234567?text=', $this->whatsappLinkFor($this->makeArtwork()));
+    }
+
+    public function test_a_formatted_whatsapp_setting_is_reduced_to_digits_in_the_link(): void
+    {
+        // A value saved before numbers were normalised on write.
+        SiteSetting::query()->create(['key' => 'whatsapp_number', 'value' => '+994 (50) 123-45-67', 'type' => 'string']);
+
+        $this->assertStringStartsWith('https://wa.me/994501234567?text=', $this->whatsappLinkFor($this->makeArtwork()));
+    }
+
+    public function test_a_formatted_env_whatsapp_number_is_reduced_to_digits_too(): void
+    {
+        config(['gallery.whatsapp_number' => '+994 50 123 45 67']);
+
+        $this->assertStringStartsWith('https://wa.me/994501234567?text=', $this->whatsappLinkFor($this->makeArtwork()));
+    }
+
+    public function test_there_is_no_link_when_neither_source_holds_a_usable_number(): void
+    {
+        config(['gallery.whatsapp_number' => null]);
+        SiteSetting::query()->create(['key' => 'whatsapp_number', 'value' => 'not a number', 'type' => 'string']);
+
+        $this->assertNull($this->whatsappLinkFor($this->makeArtwork()));
+    }
+
+    public function test_the_link_host_and_number_cannot_be_altered_by_the_stored_value(): void
+    {
+        SiteSetting::query()->create(['key' => 'whatsapp_number', 'value' => 'evil.example/#994501234567', 'type' => 'string']);
+
+        $link = $this->whatsappLinkFor($this->makeArtwork());
+
+        $this->assertMatchesRegularExpression('#^https://wa\.me/994501234567\?text=#', $link);
+    }
 }

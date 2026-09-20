@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // admin requests always get a JSON 401 via shouldRenderJsonWhen below
         // rather than a redirect to a route that doesn't exist.
         $middleware->redirectGuestsTo(fn () => null);
+
+        // Outermost global middleware, so the security headers also reach responses that other global
+        // middleware short-circuit (CORS preflights, oversized request bodies) and error responses.
+        $middleware->prepend(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

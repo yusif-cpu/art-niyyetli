@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,6 +26,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Surfaces N+1 regressions early: lazy-loading a relation on a model that came
+        // from a multi-row result is logged as a warning in every non-production
+        // environment (the test suite upgrades it to an exception in Tests\TestCase).
+        // It is never enabled in production, so a missed eager load there degrades to
+        // an extra query, not an error.
+        Model::preventLazyLoading(! $this->app->environment('production'));
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
+            Log::warning(sprintf('Lazy loading [%s] on model [%s].', $relation, $model::class));
+        });
+
         Gate::define('admin.access', fn (User $user) => $user->is_active && ($user->hasRole('administrator') || $user->hasRole('editor')));
 
         Gate::define('admin.manage-users', fn (User $user) => $user->is_active && $user->hasRole('administrator'));

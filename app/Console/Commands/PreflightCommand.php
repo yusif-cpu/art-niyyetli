@@ -74,6 +74,7 @@ class PreflightCommand extends Command
             $this->mailer(),
             $this->cacheStore(),
             $this->limiterStore(),
+            $this->publicContentCache(),
             $this->corsOrigins(),
             $this->trustedProxies(),
             $this->storageLink(),
@@ -204,6 +205,19 @@ class PreflightCommand extends Command
         return $store === 'database'
             ? [self::WARN, 'Rate limiter store', '"database" adds six SQL statements, including a row lock, to every throttled request; use "file" (CACHE_LIMITER_STORE=file) or a shared store']
             : [self::PASS, 'Rate limiter store', $store];
+    }
+
+    /** Informational: how long public content may be stale, and what to run after changing it outside the admin. */
+    private function publicContentCache(): array
+    {
+        $ttl = (int) config('public_cache.api_ttl');
+        $http = $ttl > 0 ? "public API responses reusable for {$ttl}s" : 'HTTP caching of the public API is off';
+        $store = (string) config('cache.default');
+        $shared = $store === 'file'
+            ? ' "file" is per server: with several servers, admin edits only invalidate the server that handled them, so use a shared store (database, Redis)'
+            : '';
+
+        return [self::PASS, 'Public content cache', "{$http}; admin edits apply at once, but content changed outside the admin (seeders, SQL) appears after up to 5 min unless you run `php artisan public-cache:flush`.{$shared}"];
     }
 
     /** A directory that exists and is writable, or one that can be created because its nearest existing ancestor is. */

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Performance;
 
+use App\Support\Cache\PublicContentCache;
 use Database\Seeders\BenchmarkSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -120,6 +121,11 @@ class PublicApiQueryCountTest extends TestCase
             $send = fn () => $kind === 'json' ? $this->getJson($url) : $this->get($url);
 
             $send()->assertOk(); // warm-up: absorbs one-off work and proves the URL is valid
+
+            // The public content cache (Task 9) would serve the measured request from the warm-up's entry and report 0
+            // queries, hiding an N+1 in the cached endpoints. Invalidating it first measures the real (cold) query
+            // structure; the warm-cache numbers are asserted in PublicCacheInvalidationTest.
+            app(PublicContentCache::class)->bump();
 
             $response = null;
             $counts[$name] = $this->countQueries(function () use (&$response, $send) {

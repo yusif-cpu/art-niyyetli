@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 use App\Enums\LogoDisplayMode;
 use App\Models\Media;
 use App\Models\SiteSetting;
+use App\Support\Cache\PublicContentCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,7 +16,18 @@ class SiteSettingService
         'brand_text', 'logo_media_id', 'logo_display_mode',
     ];
 
+    public function __construct(private PublicContentCache $cache) {}
+
+    /**
+     * The settings as the public site sees them. Cached (plain scalars only) and invalidated by the content version,
+     * which every admin write bumps; update() bumps it itself before re-reading, so the response to a save is fresh.
+     */
     public function all(): array
+    {
+        return $this->cache->remember('site-settings', (int) config('public_cache.ttl.site_settings'), fn () => $this->load());
+    }
+
+    private function load(): array
     {
         $rows = SiteSetting::query()->whereIn('key', self::ALLOWED_KEYS)->pluck('value', 'key');
 
@@ -29,8 +41,10 @@ class SiteSettingService
         $settings['logo_display_mode'] = $settings['logo_display_mode'] ?: LogoDisplayMode::LogoText->value;
 
         // logo_url is derived, not stored: it is not in ALLOWED_KEYS and is
-        // never written by update(); it is resolved fresh from logo_media_id
-        // on every read so a replaced/removed media file is always reflected.
+        // never written by update(); it is resolved from logo_media_id whenever
+        // the settings are (re)built, so a replaced/removed media file is
+        // reflected as soon as the public content cache is invalidated (every
+        // admin write does that) or its entry expires.
         $settings['logo_url'] = $this->resolveLogoUrl($settings['logo_media_id']);
 
         return $settings;
@@ -55,6 +69,10 @@ class SiteSettingService
                 );
             }
         });
+
+        // Before re-reading, not only in the admin middleware after the response: the settings returned to the
+        // admin who just saved must never come from the cache entry that this write made stale.
+        $this->cache->bump();
 
         return $this->all();
     }

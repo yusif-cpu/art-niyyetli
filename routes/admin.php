@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\SocialLinkController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Middleware\BumpPublicContentVersion;
 use App\Http\Middleware\ValidatesAdminListQuery;
 use Illuminate\Support\Facades\Route;
 
@@ -31,7 +32,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // The admin-api limiter throttles writes only, per user. Laravel's middleware priority runs it after
         // `auth` but before `can`: an unauthenticated caller spends no budget, and a logged-in user without
         // access can only exhaust their own.
-        Route::middleware(['can:admin.access', 'throttle:admin-api', ValidatesAdminListQuery::class])->group(function () {
+        // BumpPublicContentVersion invalidates the public content cache after every successful write in this group,
+        // so any route added here is covered automatically (login and logout, outside it, change no content).
+        Route::middleware(['can:admin.access', 'throttle:admin-api', ValidatesAdminListQuery::class, BumpPublicContentVersion::class])->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
             Route::post('artworks/reorder', [ArtworkController::class, 'reorder'])->name('artworks.reorder');

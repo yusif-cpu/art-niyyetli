@@ -10,23 +10,29 @@ use App\Models\Artist;
 use App\Models\Artwork;
 use App\Models\Exhibition;
 use App\Models\Page;
+use App\Support\Cache\PublicContentCache;
 use App\Support\Seo\SeoText;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
 {
+    public function __construct(private PublicContentCache $cache) {}
+
     public function index(): Response
     {
-        $urls = array_merge(
-            [['loc' => SeoText::absoluteUrl('/'), 'lastmod' => null]],
-            $this->staticPages(),
-            $this->artworks(),
-            $this->artists(),
-            $this->exhibitions(),
-            $this->articles(),
-        );
+        // The same document for every visitor, so it is cached as a string; an admin write invalidates it.
+        $xml = $this->cache->remember('sitemap', (int) config('public_cache.ttl.sitemap'), function () {
+            $urls = array_merge(
+                [['loc' => SeoText::absoluteUrl('/'), 'lastmod' => null]],
+                $this->staticPages(),
+                $this->artworks(),
+                $this->artists(),
+                $this->exhibitions(),
+                $this->articles(),
+            );
 
-        $xml = $this->render($urls);
+            return $this->render($urls);
+        });
 
         return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ExhibitionStatus;
+use App\Enums\Locale;
 use App\Enums\PageType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\ArtistResource;
@@ -19,15 +20,30 @@ use App\Models\Page;
 use App\Models\SocialLink;
 use App\Support\Api\LocaleResolver;
 use App\Support\Api\LocalizedFields;
+use App\Support\Cache\PublicContentCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class HomepageController extends Controller
 {
+    public function __construct(private PublicContentCache $cache) {}
+
     public function index(Request $request): JsonResponse
     {
+        // The only input that changes the payload is the locale, normalised to az/en before it becomes part of the key.
         $locale = LocaleResolver::resolve($request);
 
+        $body = $this->cache->remember(
+            "homepage:{$locale->value}",
+            (int) config('public_cache.ttl.homepage'),
+            fn () => response()->json($this->payload($request, $locale))->getContent(),
+        );
+
+        return JsonResponse::fromJsonString($body);
+    }
+
+    private function payload(Request $request, Locale $locale): array
+    {
         $homePage = Page::query()
             ->where('type', PageType::Home)
             ->where('is_active', true)
@@ -74,7 +90,7 @@ class HomepageController extends Controller
         $socialLinks = SocialLink::query()->with('logoMedia.variants')
             ->where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
 
-        return response()->json(['data' => [
+        return ['data' => [
             'page' => $homePage ? [
                 'title' => LocalizedFields::resolve($homePage->translations, $locale, ['title'])['title'],
                 'sections' => PageSectionResource::collection($homePage->sections)->resolve($request),
@@ -90,6 +106,6 @@ class HomepageController extends Controller
             'exhibition' => $exhibition ? (new ExhibitionResource($exhibition))->resolve($request) : null,
             'faqs' => FaqResource::collection($faqs)->resolve($request),
             'social_links' => SocialLinkResource::collection($socialLinks)->resolve($request),
-        ]]);
+        ]];
     }
 }

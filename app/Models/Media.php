@@ -48,6 +48,11 @@ class Media extends Model
         return $this->hasMany(SocialLink::class, 'logo_media_id');
     }
 
+    public function pageSections(): HasMany
+    {
+        return $this->hasMany(PageSection::class, 'media_id');
+    }
+
     public function representingArtists(): HasMany
     {
         return $this->hasMany(Artist::class, 'representation_image_id');

@@ -109,4 +109,30 @@ class MediaDeletionTest extends TestCase
         $this->actingAs($this->admin)->deleteJson("/admin/media/{$media->id}")->assertStatus(409);
         $this->assertDatabaseHas('media', ['id' => $media->id, 'deleted_at' => null]);
     }
+
+    public function test_a_refused_delete_says_what_still_uses_the_file(): void
+    {
+        $media = Media::factory()->create();
+        Artist::factory()->create(['representation_image_id' => $media->id]);
+
+        $this->actingAs($this->admin)->deleteJson("/admin/media/{$media->id}")
+            ->assertStatus(409)
+            ->assertExactJson(['message' => 'This media file is still used by an artist and cannot be deleted. Remove it from there first.']);
+    }
+
+    public function test_deleting_media_keeps_its_variant_files_on_disk_for_a_later_purge(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $upload = $this->actingAs($this->admin)->postJson('/admin/media', ['file' => UploadedFile::fake()->image('artwork.jpg', 800, 600)])->assertOk();
+        $paths = $upload->json('data.variants');
+        $mediaId = $upload->json('data.id');
+
+        $this->actingAs($this->admin)->deleteJson("/admin/media/{$mediaId}")->assertOk();
+
+        $this->assertCount(8, $paths);
+        $this->assertCount(8, Storage::disk('public')->allFiles(), 'variant files are not removed when the media is archived');
+        $this->assertCount(1, Storage::disk('local')->allFiles(), 'nor is the private original');
+    }
 }

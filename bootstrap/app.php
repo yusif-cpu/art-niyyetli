@@ -22,6 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Outermost global middleware, so the security headers also reach responses that other global
         // middleware short-circuit (CORS preflights, oversized request bodies) and error responses.
         $middleware->prepend(SecurityHeaders::class);
+
+        // Which proxies are trusted comes from config/trustedproxy.php (TRUSTED_PROXIES), read at request time —
+        // .env is not loaded yet when this callback runs. Only these forwarded headers are ever honoured; the
+        // framework default would also trust X-Forwarded-Prefix and the AWS ELB header, which this app has no use for.
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR
+            | Request::HEADER_X_FORWARDED_HOST
+            | Request::HEADER_X_FORWARDED_PORT
+            | Request::HEADER_X_FORWARDED_PROTO);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -161,6 +161,60 @@ class PreflightCommandTest extends TestCase
         $this->assertStringContainsString('Preflight passed.', $output);
     }
 
+    public function test_forwarded_headers_without_trusted_proxies_are_a_warning_not_a_failure(): void
+    {
+        config(['trustedproxy.proxies' => []]);
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.7';
+
+        try {
+            [$exit, $output] = $this->preflight();
+        } finally {
+            unset($_SERVER['HTTP_X_FORWARDED_FOR']);
+        }
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertSame(1, substr_count($output, ' WARN '), $output);
+        $this->assertStringContainsString('TRUSTED_PROXIES', $output);
+        $this->assertStringContainsString('X-Forwarded-For present but TRUSTED_PROXIES is not set', $output);
+    }
+
+    public function test_no_forwarded_headers_and_no_trusted_proxies_is_fine_for_a_directly_reached_server(): void
+    {
+        config(['trustedproxy.proxies' => []]);
+
+        [$exit, $output] = $this->preflight();
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertStringContainsString('not set: correct when the application is reached directly', $output);
+        $this->assertStringNotContainsString(' WARN ', $output);
+    }
+
+    public function test_configured_trusted_proxies_are_listed_and_silence_the_warning(): void
+    {
+        config(['trustedproxy.proxies' => ['10.0.0.5', '172.16.0.0/12']]);
+        $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
+
+        try {
+            [$exit, $output] = $this->preflight();
+        } finally {
+            unset($_SERVER['HTTP_X_FORWARDED_PROTO']);
+        }
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertStringContainsString('10.0.0.5, 172.16.0.0/12', $output);
+        $this->assertStringNotContainsString(' WARN ', $output);
+    }
+
+    public function test_trusting_every_host_is_reported_with_its_condition(): void
+    {
+        config(['trustedproxy.proxies' => '*']);
+
+        [$exit, $output] = $this->preflight();
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertStringContainsString('only safe when the network stops clients reaching the application directly', $output);
+    }
+
     public function test_the_contact_email_setting_satisfies_the_enquiry_recipient_check(): void
     {
         config(['gallery.enquiry_notification_email' => null]);
@@ -186,6 +240,8 @@ class PreflightCommandTest extends TestCase
         $this->assertNotContains($template['CACHE_STORE'], ['array', 'null']);
         $this->assertNotContains($template['SESSION_DRIVER'], ['array', 'null']);
         $this->assertSame('', $template['PUBLIC_API_CORS_ORIGINS'], 'same-origin: no CORS origins by default');
+        $this->assertSame('false', $template['PUBLIC_API_CORS_ALLOW_POST']);
+        $this->assertSame('', $template['TRUSTED_PROXIES'], 'no proxy is trusted unless the operator names it');
 
         foreach (array_keys($template) as $key) {
             $this->assertStringStartsNotWith('ADMIN_DEV_', $key, 'the dev administrator must never be configured in production');

@@ -75,6 +75,7 @@ class PreflightCommand extends Command
             $this->cacheStore(),
             $this->limiterStore(),
             $this->corsOrigins(),
+            $this->trustedProxies(),
             $this->storageLink(),
             $this->frontendBuild(),
             $this->testAccount(),
@@ -196,6 +197,28 @@ class PreflightCommand extends Command
         return $local === []
             ? [self::PASS, 'PUBLIC_API_CORS_ORIGINS', 'no local origins']
             : [self::FAIL, 'PUBLIC_API_CORS_ORIGINS', 'allows local or malformed origin(s): '.implode(', ', $local)];
+    }
+
+    private function trustedProxies(): array
+    {
+        $configured = config('trustedproxy.proxies');
+
+        if ($configured === '*') {
+            return [self::PASS, 'TRUSTED_PROXIES', '"*" trusts every connecting host: only safe when the network stops clients reaching the application directly'];
+        }
+
+        if (is_array($configured) && $configured !== []) {
+            return [self::PASS, 'TRUSTED_PROXIES', implode(', ', $configured)];
+        }
+
+        $forwarded = array_values(array_filter(
+            ['X-Forwarded-For', 'X-Forwarded-Proto', 'X-Forwarded-Host', 'X-Forwarded-Port'],
+            fn (string $header) => isset($_SERVER['HTTP_'.strtoupper(str_replace('-', '_', $header))])
+        ));
+
+        return $forwarded === []
+            ? [self::PASS, 'TRUSTED_PROXIES', 'not set: correct when the application is reached directly, with no proxy in front']
+            : [self::WARN, 'TRUSTED_PROXIES', implode(', ', $forwarded).' present but TRUSTED_PROXIES is not set: behind a proxy or load balancer every visitor would share one rate-limit bucket and HTTPS would be misdetected'];
     }
 
     private function storageLink(): array

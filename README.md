@@ -173,7 +173,9 @@ FAQ (`GET /faqs`):
 - `429` — rate limited: 60 requests/minute/IP on the read (GET) surface, or 5 requests/hour/IP on `POST /enquiries` specifically (its own separate limit, not shared with the read bucket).
 - `405` — any non-GET method on a route other than `POST /enquiries`.
 
-**CORS:** configured in `config/cors.php`, restricted to `PUBLIC_API_CORS_ORIGINS` (comma-separated origins in `.env`; defaults to common localhost dev-server ports). Production sets this to the real frontend origin(s) — never a wildcard.
+**CORS:** configured in `config/cors.php`, restricted to `PUBLIC_API_CORS_ORIGINS` (comma-separated origins in `.env`). When unset it defaults to the common localhost dev-server ports outside production and to **no origins in production** (the SPA is same-origin and needs none); an empty value means none in every environment. Only `GET`/`HEAD`/`OPTIONS` are allowed cross-origin unless `PUBLIC_API_CORS_ALLOW_POST=true` (for a separately hosted frontend submitting enquiries); requests may carry only the `Accept`, `Content-Type` and `X-Requested-With` headers, and preflights are cached for 10 minutes. Never a wildcard.
+
+**Proxies:** when the app sits behind a reverse proxy, load balancer or CDN, set `TRUSTED_PROXIES` (comma-separated IPs/CIDRs, see `config/trustedproxy.php`) so rate limiting and HTTPS detection use the real client IP and scheme. Leave it empty when clients reach the web server directly: forwarded headers are then ignored.
 
 ### Enquiries (Phase 10)
 

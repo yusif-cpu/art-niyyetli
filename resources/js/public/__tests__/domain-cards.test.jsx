@@ -16,6 +16,7 @@ describe('ArtistCard', () => {
         expect(screen.getByText('Müasir rəssamlıq')).toBeInTheDocument();
         expect(screen.getByRole('link')).toHaveAttribute('href', '/artists/aygun-mammadova');
         expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.test/portrait.webp');
+        expect(screen.getByRole('img')).toHaveAttribute('loading', 'lazy');
     });
 
     it('renders a placeholder, not a broken image, when portrait_url is null', () => {
@@ -37,6 +38,7 @@ describe('ExhibitionCard', () => {
         expect(screen.getByText('2026-01-10 – 2026-02-10')).toBeInTheDocument();
         expect(screen.getByRole('link')).toHaveAttribute('href', '/exhibitions/winter-show-2026');
         expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.test/ex.webp');
+        expect(screen.getByRole('img')).toHaveAttribute('loading', 'lazy');
     });
 
     it('renders a placeholder when there is no media', () => {
@@ -57,6 +59,7 @@ describe('ArticleCard', () => {
         expect(screen.getByText('A short teaser.')).toBeInTheDocument();
         expect(screen.getByRole('link')).toHaveAttribute('href', '/articles/artist-interview-2026');
         expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.test/article.webp');
+        expect(screen.getByRole('img')).toHaveAttribute('loading', 'lazy');
     });
 
     it('renders a placeholder when there is no media', () => {

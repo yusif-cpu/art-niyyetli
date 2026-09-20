@@ -5,7 +5,7 @@ export default function BrandMark({ logoUrl, displayMode, brandText, className =
 
     return (
         <span className={`inline-flex items-center gap-2 ${className}`}>
-            {showLogo && <img src={logoUrl} alt={imgAlt} className={imgClassName} />}
+            {showLogo && <img src={logoUrl} alt={imgAlt} className={imgClassName} loading="eager" decoding="async" />}
             {showText && <span className={textClassName}>{brandText}</span>}
         </span>
     );

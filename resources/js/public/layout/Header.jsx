@@ -1,9 +1,6 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
-import { useApiData } from '../lib/useApiData.js';
-import { getNavigation } from '../services/navigation.js';
-import { getSiteSettings } from '../services/siteSettings.js';
-import { listSocialLinks } from '../services/socialLinks.js';
+import { useSiteData } from './SiteDataContext.jsx';
 import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import SocialLinks from '../components/SocialLinks.jsx';
@@ -14,9 +11,7 @@ function itemLabel(locale, item) {
 
 export default function Header() {
     const { locale } = useLocale();
-    const navigation = useApiData(() => getNavigation(locale), [locale]);
-    const settings = useApiData(() => getSiteSettings(locale), [locale]);
-    const socialLinks = useApiData(() => listSocialLinks(locale), [locale]);
+    const { navigation, settings, socialLinks } = useSiteData();
     const headerItems = Array.isArray(navigation.data?.header) ? navigation.data.header : [];
 
     return (

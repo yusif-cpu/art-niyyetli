@@ -1,5 +1,6 @@
 import { LocaleProvider } from './i18n/LocaleContext.jsx';
 import { useRouter } from './lib/useRouter.js';
+import { SiteDataProvider } from './layout/SiteDataContext.jsx';
 import SiteShell from './layout/SiteShell.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import HomePage from './pages/HomePage.jsx';
@@ -43,7 +44,9 @@ function RoutedApp() {
 export default function App() {
     return (
         <LocaleProvider>
-            <RoutedApp />
+            <SiteDataProvider>
+                <RoutedApp />
+            </SiteDataProvider>
         </LocaleProvider>
     );
 }

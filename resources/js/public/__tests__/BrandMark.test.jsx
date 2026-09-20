@@ -14,6 +14,14 @@ describe('BrandMark', () => {
         expect(img).toHaveAttribute('alt', '');
     });
 
+    it('loads the logo eagerly, since it is above the fold on every page, and decodes it asynchronously', () => {
+        const { container } = render(<BrandMark logoUrl="https://example.test/logo.png" displayMode="logo_text" brandText="ArtNiyyətli" />);
+
+        const img = container.querySelector('img');
+        expect(img).toHaveAttribute('loading', 'eager');
+        expect(img).toHaveAttribute('decoding', 'async');
+    });
+
     it('renders only the logo in logo_only mode, with the brand text as its accessible name', () => {
         render(<BrandMark logoUrl="https://example.test/logo.png" displayMode="logo_only" brandText="ArtNiyyətli" />);
 

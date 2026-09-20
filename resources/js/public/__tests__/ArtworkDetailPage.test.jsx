@@ -30,6 +30,26 @@ describe('ArtworkDetailPage', () => {
         expect(screen.getByRole('img', { name: 'Sunset Over Baku by Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/full.webp');
     });
 
+    it('loads the first gallery image eagerly with high priority and the rest lazily', async () => {
+        const images = [
+            { type: 'main', sort_order: 0, is_main: true, url: 'https://example.test/one.webp' },
+            { type: 'gallery', sort_order: 1, is_main: false, url: 'https://example.test/two.webp' },
+            { type: 'gallery', sort_order: 2, is_main: false, url: 'https://example.test/three.webp' },
+        ];
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: { ...detail, images } }));
+
+        const { container } = render(<LocaleProvider><ArtworkDetailPage params={{ code: 'AN-2026-014' }} /></LocaleProvider>);
+        await screen.findByText('Sunset Over Baku');
+
+        const [first, second, third] = container.querySelectorAll('img');
+        expect(first).toHaveAttribute('loading', 'eager');
+        expect(first).toHaveAttribute('fetchpriority', 'high');
+        [second, third].forEach((img) => {
+            expect(img).toHaveAttribute('loading', 'lazy');
+            expect(img).not.toHaveAttribute('fetchpriority');
+        });
+    });
+
     it('does not render a WhatsApp link when whatsapp_link is null', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: detail }));
         render(<LocaleProvider><ArtworkDetailPage params={{ code: 'AN-2026-014' }} /></LocaleProvider>);

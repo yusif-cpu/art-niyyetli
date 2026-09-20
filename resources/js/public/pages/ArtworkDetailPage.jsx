@@ -24,10 +24,11 @@ export default function ArtworkDetailPage({ params }) {
     return (
         <div className="grid grid-cols-1 gap-8 px-6 py-8 lg:grid-cols-2">
             <div className="space-y-2">
-                {data.images.map((image) => (
+                {data.images.map((image, index) => (
                     <ImageWithFallback
                         key={image.url}
                         src={image.url}
+                        priority={index === 0}
                         alt={data.artist?.name ? `${data.title} by ${data.artist.name}` : data.title}
                         className="w-full object-cover"
                     />

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import { SiteDataProvider } from '../layout/SiteDataContext.jsx';
 import SiteShell from '../layout/SiteShell.jsx';
 
 function jsonResponse(body) {
@@ -62,9 +63,11 @@ describe('SiteShell', () => {
     it('renders header pages, catalogue links, footer pages, and social links, guarding null fields', async () => {
         render(
             <LocaleProvider>
-                <SiteShell>
-                    <p>Page content</p>
-                </SiteShell>
+                <SiteDataProvider>
+                    <SiteShell>
+                        <p>Page content</p>
+                    </SiteShell>
+                </SiteDataProvider>
             </LocaleProvider>
         );
 
@@ -91,9 +94,11 @@ describe('SiteShell', () => {
     it('renders the branding logo from site settings in both the header and the footer', async () => {
         render(
             <LocaleProvider>
-                <SiteShell>
-                    <p>Page content</p>
-                </SiteShell>
+                <SiteDataProvider>
+                    <SiteShell>
+                        <p>Page content</p>
+                    </SiteShell>
+                </SiteDataProvider>
             </LocaleProvider>
         );
 
@@ -121,9 +126,11 @@ describe('SiteShell', () => {
 
         render(
             <LocaleProvider>
-                <SiteShell>
-                    <p>Page content</p>
-                </SiteShell>
+                <SiteDataProvider>
+                    <SiteShell>
+                        <p>Page content</p>
+                    </SiteShell>
+                </SiteDataProvider>
             </LocaleProvider>
         );
 
@@ -141,9 +148,11 @@ describe('SiteShell', () => {
     it('switches header and footer labels to English on locale change', async () => {
         render(
             <LocaleProvider>
-                <SiteShell>
-                    <p>Page content</p>
-                </SiteShell>
+                <SiteDataProvider>
+                    <SiteShell>
+                        <p>Page content</p>
+                    </SiteShell>
+                </SiteDataProvider>
             </LocaleProvider>
         );
 

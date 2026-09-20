@@ -30,6 +30,8 @@ describe('ArtworkCard', () => {
         expect(screen.getByText('3200 AZN')).toBeInTheDocument();
         expect(screen.getByRole('link')).toHaveAttribute('href', '/artworks/AN-2026-014');
         expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.test/catalogue.webp');
+        expect(screen.getByRole('img')).toHaveAttribute('loading', 'lazy');
+        expect(screen.getByRole('img')).toHaveAttribute('decoding', 'async');
     });
 
     it('renders "price on request" when price is null', () => {

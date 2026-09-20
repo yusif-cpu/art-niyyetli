@@ -2,19 +2,14 @@
 
 namespace App\Services\Api;
 
-use App\Mail\NewEnquiryReceived;
+use App\Jobs\SendEnquiryNotification;
 use App\Models\Artwork;
 use App\Models\Enquiry;
 use App\Models\EnquirySubject;
-use App\Services\Admin\SiteSettingService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class EnquiryService
 {
-    public function __construct(private SiteSettingService $settings) {}
-
     public function createFromPublicSubmission(?Artwork $artwork, array $data, ?string $ip, ?string $userAgent): Enquiry
     {
         $enquiry = DB::transaction(function () use ($artwork, $data, $ip, $userAgent) {
@@ -40,25 +35,11 @@ class EnquiryService
             ]);
         });
 
-        $this->sendNotification($enquiry);
+        // The enquiry is committed above. The notification (recipient lookup, rendering, SMTP) runs after the response
+        // has been sent, so the visitor never waits for the mail server and a mail failure can neither change the
+        // response nor undo the enquiry.
+        SendEnquiryNotification::dispatch($enquiry->id)->afterResponse();
 
         return $enquiry;
-    }
-
-    private function sendNotification(Enquiry $enquiry): void
-    {
-        $recipient = $this->settings->all()['contact_email'] ?? config('gallery.enquiry_notification_email');
-
-        if (! $recipient) {
-            Log::warning('Enquiry notification skipped: no recipient configured.', ['enquiry_id' => $enquiry->id]);
-
-            return;
-        }
-
-        try {
-            Mail::to($recipient)->send(new NewEnquiryReceived($enquiry->load('artwork.translations', 'subject.translations')));
-        } catch (\Throwable $e) {
-            Log::error('Enquiry notification failed to send.', ['enquiry_id' => $enquiry->id, 'error' => $e->getMessage()]);
-        }
     }
 }

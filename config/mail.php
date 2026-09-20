@@ -45,7 +45,11 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            // Seconds the SMTP connect, and each single read or write, may wait before the send fails. It applies per
+            // network operation, not to the whole send: an SMTP exchange is several round trips, so a server that keeps
+            // answering slowly can take a multiple of this. The enquiry notification runs after the response but in the
+            // same PHP-FPM worker, which stays busy until the send ends. Unset, empty, zero or not a number means 10.
+            'timeout' => max(0, (int) env('MAIL_TIMEOUT', 10)) ?: 10,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 

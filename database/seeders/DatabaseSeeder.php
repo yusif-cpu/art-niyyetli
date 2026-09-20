@@ -17,10 +17,14 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // A convenience account with the factory's well-known password: local
+        // development and tests only, never a deployed environment.
+        if (app()->environment(['local', 'testing'])) {
+            User::factory()->create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ]);
+        }
 
         $this->call([
             RoleSeeder::class,

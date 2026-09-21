@@ -123,7 +123,7 @@ class SitemapController extends Controller
     /** Absolute URL for path segments, each percent-encoded (slugs may hold Unicode letters; codes may hold anything). */
     private function url(string ...$segments): string
     {
-        return SeoText::absoluteUrl('/'.implode('/', array_map('rawurlencode', $segments)));
+        return SeoText::segmentsUrl(...$segments);
     }
 
     private function render(array $urls): string

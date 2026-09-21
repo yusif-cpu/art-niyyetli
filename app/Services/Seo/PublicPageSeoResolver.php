@@ -108,7 +108,7 @@ class PublicPageSeoResolver
         return new PageSeo(
             title: SeoText::pageTitle($override?->title ?? $fields['title']),
             description: SeoText::description($override?->description ?? $fields['content']),
-            canonicalUrl: SeoText::absoluteUrl("/{$slug}"),
+            canonicalUrl: SeoText::segmentsUrl($slug),
             index: true,
             follow: true,
             ogType: 'website',
@@ -163,7 +163,7 @@ class PublicPageSeoResolver
 
         $title = $override?->title ?? $fields['title'];
         $description = SeoText::description($override?->description ?? $fields['short_description']);
-        $canonical = SeoText::absoluteUrl("/artworks/{$inventoryCode}");
+        $canonical = SeoText::segmentsUrl('artworks', $inventoryCode);
 
         return new PageSeo(
             title: SeoText::pageTitle($title),
@@ -241,7 +241,7 @@ class PublicPageSeoResolver
 
         $title = $override?->title ?? $name;
         $description = SeoText::description($override?->description ?? $fields['biography']);
-        $canonical = SeoText::absoluteUrl("/artists/{$slug}");
+        $canonical = SeoText::segmentsUrl('artists', $slug);
 
         return new PageSeo(
             title: SeoText::pageTitle($title),
@@ -312,7 +312,7 @@ class PublicPageSeoResolver
         $ogImageUrl = $override?->ogImage ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail') : null;
         $title = $override?->title ?? $fields['title'];
         $description = SeoText::description($override?->description ?? $fields['short_text']);
-        $canonical = SeoText::absoluteUrl("/exhibitions/{$slug}");
+        $canonical = SeoText::segmentsUrl('exhibitions', $slug);
 
         return new PageSeo(
             title: SeoText::pageTitle($title),
@@ -383,7 +383,7 @@ class PublicPageSeoResolver
         $ogImageUrl = $override?->ogImage ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail') : null;
         $title = $override?->title ?? $fields['title'];
         $description = SeoText::description($override?->description ?? $fields['short_text']);
-        $canonical = SeoText::absoluteUrl("/articles/{$slug}");
+        $canonical = SeoText::segmentsUrl('articles', $slug);
 
         return new PageSeo(
             title: SeoText::pageTitle($title),

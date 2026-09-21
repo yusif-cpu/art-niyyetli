@@ -31,6 +31,16 @@ class SeoText
         return $path === '' ? "{$base}/" : "{$base}/{$path}";
     }
 
+    /**
+     * Absolute URL for path segments, each percent-encoded, so a Unicode slug or an inventory code holding a space,
+     * `?`, `#` or `/` stays one valid path segment. Shared by the canonical URLs and the sitemap so both name the
+     * same page identically; segments made of unreserved characters (`AN-2026-014`, `about`) come out unchanged.
+     */
+    public static function segmentsUrl(string ...$segments): string
+    {
+        return self::absoluteUrl('/'.implode('/', array_map('rawurlencode', $segments)));
+    }
+
     public static function ogLocale(Locale $locale): string
     {
         return match ($locale) {

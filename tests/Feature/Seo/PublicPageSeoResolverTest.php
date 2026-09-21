@@ -375,6 +375,59 @@ class PublicPageSeoResolverTest extends TestCase
         $this->assertSame(404, $seo->httpStatus);
     }
 
+    public function test_canonical_urls_percent_encode_each_path_segment(): void
+    {
+        $this->makeArtwork('AN 12/B?x');
+        $this->makeArtist('əli-məmmədov');
+        $this->makeExhibition('yaz-sərgisi');
+        $this->makePublishedArticle('şuşa-haqqında');
+        $page = Page::create(['type' => PageType::About, 'is_active' => true]);
+        $page->translations()->create(['locale' => 'az', 'slug' => 'haqqımızda', 'title' => 'Haqqımızda', 'content' => 'x']);
+
+        $expected = [
+            [['artworks', 'AN 12/B?x'], 'http://localhost:8080/artworks/AN%2012%2FB%3Fx'],
+            [['artists', 'əli-məmmədov'], 'http://localhost:8080/artists/%C9%99li-m%C9%99mm%C9%99dov'],
+            [['exhibitions', 'yaz-sərgisi'], 'http://localhost:8080/exhibitions/yaz-s%C9%99rgisi'],
+            [['articles', 'şuşa-haqqında'], 'http://localhost:8080/articles/%C5%9Fu%C5%9Fa-haqq%C4%B1nda'],
+            [['haqqımızda'], 'http://localhost:8080/haqq%C4%B1m%C4%B1zda'],
+        ];
+
+        foreach ($expected as [$segments, $canonical]) {
+            $this->assertSame($canonical, $this->resolver()->resolve($segments, Locale::Az)->canonicalUrl);
+        }
+    }
+
+    public function test_the_canonical_url_of_every_entity_equals_its_sitemap_loc(): void
+    {
+        $this->makeArtwork('AN 12/B?x');
+        $this->makeArtist('əli-məmmədov');
+        $this->makeExhibition('yaz-sərgisi');
+        $this->makePublishedArticle('şuşa-haqqında');
+
+        $sitemap = $this->get('/sitemap.xml')->assertOk()->getContent();
+
+        foreach ([['artworks', 'AN 12/B?x'], ['artists', 'əli-məmmədov'], ['exhibitions', 'yaz-sərgisi'], ['articles', 'şuşa-haqqında']] as $segments) {
+            $canonical = $this->resolver()->resolve($segments, Locale::Az)->canonicalUrl;
+
+            $this->assertStringContainsString('<loc>'.$canonical.'</loc>', $sitemap, "Canonical and sitemap disagree for {$segments[0]}/{$segments[1]}");
+        }
+    }
+
+    public function test_the_encoded_canonical_reaches_the_rendered_head_and_json_ld(): void
+    {
+        // No `/` in the code here: a slash always splits the request path into extra segments, so such a code can
+        // only be exercised at the resolver level (above).
+        $this->makeArtwork('AN 12?x');
+
+        $html = $this->get('/artworks/AN%2012%3Fx')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<link rel="canonical" href="http://localhost:8080/artworks/AN%2012%3Fx">', $html);
+        $this->assertStringContainsString('<meta property="og:url" content="http://localhost:8080/artworks/AN%2012%3Fx">', $html);
+
+        $breadcrumb = $this->resolver()->resolve(['artworks', 'AN 12?x'], Locale::Az)->jsonLd['@graph'][1]['itemListElement'];
+        $this->assertSame('http://localhost:8080/artworks/AN%2012%3Fx', $breadcrumb[2]['item']);
+    }
+
     public function test_article_detail_content_never_appears_as_raw_html_in_jsonld(): void
     {
         $article = $this->makePublishedArticle('safe-article');

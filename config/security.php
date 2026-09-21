@@ -32,8 +32,9 @@ return [
     /*
     | Content-Security-Policy.
     |   mode:       off | report-only | enforce. Anything else is treated as report-only (a typo must never
-    |               silently enforce, or silently disable, the policy). Start with report-only and check the
-    |               browser console for "[Report Only]" violations on every public and admin screen first.
+    |               silently enforce, or silently disable, the policy). The default is report-only: it is what local
+    |               development runs (new resources show up as "[Report Only]" console messages), while
+    |               .env.production.example sets "enforce" for the policy reviewed clean in Phase 12.
     |   report_uri: optional URL that receives violation reports (added as a report-uri directive).
     | The policy itself lives in SecurityHeaders::policy(). It is skipped while the Vite dev server is
     | running (public/hot exists), which needs inline and HMR allowances.

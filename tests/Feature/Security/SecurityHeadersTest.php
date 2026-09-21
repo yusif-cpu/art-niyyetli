@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Security;
 
+use Dotenv\Dotenv;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
@@ -197,6 +198,67 @@ class SecurityHeadersTest extends TestCase
 
         $this->assertSame(self::REPORT_ONLY_POLICY."; frame-ancestors 'self'", $response->headers->get('Content-Security-Policy'));
         $this->assertFalse($response->headers->has('Content-Security-Policy-Report-Only'));
+    }
+
+    #[DataProvider('responses')]
+    public function test_enforce_mode_puts_the_enforcing_policy_on_every_kind_of_response(string $method, string $uri, int $status): void
+    {
+        config(['security.csp.mode' => 'enforce']);
+
+        $response = $this->call($method, $uri);
+
+        $response->assertStatus($status);
+        $this->assertSame([self::REPORT_ONLY_POLICY."; frame-ancestors 'self'"], $response->headers->all('content-security-policy'), "CSP on {$method} {$uri}");
+        $this->assertFalse($response->headers->has('Content-Security-Policy-Report-Only'), "Report-Only on {$method} {$uri}");
+    }
+
+    public function test_the_enforced_policy_never_relaxes_script_or_style_sources_or_allows_wildcards(): void
+    {
+        config(['security.csp.mode' => 'enforce']);
+
+        $policy = (string) $this->get('/')->headers->get('Content-Security-Policy');
+        $directives = [];
+
+        foreach (explode(';', $policy) as $directive) {
+            $parts = preg_split('/\s+/', trim($directive));
+            $directives[array_shift($parts)] = $parts;
+        }
+
+        foreach (['unsafe-inline', 'unsafe-eval', 'unsafe-hashes', 'strict-dynamic'] as $keyword) {
+            $this->assertStringNotContainsString($keyword, $policy);
+        }
+
+        foreach ($directives as $name => $sources) {
+            $this->assertNotContains('*', $sources, "{$name} must not allow every origin");
+            $this->assertNotContains('http:', $sources, "{$name} must not allow every http origin");
+            $this->assertNotContains('https:', $sources, "{$name} must not allow every https origin");
+        }
+
+        $this->assertSame(["'self'"], $directives['default-src']);
+        $this->assertSame(["'self'"], $directives['script-src']);
+        $this->assertSame(["'self'"], $directives['style-src']);
+        $this->assertSame(["'self'"], $directives['connect-src']);
+        $this->assertSame(["'self'"], $directives['font-src']);
+        $this->assertSame(['https://www.youtube-nocookie.com'], $directives['frame-src']);
+        $this->assertSame(["'none'"], $directives['object-src']);
+        $this->assertSame(["'self'"], $directives['frame-ancestors']);
+        $this->assertSame(["'self'"], $directives['base-uri']);
+        $this->assertSame(["'self'"], $directives['form-action']);
+        // data: is only ever needed for images; no other directive may accept it.
+        foreach ($directives as $name => $sources) {
+            if ($name !== 'img-src') {
+                $this->assertNotContains('data:', $sources, "{$name} must not allow data: URLs");
+            }
+        }
+    }
+
+    public function test_the_production_template_enforces_the_csp_and_the_development_template_only_reports(): void
+    {
+        $production = Dotenv::parse((string) file_get_contents(base_path('.env.production.example')));
+        $development = Dotenv::parse((string) file_get_contents(base_path('.env.example')));
+
+        $this->assertSame('enforce', $production['SECURITY_CSP']);
+        $this->assertSame('report-only', $development['SECURITY_CSP']);
     }
 
     public function test_off_mode_sends_no_csp_header_but_keeps_the_other_headers(): void

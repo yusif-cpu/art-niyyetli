@@ -33,6 +33,17 @@ use RuntimeException;
  *     touch /tmp/bench.sqlite
  *     php artisan migrate:fresh --force && php artisan db:seed --class=BenchmarkSeeder --force'
  *
+ * SQLite is enough for timing, but query PLANS (EXPLAIN, index choices, filesorts) only mean something on MySQL. For
+ * those, use a throwaway container on the compose network instead of the dev database — its data lives in tmpfs and
+ * disappears with it (never point migrate:fresh at the dev MySQL):
+ *
+ *   docker run -d --name art-bench-mysql --network art-niyyetli_art-niyyetli --tmpfs /var/lib/mysql \
+ *     -e MYSQL_ROOT_PASSWORD=bench -e MYSQL_DATABASE=bench mysql:8.4
+ *   docker exec -e DB_CONNECTION=mysql -e DB_HOST=art-bench-mysql -e DB_DATABASE=bench -e DB_USERNAME=root \
+ *     -e DB_PASSWORD=bench -e DB_URL= -e BENCH_ARTWORKS=5000 art-niyyetli-app sh -c \
+ *     'php artisan migrate:fresh --force && php artisan db:seed --class=BenchmarkSeeder --force'
+ *   docker rm -f art-bench-mysql
+ *
  * Then time an endpoint in-process, with the query log, as the Phase 12 audit did:
  *
  *   DB::enableQueryLog();

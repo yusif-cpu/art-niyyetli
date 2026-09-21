@@ -71,6 +71,12 @@ class MediaVariantGenerator
      * reachable unless the address is known, and the public API only ever reveals addresses of published content.
      * (Variants generated before this scheme keep their old paths.) Regenerating reuses the media's existing token,
      * so the same files are overwritten instead of new ones piling up.
+     *
+     * Caching caveat: nginx serves these files with `Cache-Control: public, max-age=86400` and no revalidation
+     * (docker/nginx/default.conf, `location /storage/`), which is only safe while a URL is written once. Today
+     * generate() runs only from MediaService::upload(), for a brand-new media, so that holds. A feature that
+     * regenerates an existing media in place would leave browsers and shared caches showing the old image for up to
+     * a day: give the regenerated files a new token (a new URL) instead of reusing this one.
      */
     private function tokenFor(Media $media): string
     {

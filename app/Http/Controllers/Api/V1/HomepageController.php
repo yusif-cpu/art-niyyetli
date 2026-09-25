@@ -60,12 +60,13 @@ class HomepageController extends Controller
         ];
 
         $wall = Artwork::query()->where('is_active', true)->where('show_on_wall', true)
-            ->with($artworkWith)->orderBy('sort_order')->get();
+            ->with($artworkWith)->orderBy('sort_order')
+            ->limit((int) config('gallery.wall_limit', 16))->get();
 
         $featured = Artwork::query()->where('is_active', true)->where('featured', true)
             ->with($artworkWith)->orderBy('sort_order')->limit(6)->get();
 
-        $artists = Artist::query()->where('is_active', true)
+        $artists = Artist::query()->where('is_active', true)->withUsableAzTranslation()
             ->with(['translations', 'representationImage.variants'])
             ->orderBy('sort_order')->orderBy('id')->get();
 

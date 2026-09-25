@@ -140,4 +140,72 @@ class ArtworkCatalogueApiTest extends TestCase
         $this->assertNull($response->json('data.0.currency'));
         $this->assertNotNull($response->json('data.0.availability'));
     }
+
+    public function test_price_max_alone_is_accepted_and_filters(): void
+    {
+        $cheap = $this->makeArtwork(['price' => 500]);
+        $this->makeArtwork(['price' => 9000]);
+
+        $response = $this->getJson('/api/v1/artworks?price_max=1000');
+
+        $response->assertOk();
+        $this->assertSame([$cheap->inventory_code], collect($response->json('data'))->pluck('inventory_code')->all());
+    }
+
+    public function test_price_min_alone_and_both_together_filter(): void
+    {
+        $this->makeArtwork(['price' => 500]);
+        $mid = $this->makeArtwork(['price' => 2000]);
+        $high = $this->makeArtwork(['price' => 9000]);
+
+        $min = $this->getJson('/api/v1/artworks?price_min=1000&sort=price_asc');
+        $min->assertOk();
+        $this->assertSame([$mid->inventory_code, $high->inventory_code], collect($min->json('data'))->pluck('inventory_code')->all());
+
+        $both = $this->getJson('/api/v1/artworks?price_min=1000&price_max=5000');
+        $both->assertOk();
+        $this->assertSame([$mid->inventory_code], collect($both->json('data'))->pluck('inventory_code')->all());
+    }
+
+    public function test_price_max_alone_still_rejects_invalid_values(): void
+    {
+        $this->getJson('/api/v1/artworks?price_max=abc')->assertStatus(422)->assertJsonValidationErrors('price_max');
+        $this->getJson('/api/v1/artworks?price_max=-1')->assertStatus(422)->assertJsonValidationErrors('price_max');
+    }
+
+    public function test_size_filter_uses_the_larger_dimension(): void
+    {
+        $small = $this->makeArtwork(['width_cm' => 30, 'height_cm' => 40]);
+        $tall = $this->makeArtwork(['width_cm' => 20, 'height_cm' => 120]);
+        $wide = $this->makeArtwork(['width_cm' => 150, 'height_cm' => 50]);
+
+        $codes = fn (string $qs) => collect($this->getJson("/api/v1/artworks?{$qs}&sort=newest")->assertOk()->json('data'))
+            ->pluck('inventory_code')->sort()->values()->all();
+
+        $this->assertSame(collect([$tall, $wide])->pluck('inventory_code')->sort()->values()->all(), $codes('size_min=100'));
+        $this->assertSame([$small->inventory_code], $codes('size_max=50'));
+        $this->assertSame([$tall->inventory_code], $codes('size_min=100&size_max=120'));
+    }
+
+    public function test_size_bounds_are_inclusive(): void
+    {
+        $exact = $this->makeArtwork(['width_cm' => 60, 'height_cm' => 100]);
+
+        $this->assertCount(1, $this->getJson('/api/v1/artworks?size_min=100')->json('data'));
+        $this->assertCount(1, $this->getJson('/api/v1/artworks?size_max=100')->json('data'));
+        $this->assertSame($exact->inventory_code, $this->getJson('/api/v1/artworks?size_min=100&size_max=100')->json('data.0.inventory_code'));
+    }
+
+    public function test_size_max_below_size_min_returns_422_but_size_max_alone_is_fine(): void
+    {
+        $this->getJson('/api/v1/artworks?size_min=100&size_max=50')->assertStatus(422)->assertJsonValidationErrors('size_max');
+        $this->getJson('/api/v1/artworks?size_max=50')->assertOk();
+    }
+
+    public function test_invalid_size_values_return_422(): void
+    {
+        $this->getJson('/api/v1/artworks?size_min=abc')->assertStatus(422)->assertJsonValidationErrors('size_min');
+        $this->getJson('/api/v1/artworks?size_min=-5')->assertStatus(422)->assertJsonValidationErrors('size_min');
+        $this->getJson('/api/v1/artworks?size_max=abc')->assertStatus(422)->assertJsonValidationErrors('size_max');
+    }
 }

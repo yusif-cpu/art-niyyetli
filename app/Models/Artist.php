@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\Seo\Concerns\HasSeoOverride;
 use Database\Factories\ArtistFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,17 @@ class Artist extends Model
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];
+    }
+
+    /**
+     * Artists the public site can link to: the AZ translation is the canonical one that every other locale falls
+     * back to, so an artist without an AZ slug has no usable public URL.
+     *
+     * @param  Builder<Artist>  $query
+     */
+    public function scopeWithUsableAzTranslation(Builder $query): void
+    {
+        $query->whereHas('translations', fn ($q) => $q->where('locale', 'az')->where('slug', '!=', ''));
     }
 
     public function translations(): HasMany

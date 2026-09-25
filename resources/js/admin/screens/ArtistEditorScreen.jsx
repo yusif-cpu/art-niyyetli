@@ -148,7 +148,13 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
         } catch (err) {
             if (err instanceof ApiError) {
                 setErrors(err.errors || {});
-                setBanner('Məlumatları yadda saxlamaq mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.');
+                if (err.errors?.translations) {
+                    // The API requires the AZ translation (its slug, name and surname) — the public site links by it.
+                    setLocale('az');
+                    setBanner('AZ tərcüməsi mütləqdir: URL (slug), ad və soyad AZ tabında doldurulmalıdır.');
+                } else {
+                    setBanner('Məlumatları yadda saxlamaq mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.');
+                }
             }
         } finally {
             setSaving(false);

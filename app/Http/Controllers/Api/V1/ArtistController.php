@@ -14,6 +14,7 @@ class ArtistController extends Controller
     {
         $artists = Artist::query()
             ->where('is_active', true)
+            ->withUsableAzTranslation()
             ->with(['translations', 'representationImage.variants'])
             ->orderBy('sort_order')
             ->orderBy('id')

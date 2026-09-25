@@ -151,4 +151,41 @@ class HomepageApiTest extends TestCase
 
         $this->assertSame($pagesSections, $homepageSections);
     }
+
+    public function test_wall_is_capped_by_the_configured_limit_keeping_curator_order(): void
+    {
+        config(['gallery.wall_limit' => 2]);
+        $third = $this->makeArtwork(['show_on_wall' => true, 'sort_order' => 2]);
+        $first = $this->makeArtwork(['show_on_wall' => true, 'sort_order' => 0]);
+        $second = $this->makeArtwork(['show_on_wall' => true, 'sort_order' => 1]);
+
+        $wall = collect($this->getJson('/api/v1/homepage')->json('data.wall'))->pluck('inventory_code')->all();
+
+        $this->assertSame([$first->inventory_code, $second->inventory_code], $wall);
+        $this->assertNotContains($third->inventory_code, $wall);
+    }
+
+    public function test_wall_limit_defaults_to_sixteen_and_ignores_query_parameters(): void
+    {
+        $this->assertSame(16, config('gallery.wall_limit'));
+
+        config(['gallery.wall_limit' => 1]);
+        $this->makeArtwork(['show_on_wall' => true, 'sort_order' => 0]);
+        $this->makeArtwork(['show_on_wall' => true, 'sort_order' => 1]);
+
+        $this->assertCount(1, $this->getJson('/api/v1/homepage?wall_limit=50&limit=50')->json('data.wall'));
+    }
+
+    public function test_artists_without_a_usable_az_translation_are_not_listed(): void
+    {
+        $usable = Artist::factory()->create(['is_active' => true]);
+        $usable->translations()->create(['locale' => 'az', 'slug' => 'ok', 'first_name' => 'A', 'last_name' => 'B']);
+        Artist::factory()->create(['is_active' => true]);
+        $enOnly = Artist::factory()->create(['is_active' => true]);
+        $enOnly->translations()->create(['locale' => 'en', 'slug' => 'en-only', 'first_name' => 'C', 'last_name' => 'D']);
+
+        $artists = $this->getJson('/api/v1/homepage')->json('data.artists');
+
+        $this->assertSame(['ok'], collect($artists)->pluck('slug')->all());
+    }
 }

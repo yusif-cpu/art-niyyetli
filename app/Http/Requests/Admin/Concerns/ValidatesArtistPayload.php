@@ -17,6 +17,22 @@ trait ValidatesArtistPayload
         }
     }
 
+    /**
+     * The AZ translation is the canonical one every other locale falls back to, so an artist saved without it
+     * would have no usable public slug. Its slug, first and last name are already required per translation.
+     * An update may send only the EN translation as long as the artist already has a stored AZ one.
+     */
+    protected function requireAzTranslation(Validator $validator): void
+    {
+        $locales = collect($this->input('translations', []))->pluck('locale');
+
+        $hasStoredAz = $this->route('artist')?->translations()->where('locale', 'az')->exists() ?? false;
+
+        if (! $locales->contains('az') && ! $hasStoredAz) {
+            $validator->errors()->add('translations', 'An Azerbaijani (az) translation with a slug is required.');
+        }
+    }
+
     protected function rejectSlugCollisionsWithOtherArtists(Validator $validator): void
     {
         $currentArtist = $this->route('artist');

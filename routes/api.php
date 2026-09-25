@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\V1\EnquiryController;
 use App\Http\Controllers\Api\V1\EnquirySubjectController;
 use App\Http\Controllers\Api\V1\ExhibitionController;
 use App\Http\Controllers\Api\V1\FaqController;
+use App\Http\Controllers\Api\V1\GenreController;
 use App\Http\Controllers\Api\V1\HomepageController;
+use App\Http\Controllers\Api\V1\MediumController;
 use App\Http\Controllers\Api\V1\NavigationController;
 use App\Http\Controllers\Api\V1\PageController;
 use App\Http\Controllers\Api\V1\SiteSettingController;
@@ -27,6 +29,8 @@ Route::prefix('v1')->middleware('throttle:public-api')->group(function () {
         Route::get('navigation', [NavigationController::class, 'index']);
         Route::get('artworks', [ArtworkController::class, 'index']);
         Route::get('artworks/{inventoryCode}', [ArtworkController::class, 'show']);
+        Route::get('genres', [GenreController::class, 'index']);
+        Route::get('mediums', [MediumController::class, 'index']);
         Route::get('artists', [ArtistController::class, 'index']);
         Route::get('artists/{slug}', [ArtistController::class, 'show']);
         Route::get('exhibitions', [ExhibitionController::class, 'index']);

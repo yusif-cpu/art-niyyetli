@@ -49,6 +49,19 @@ class ArtworkController extends Controller
             $query->where('price', '<=', $request->float('price_max'));
         }
 
+        // An artwork's size is its larger dimension, GREATEST(width_cm, height_cm), whichever way it is oriented.
+        // Written without GREATEST (absent from SQLite): the larger side is >= min if either side is, and <= max
+        // only if both are.
+        if ($request->filled('size_min')) {
+            $min = $request->float('size_min');
+            $query->where(fn ($q) => $q->where('width_cm', '>=', $min)->orWhere('height_cm', '>=', $min));
+        }
+
+        if ($request->filled('size_max')) {
+            $max = $request->float('size_max');
+            $query->where('width_cm', '<=', $max)->where('height_cm', '<=', $max);
+        }
+
         match ($request->query('sort')) {
             'newest' => $query->orderBy('created_at', 'desc'),
             'price_asc' => $query->orderBy('price', 'asc'),

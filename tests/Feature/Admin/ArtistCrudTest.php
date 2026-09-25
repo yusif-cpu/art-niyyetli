@@ -178,4 +178,53 @@ class ArtistCrudTest extends TestCase
         $this->deleteJson("/admin/artists/{$artist->id}")->assertStatus(401);
         $this->assertNull($artist->fresh()->deleted_at);
     }
+
+    public function test_creating_an_artist_without_an_az_translation_is_rejected(): void
+    {
+        $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload([
+            'translations' => [['locale' => 'en', 'slug' => 'aygun-en', 'first_name' => 'Aygun', 'last_name' => 'Mammadova']],
+        ]))->assertStatus(422)->assertJsonValidationErrors('translations');
+
+        $this->assertSame(0, Artist::query()->count());
+    }
+
+    public function test_creating_an_artist_with_an_invalid_or_missing_az_slug_is_rejected(): void
+    {
+        $az = ['locale' => 'az', 'first_name' => 'Aygün', 'last_name' => 'Məmmədova'];
+
+        $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload(['translations' => [$az]]))
+            ->assertStatus(422)->assertJsonValidationErrors('translations.0.slug');
+        $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload(['translations' => [$az + ['slug' => 'bad slug/']]]))
+            ->assertStatus(422)->assertJsonValidationErrors('translations.0.slug');
+        $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload(['translations' => [$az + ['slug' => '']]]))
+            ->assertStatus(422)->assertJsonValidationErrors('translations.0.slug');
+    }
+
+    public function test_creating_an_artist_with_az_and_en_translations_still_works(): void
+    {
+        $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload([
+            'translations' => [
+                ['locale' => 'az', 'slug' => 'aygun', 'first_name' => 'Aygün', 'last_name' => 'Məmmədova'],
+                ['locale' => 'en', 'slug' => 'aygun-en', 'first_name' => 'Aygun', 'last_name' => 'Mammadova'],
+            ],
+        ]))->assertOk();
+    }
+
+    public function test_updating_with_translations_that_omit_az_is_rejected_when_the_artist_has_none_stored(): void
+    {
+        $artist = Artist::factory()->create(['is_active' => true]);
+
+        $this->actingAs($this->admin)->putJson("/admin/artists/{$artist->id}", [
+            'translations' => [['locale' => 'en', 'slug' => 'only-en', 'first_name' => 'A', 'last_name' => 'B']],
+        ])->assertStatus(422)->assertJsonValidationErrors('translations');
+    }
+
+    public function test_updating_without_translations_leaves_the_stored_az_translation_alone(): void
+    {
+        $id = $this->actingAs($this->admin)->postJson('/admin/artists', $this->artistPayload())->json('data.id');
+
+        $this->actingAs($this->admin)->putJson("/admin/artists/{$id}", ['birth_year' => 1990])->assertOk();
+
+        $this->assertSame('aygun-mammadova', Artist::query()->find($id)->translations()->where('locale', 'az')->value('slug'));
+    }
 }

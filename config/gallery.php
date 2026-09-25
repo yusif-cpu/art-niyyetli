@@ -19,4 +19,8 @@ return [
     // already marked sold. Off by default per Phase 10 spec §6.
     'allow_sold_enquiries' => env('ALLOW_SOLD_ENQUIRIES', false),
 
+    // Safety cap on the homepage `wall`: at most this many show_on_wall artworks are returned, in curator
+    // sort_order. Server-side only; not a query parameter.
+    'wall_limit' => (int) env('GALLERY_WALL_LIMIT', 16),
+
 ];

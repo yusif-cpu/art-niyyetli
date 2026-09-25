@@ -125,4 +125,29 @@ class ArtistApiTest extends TestCase
         $this->assertSame('Adı'.$artist->id, $response->json('data.first_name'));
         $this->assertSame('Surname EN', $response->json('data.last_name'));
     }
+
+    public function test_index_excludes_artists_without_a_usable_az_translation(): void
+    {
+        $usable = $this->makeArtist();
+        Artist::factory()->create(['is_active' => true]);
+        $enOnly = Artist::factory()->create(['is_active' => true]);
+        $enOnly->translations()->create(['locale' => 'en', 'slug' => 'en-only', 'first_name' => 'C', 'last_name' => 'D']);
+
+        $response = $this->getJson('/api/v1/artists');
+
+        $response->assertOk();
+        $this->assertSame([$usable->id], collect($response->json('data'))->pluck('id')->all());
+        $this->assertNotContains(null, collect($response->json('data'))->pluck('slug')->all());
+    }
+
+    public function test_index_keeps_az_artists_that_also_have_an_en_translation(): void
+    {
+        $artist = $this->makeArtist();
+        $artist->translations()->create(['locale' => 'en', 'slug' => 'artist-en-'.$artist->id, 'first_name' => 'X', 'last_name' => 'Y']);
+
+        $response = $this->getJson('/api/v1/artists?locale=en');
+
+        $response->assertOk();
+        $this->assertSame('artist-en-'.$artist->id, $response->json('data.0.slug'));
+    }
 }

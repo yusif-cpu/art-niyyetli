@@ -59,6 +59,9 @@ class UpdateArtistRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->rejectDuplicateTranslationLocales($validator);
+            if ($this->has('translations')) {
+                $this->requireAzTranslation($validator);
+            }
             $this->rejectSlugCollisionsWithOtherArtists($validator);
         });
     }

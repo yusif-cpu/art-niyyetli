@@ -123,6 +123,21 @@ describe('ArtistsScreen', () => {
         });
     });
 
+    it('explains the required AZ translation and switches to the AZ tab when the API rejects the save', async () => {
+        setupFetch();
+        await openEditor();
+        await userEvent.click(screen.getByRole('tab', { name: 'EN' }));
+
+        global.fetch.mockImplementationOnce(() =>
+            Promise.resolve(jsonResponse(422, { message: 'An Azerbaijani (az) translation with a slug is required.', errors: { translations: ['An Azerbaijani (az) translation with a slug is required.'] } }))
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+
+        expect(await screen.findByText(/AZ tərcüməsi mütləqdir/)).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'AZ' })).toHaveAttribute('aria-selected', 'true');
+    });
+
     it('deletes an artist after confirmation', async () => {
         setupFetch();
         await openEditor();

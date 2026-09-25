@@ -21,7 +21,10 @@ class PublicArtworkIndexRequest extends FormRequest
             'medium' => ['sometimes', 'string', 'max:100'],
             'status' => ['sometimes', Rule::enum(ArtworkAvailability::class)],
             'price_min' => ['sometimes', 'numeric', 'min:0'],
-            'price_max' => ['sometimes', 'numeric', 'min:0', 'gte:price_min'],
+            // `gte:price_min` on its own fails when price_min is absent, so it only applies alongside it.
+            'price_max' => ['sometimes', 'numeric', 'min:0', Rule::when($this->filled('price_min'), 'gte:price_min')],
+            'size_min' => ['sometimes', 'numeric', 'min:0'],
+            'size_max' => ['sometimes', 'numeric', 'min:0', Rule::when($this->filled('size_min'), 'gte:size_min')],
             'sort' => ['sometimes', Rule::in(['newest', 'price_asc', 'price_desc'])],
         ];
     }

@@ -37,9 +37,15 @@ class PageSeeder extends Seeder
     private const HEADER_ORDER = [
         'home' => 0,
         'about' => 1,
-        'collectors' => 2,
-        'contact' => 3,
+        'contact' => 2,
     ];
+
+    /**
+     * Structural pages that are kept in the database but are not part of the public site: seeded inactive and
+     * without a navigation item, so their URL answers 404 until an admin deliberately activates and links them.
+     * ("Kolleksionerlər üçün" is not in the client's requirements.)
+     */
+    private const UNLISTED = [PageType::Collectors];
 
     /**
      * The 4 special catalogue routes have always rendered in the header, in this
@@ -86,14 +92,18 @@ class PageSeeder extends Seeder
 
             // Create-if-missing only: once the client has edited these pages (content,
             // active flag, navigation order/visibility) a re-run must not reset them.
+            $unlisted = in_array($type, self::UNLISTED, true);
+
             $page = Page::query()->firstOrCreate(['type' => $type->value], [
-                'is_active' => true,
+                'is_active' => ! $unlisted,
             ]);
 
-            NavigationItem::query()->firstOrCreate(
-                ['placement' => 'header', 'page_id' => $page->id],
-                ['nav_type' => NavType::Page->value, 'route_key' => null, 'sort_order' => self::HEADER_ORDER[$type->value], 'is_visible' => true]
-            );
+            if (! $unlisted) {
+                NavigationItem::query()->firstOrCreate(
+                    ['placement' => 'header', 'page_id' => $page->id],
+                    ['nav_type' => NavType::Page->value, 'route_key' => null, 'sort_order' => self::HEADER_ORDER[$type->value], 'is_visible' => true]
+                );
+            }
 
             foreach (Locale::cases() as $locale) {
                 $title = self::TITLES[$type->value][$locale->value];

@@ -30,22 +30,22 @@ describe('App routing', () => {
     });
 
     it('issues exactly three shell requests plus one page request on a hard load of a static page', async () => {
-        window.history.pushState(null, '', '/collectors');
+        window.history.pushState(null, '', '/about');
         const shell = global.fetch;
         global.fetch = vi.fn((url) => {
-            if (url.includes('/pages/collectors')) {
-                return Promise.resolve(jsonResponse({ data: { title: 'Kolleksionerlər üçün', content: 'Məzmun', sections: [] } }));
+            if (url.includes('/pages/about')) {
+                return Promise.resolve(jsonResponse({ data: { title: 'Haqqımızda', content: 'Məzmun', sections: [] } }));
             }
             return shell(url);
         });
 
         render(<App />);
-        await screen.findByRole('heading', { name: 'Kolleksionerlər üçün' });
+        await screen.findByRole('heading', { name: 'Haqqımızda' });
         await screen.findByRole('link', { name: 'Əsərlər' });
 
         expect(global.fetch.mock.calls.map(([url]) => url).sort()).toEqual([
             '/api/v1/navigation?locale=az',
-            '/api/v1/pages/collectors?locale=az',
+            '/api/v1/pages/about?locale=az',
             '/api/v1/site-settings?locale=az',
             '/api/v1/social-links?locale=az',
         ]);
@@ -61,6 +61,22 @@ describe('App routing', () => {
         expect(urls.filter((url) => url.includes('/site-settings'))).toHaveLength(1);
         expect(urls.filter((url) => url.includes('/social-links'))).toHaveLength(1);
         expect(urls.filter((url) => url.includes('/homepage'))).toHaveLength(1);
+    });
+
+    it('renders the not-found page for /collectors, which is no longer part of the site (the API answers 404)', async () => {
+        window.history.pushState(null, '', '/collectors');
+        const shell = global.fetch;
+        global.fetch = vi.fn((url) => {
+            if (url.includes('/pages/collectors')) {
+                return Promise.resolve({ ok: false, status: 404, headers: { get: () => 'application/json' }, json: async () => ({ message: '' }) });
+            }
+            return shell(url);
+        });
+
+        render(<App />);
+
+        expect(await screen.findByText('Səhifə tapılmadı')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Kolleksionerlər üçün' })).not.toBeInTheDocument();
     });
 
     it('renders NotFoundPage for an unmatched route', () => {

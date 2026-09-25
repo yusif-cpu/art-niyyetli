@@ -25,7 +25,7 @@ const BASE_PAYLOAD = {
     meta: {
         available_pages: [
             { id: 10, title: 'Haqqımızda', slug: 'about' },
-            { id: 11, title: 'Kolleksionerlər üçün', slug: 'collectors' },
+            { id: 11, title: 'Məxfilik siyasəti', slug: 'privacy-policy' },
         ],
         available_routes: ['artworks', 'artists', 'exhibitions', 'articles'],
     },
@@ -66,7 +66,7 @@ describe('NavigationScreen', () => {
         const headerSelect = screen.getByLabelText('Başlıq (əsas naviqasiya) üçün element seç');
         const optionLabels = within(headerSelect).getAllByRole('option').map((o) => o.textContent);
 
-        expect(optionLabels).toContain('Kolleksionerlər üçün');
+        expect(optionLabels).toContain('Məxfilik siyasəti');
         expect(optionLabels).not.toContain('Haqqımızda');
         expect(optionLabels).toContain('Sərgilər');
         expect(optionLabels).not.toContain('Əsərlər');

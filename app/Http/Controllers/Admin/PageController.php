@@ -19,6 +19,7 @@ class PageController extends Controller
     public function index(): AnonymousResourceCollection
     {
         $pages = Page::query()
+            ->listedInAdmin()
             ->with([
                 'translations',
                 'sections' => fn ($q) => $q->orderBy('sort_order'),

@@ -97,13 +97,13 @@ class BenchmarkSeeder extends Seeder
             'artist_slug' => "bench-{$batch}-artist-0",
             'exhibition_slug' => $exhibitionSlug,
             'article_slug' => $articleSlug,
-            'page_slug' => 'collectors',
+            'page_slug' => 'about',
         ];
     }
 
     /**
-     * One-time site-wide data: the structural pages + navigation, enquiry subjects, a
-     * collectors page with an image section, FAQs, social links and branding settings.
+     * One-time site-wide data: the structural pages + navigation, enquiry subjects, an
+     * about page with image sections, FAQs, social links and branding settings.
      */
     private function seedGlobals(): void
     {
@@ -116,9 +116,9 @@ class BenchmarkSeeder extends Seeder
 
         $mediaIds = $this->makeMedia(4, 'global');
 
-        $collectors = Page::query()->where('type', 'collectors')->firstOrFail();
+        $about = Page::query()->where('type', 'about')->firstOrFail();
         foreach (['how-to-buy', 'authenticity'] as $sortOrder => $key) {
-            $section = $collectors->sections()->create([
+            $section = $about->sections()->create([
                 'key' => $key, 'media_id' => $mediaIds[$sortOrder], 'sort_order' => $sortOrder, 'is_active' => true,
             ]);
             $section->translations()->create(['locale' => 'az', 'heading' => "Bölmə {$key}", 'body' => 'Mətn.']);

@@ -259,6 +259,18 @@ class PageCrudTest extends TestCase
         $this->assertNull($page->fresh()->deleted_at);
     }
 
+    public function test_the_unlisted_collectors_page_stays_protected_from_deletion(): void
+    {
+        // It is kept (inactive, unlinked) rather than removed: deleting it would soft-delete the page while its
+        // translations keep the (slug, locale) unique index, so a later db:seed could not re-create it.
+        $page = Page::query()->create(['type' => 'collectors', 'is_active' => false]);
+        $page->translations()->create(['locale' => 'az', 'slug' => 'collectors', 'title' => 'Kolleksionerlər üçün', 'content' => 'C']);
+
+        $this->actingAs($this->admin)->deleteJson("/admin/pages/{$page->id}")->assertStatus(409);
+
+        $this->assertNull($page->fresh()->deleted_at);
+    }
+
     public function test_unauthenticated_request_cannot_delete_a_page(): void
     {
         $page = Page::query()->create(['type' => 'custom', 'is_active' => true]);

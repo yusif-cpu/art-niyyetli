@@ -13,7 +13,6 @@ const NAV_AZ = {
     header: [
         { type: 'page', title: 'Ana səhifə', href: '/' },
         { type: 'page', title: 'Haqqımızda', href: '/about' },
-        { type: 'page', title: 'Kolleksionerlər üçün', href: '/collectors' },
         { type: 'page', title: 'Əlaqə', href: '/contact' },
         { type: 'route', route_key: 'artworks', href: '/artworks' },
         { type: 'route', route_key: 'artists', href: '/artists' },
@@ -28,7 +27,6 @@ const NAV_EN = {
     header: [
         { type: 'page', title: 'Home', href: '/' },
         { type: 'page', title: 'About', href: '/about' },
-        { type: 'page', title: 'For collectors', href: '/collectors' },
         { type: 'page', title: 'Contact', href: '/contact' },
         { type: 'route', route_key: 'artworks', href: '/artworks' },
         { type: 'route', route_key: 'artists', href: '/artists' },
@@ -73,7 +71,6 @@ describe('SiteShell', () => {
 
         expect(await screen.findByRole('link', { name: 'Ana səhifə' })).toHaveAttribute('href', '/');
         expect(screen.getByRole('link', { name: 'Haqqımızda' })).toHaveAttribute('href', '/about');
-        expect(screen.getByRole('link', { name: 'Kolleksionerlər üçün' })).toHaveAttribute('href', '/collectors');
         expect(screen.getByRole('link', { name: 'Əlaqə' })).toHaveAttribute('href', '/contact');
         expect(screen.getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
         expect(screen.getByRole('link', { name: 'Rəssamlar' })).toHaveAttribute('href', '/artists');

@@ -9,11 +9,28 @@ import ExhibitionCard from '../components/ExhibitionCard.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 
+// Section keys are free-form admin data, not a fixed backend enum: look known sections up by key (never by
+// position — the hero can be deactivated, renamed or reordered) and ignore every other key.
+function findSection(page, key) {
+    return page?.sections?.find((section) => section.key === key);
+}
+
+function SectionCopy({ section, headingClassName, as: Heading }) {
+    return (
+        <div className="mb-8">
+            {section.heading && <Heading className={headingClassName}>{section.heading}</Heading>}
+            {section.body && <p className="mt-2 text-neutral-600">{section.body}</p>}
+        </div>
+    );
+}
+
 export default function HomePage() {
     const { locale } = useLocale();
     const { data, loading, error } = useApiData(() => getHomepage(locale), [locale]);
 
-    const hero = data?.page?.sections?.[0];
+    const hero = findSection(data?.page, 'hero');
+    const steps = findSection(data?.page, 'steps');
+    const cta = findSection(data?.page, 'cta');
     usePageMeta({
         title: data ? (hero ? `${hero.heading} — ArtNiyyətli` : 'ArtNiyyətli') : undefined,
         description: data ? hero?.body : undefined,
@@ -24,14 +41,10 @@ export default function HomePage() {
 
     return (
         <div className="space-y-12 px-6 py-8">
-            {data.page && (
+            {(hero || steps) && (
                 <section>
-                    {data.page.sections.map((section) => (
-                        <div key={section.key} className="mb-8">
-                            <h1 className="text-2xl font-semibold">{section.heading}</h1>
-                            <p className="mt-2 text-neutral-600">{section.body}</p>
-                        </div>
-                    ))}
+                    {hero && <SectionCopy section={hero} as="h1" headingClassName="text-2xl font-semibold" />}
+                    {steps && <SectionCopy section={steps} as="h2" headingClassName="text-lg font-semibold" />}
                 </section>
             )}
 
@@ -79,6 +92,12 @@ export default function HomePage() {
                             </div>
                         ))}
                     </dl>
+                </section>
+            )}
+
+            {cta && (
+                <section>
+                    <SectionCopy section={cta} as="h2" headingClassName="text-lg font-semibold" />
                 </section>
             )}
         </div>

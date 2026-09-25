@@ -77,4 +77,49 @@ describe('HomePage', () => {
 
         await waitFor(() => expect(screen.getAllByText('ArtNiyyətli').length).toBeGreaterThan(0));
     });
+
+    describe('page sections are resolved by key', () => {
+        const empty = { stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [] };
+        const section = (key, heading, sort_order = 0) => ({ key, heading, body: `${heading} body`, sort_order, image_url: null });
+
+        function renderWith(sections) {
+            global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...empty, page: { title: 'Ana səhifə', sections } } }));
+            render(<LocaleProvider><HomePage /></LocaleProvider>);
+        }
+
+        it('uses the hero even when it is not the first section, for the h1, title and description', async () => {
+            renderWith([section('steps', 'How it works'), section('hero', 'Real Hero', 1)]);
+
+            expect(await screen.findByRole('heading', { level: 1, name: 'Real Hero' })).toBeInTheDocument();
+            expect(screen.getByRole('heading', { level: 2, name: 'How it works' })).toBeInTheDocument();
+            await waitFor(() => expect(document.title).toBe('Real Hero — ArtNiyyətli'));
+        });
+
+        it('renders steps and cta by key and ignores unknown keys', async () => {
+            renderWith([section('mystery', 'Unknown Block'), section('hero', 'Hero'), section('cta', 'Get in touch', 2), section('steps', 'Steps', 1), section('test', 'Another Unknown', 3)]);
+
+            expect(await screen.findByRole('heading', { level: 2, name: 'Get in touch' })).toBeInTheDocument();
+            expect(screen.getByRole('heading', { level: 2, name: 'Steps' })).toBeInTheDocument();
+            expect(screen.queryByText('Unknown Block')).not.toBeInTheDocument();
+            expect(screen.queryByText('Another Unknown')).not.toBeInTheDocument();
+        });
+
+        it('falls back to the default title and renders no hero when the hero is missing', async () => {
+            renderWith([section('mystery', 'Unknown Block'), section('cta', 'Get in touch', 1)]);
+
+            expect(await screen.findByText('Get in touch')).toBeInTheDocument();
+            expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+            expect(screen.queryByText('Unknown Block')).not.toBeInTheDocument();
+            await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
+        });
+
+        it('renders without crashing when sections are empty or absent', async () => {
+            renderWith([]);
+            await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
+
+            global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...empty, page: { title: 'Ana səhifə' } } }));
+            render(<LocaleProvider><HomePage /></LocaleProvider>);
+            await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
+        });
+    });
 });

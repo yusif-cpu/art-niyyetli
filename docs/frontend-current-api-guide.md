@@ -1,7 +1,7 @@
 # ArtNiyyətli — Public Frontend & API Guide (current state)
 
 > **Audience:** the frontend developer building and maintaining the public website.
-> **Describes:** the repository at the end of **Phase 12** (performance + security hardening), commit **`88e5407`** (`chore: finalize phase 12 security hardening`), on the `main` and `frontend` branches, **updated for commits `b2bab8d`** (`feat: extend public artwork filters and lookup api`: genre/medium lists, size filter, `price_max` fix, artist AZ-slug invariant, homepage wall cap) **and `2c64176`** (`fix: resolve homepage sections by key`). It replaces the earlier version of this file, which described commit `b638e80`.
+> **Describes:** the repository at the end of **Phase 12** (performance + security hardening), commit **`88e5407`** (`chore: finalize phase 12 security hardening`), on the `main` and `frontend` branches, **updated for commits `b2bab8d`** (`feat: extend public artwork filters and lookup api`: genre/medium lists, size filter, `price_max` fix, artist AZ-slug invariant, homepage wall cap) **`2c64176`** (`fix: resolve homepage sections by key`) **and `23ce451`** (`feat: hide collectors page from admin`). It replaces the earlier version of this file, which described commit `b638e80`.
 > **Source of truth:** the code in this repository. Every statement below was checked against routes, controllers, resources, requests, services, models, enums, config, the public frontend under `resources/js/public/`, the tests, and live calls against the Docker stack at `http://localhost:8080`. Where something could **not** be determined from the repository it is listed in [§21](#21-things-that-could-not-be-determined-from-the-repository); features that do not exist are listed in [§26](#26-out-of-scope-what-does-not-exist).
 > **Example data** in this document is fictional. Field names, key order, types and behaviours are real. Example media URLs show the `/storage/media/10/catalogue-webp.webp` shape of older uploads; new uploads have an extra random path segment (see [§11](#11-images-media-urls-and-variants)) — always treat URLs as opaque.
 > **No secrets:** this guide lists environment-variable *names* and code defaults only; it contains no `.env` values.
@@ -128,8 +128,8 @@ Then open **http://localhost:8080** (public site) and **http://localhost:8080/ad
 - **Build once (no HMR):** `npm run build` writes `public/build/` (git-ignored). The Laravel Blade shell reads `public/build/manifest.json`; **if neither a build nor the dev server exists, the shell cannot load its assets.** Rebuild after each change.
 - **Vite dev server (HMR):** `npm run dev`. While it runs, Vite writes `public/hot` and the shell loads scripts/styles from the dev server. The application deliberately **does not send the Content-Security-Policy header while `public/hot` exists** (Vite needs inline/HMR allowances). Delete a stale `public/hot` if the dev server crashed. Whether the dev server is reachable from a Windows browser when Node runs in WSL was **not verified** here.
 - **Always test against `http://localhost:8080`**, not the Vite port: the SPA calls the API with relative URLs, so the page origin must be the Laravel origin.
-- **Tests:** `npm test` runs the whole Vitest suite. This checkout has **314 Vitest tests in 62 files** when `.claude/**` is excluded (at `2c64176`; about 1 minute). If a stale git worktree exists under `.claude/worktrees/` (e.g. `subject-driven-enquiries`), plain `npm test` also discovers its duplicate copies of the specs (~212 extra tests — **about 526 in total**); that is repository noise, not your code. Exclude it with `npx vitest run --exclude '**/node_modules/**' --exclude '.claude/**'` (passing `--exclude` replaces Vitest's defaults, so keep `node_modules`). The equivalent permanent setting is `test.exclude: [...configDefaults.exclude, '.claude/**']` in `vite.config.js` (`configDefaults` from `vitest/config`); it is **not applied yet** — the config has no `exclude`. One file: `npx vitest run resources/js/public/__tests__/<name>.test.jsx`.
-- **Backend (only when coordinated):** `docker compose exec app php artisan test` (1131 PHPUnit tests at `b2bab8d`), `docker compose exec app vendor/bin/pint --test`.
+- **Tests:** `npm test` runs the whole Vitest suite. This checkout has **315 Vitest tests in 62 files** when `.claude/**` is excluded (at `23ce451`; about 1 minute). If a stale git worktree exists under `.claude/worktrees/` (e.g. `subject-driven-enquiries`), plain `npm test` also discovers its duplicate copies of the specs (~212 extra tests — **about 527 in total**); that is repository noise, not your code. Exclude it with `npx vitest run --exclude '**/node_modules/**' --exclude '.claude/**'` (passing `--exclude` replaces Vitest's defaults, so keep `node_modules`). The equivalent permanent setting is `test.exclude: [...configDefaults.exclude, '.claude/**']` in `vite.config.js` (`configDefaults` from `vitest/config`); it is **not applied yet** — the config has no `exclude`. One file: `npx vitest run resources/js/public/__tests__/<name>.test.jsx`.
+- **Backend (only when coordinated):** `docker compose exec app php artisan test` (1135 PHPUnit tests / 7590 assertions at `23ce451`), `docker compose exec app vendor/bin/pint --test`.
 - **Laravel Boost is not a project dependency.** It is not in `composer.json` / `composer.lock`, and you should **not** install it (`composer require laravel/boost` / `php artisan boost:install`). The "install Laravel Boost" block at the top of `AGENTS.md` / `CLAUDE.md` is generic bootstrap boilerplate from the initial commit; ignore it for this project.
 
 **Getting data to work with.** `db:seed` creates the CMS pages, the six enquiry subjects, roles and (if configured) a dev administrator — it does **not** create artists, artworks, exhibitions or articles. Create those in the admin at `/admin` (the dev administrator is created from the `ADMIN_DEV_USERNAME` / `ADMIN_DEV_EMAIL` / `ADMIN_DEV_PASSWORD` variables of your local `.env`; the account created by `DatabaseSeeder` for `test@example.com` has no role and **cannot** sign in to the admin). `BenchmarkSeeder` builds bulk data but is additive and meant for scratch databases — do not run it against your development database. Expect sparse or odd data (e.g. the dev database has artists without a translation — the public artist list now hides them, see [E5](#e5-get-artists)); the UI must cope ([§22](#22-known-gaps-and-gotchas-in-the-current-implementation)).
@@ -564,11 +564,18 @@ Conventions used below: **Nullable** column = may be `null` in the JSON. "Loc" =
 | Field | Type | Nullable | Notes |
 |---|---|---|---|
 | `slug` | string | yes (Loc) | |
-| `type` | `home` \| `about` \| `collectors` \| `contact` \| `custom` | no | Enum `PageType`. |
+| `type` | `home` \| `about` \| `collectors` \| `contact` \| `custom` | no | Enum `PageType`. In practice the public API returns `home`, `about`, `contact` and `custom` pages: the `collectors` value still exists in the enum but its page is inactive, so it is never returned (see *Collectors page* below). |
 | `title` | string | yes (Loc) | |
 | `content` | string | yes (Loc) | Plain authored text — see note under E4. |
 
 Includes the `home` page and every `custom` page, **regardless of navigation placement**. Inactive and soft-deleted pages are excluded. Navigation fields are deliberately not exposed (use E1).
+
+**Collectors page ("Kolleksionerlər üçün") — not part of the site.** It is not in the original public requirements, and **no Collector entity, CRUD or API exists**. It is only a generic CMS page of type `collectors` that used to be seeded and linked from the header. Since `23ce451` it is *unlisted*:
+- The page, its translations and sections **remain in the database**, but the page is **inactive** and has **no navigation item**.
+- `GET /api/v1/pages/collectors` returns **404**; the browser route `/collectors` also returns 404 (the SPA shows its not-found page); it is absent from `GET /pages`, `GET /navigation` and `sitemap.xml`. Never hard-code a link to it.
+- In the admin it is **hidden from Admin → Pages while inactive** and is **not offered by Admin → Navigation** (that picker lists active pages only). It is still protected from deletion (a structural page type).
+- It can be **intentionally reactivated** through the admin API using its existing page id (`PUT /admin/pages/{id}` with `{"is_active": true}`, or `GET /admin/pages/{id}` to inspect it); once active it appears in the pages list again and can be linked from Admin → Navigation. There is no admin button for this. Existing databases were converted by the migration `2026_09_26_000001_unlist_collectors_page` (after migrating, run `php artisan public-cache:flush` on a live server so cached navigation/sitemap drop it at once).
+Frontend implication: nothing to build or handle for collectors; an unknown or inactive page slug simply yields the not-found page like any other 404.
 
 ### E4 `GET /pages/{slug}`
 
@@ -1187,7 +1194,7 @@ Navigation is stored in the `navigation_items` table (managed in the admin) and 
 
 **Home page item:** the `href` is `/` (not `/home`), regardless of the page's slug.
 
-**Seed data:** on a fresh install the migration creates the four route items in the header; `PageSeeder` adds the singleton pages (home, about, collectors, contact) to the header and four legal pages to the footer. Admins can change all of it, so never hardcode the menu.
+**Seed data:** on a fresh install the migration creates the four route items in the header; `PageSeeder` adds the singleton pages (home, about, contact) to the header (in that order, before the four route items) and four legal pages to the footer. The `collectors` page is seeded **inactive and without a navigation item** (see *Collectors page* under [E3](#e3-get-pages)). Admins can change all of it, so never hardcode the menu.
 
 **What the SPA does today:** `Header` renders every `header` item (+ social links + locale switcher); `Footer` renders every `footer` item inside `<nav aria-label="Legal">`. Both use the same `itemLabel` helper (`page` → `title`, `route` → `t('nav.'+route_key)`).
 
@@ -1542,7 +1549,7 @@ public/
 - Vitest (`npm test` → `vitest run`), environment `jsdom`, globals on, setup file `resources/js/admin/testSetup.js`.
 - Specs live in `resources/js/public/__tests__/`. They mock `global.fetch` (`vi.fn`) with a helper returning `{ ok, status, headers: { get: () => 'application/json' }, json: async () => body }`, then render inside `<LocaleProvider>` (and `<SiteShell>` where the shell matters) and assert with Testing Library.
 - Service specs assert the exact URL, e.g. `expect(fetch).toHaveBeenCalledWith('/api/v1/social-links?locale=az', expect.anything())`.
-- Note: if `.claude/worktrees/` exists, Vitest also discovers duplicate copies of the specs there (about 212 extra tests, about 526 in total, instead of this checkout's 314); that is repository noise. Use `npx vitest run --exclude '**/node_modules/**' --exclude '.claude/**'` ([§A](#a-frontend-developer-workflow)).
+- Note: if `.claude/worktrees/` exists, Vitest also discovers duplicate copies of the specs there (about 212 extra tests, about 527 in total, instead of this checkout's 315); that is repository noise. Use `npx vitest run --exclude '**/node_modules/**' --exclude '.claude/**'` ([§A](#a-frontend-developer-workflow)).
 
 ### Reuse before you build
 
@@ -1562,7 +1569,7 @@ Before writing new UI for an API field, check whether the pattern exists: pagina
 | `ExhibitionMediaType` | exhibition `media[].type` | `photo`, `video` |
 | `ArticleType` | `type` (E11/E12) | `interview`, `video_project`, `art_article`, `exhibition_review`, `news`, `announcement` |
 | `MediaType` | article `media[].type` | `image`, `video` |
-| `PageType` | `type` (E3/E4) | `home`, `about`, `collectors`, `contact`, `custom` |
+| `PageType` | `type` (E3/E4) | `home`, `about`, `collectors`, `contact`, `custom` (`collectors` is never returned publicly — its page is inactive; see [E3](#e3-get-pages)) |
 | `NavType` | navigation item `type` | `page`, `route` |
 | `NavRouteKey` | navigation `route_key` | `artworks`, `artists`, `exhibitions`, `articles` |
 | `NavPlacement` | keys of `data` in E1 | `header`, `footer` |
@@ -1623,7 +1630,7 @@ These are facts observed in the current code — useful when you start work, and
 |---|---|---|
 | Paths | `GET /`, `GET /{any}`, `GET /robots.txt`, `GET /sitemap.xml`, **`/api/v1/*`** | `GET /admin` (the admin SPA shell) and the JSON API **`/admin/*`** |
 | Who | Anonymous visitors | Signed-in staff with role `administrator` or `editor` (user management: `administrator` only); the account must be active |
-| Session / cookies | **None.** No session, no `Set-Cookie`, no CSRF (verified on `/`, `/artworks`, `/collectors`, `/api/v1/homepage`) | Session cookie + `XSRF-TOKEN` cookie; every write needs the `X-XSRF-TOKEN` header |
+| Session / cookies | **None.** No session, no `Set-Cookie`, no CSRF (verified on `/`, `/artworks`, a static page, `/api/v1/homepage`) | Session cookie + `XSRF-TOKEN` cookie; every write needs the `X-XSRF-TOKEN` header |
 | Unauthenticated / forbidden | n/a | JSON `401` (not signed in) and `419` (missing/invalid CSRF token) — both verified live; `403` for a signed-in user without permission is enforced by the route gates (covered by the backend test suite, not re-probed here) |
 | Throttling | 60/min/IP (+ 5/hour/IP for `POST /api/v1/enquiries`) | Login: 5 attempts/min per username+IP and 20/min per IP; admin writes 240/min/user; media upload 20/min/user |
 | Stability | **The contract this guide documents.** | Internal to the admin SPA. **Not part of the public contract**; not documented here, may change. |
@@ -1732,6 +1739,7 @@ What is verifiable from the repository (the actual production infrastructure is 
 
 These are **not implemented**. Do not build UI that assumes them, and do not document them as available:
 
+- **A "collectors" / "Kolleksionerlər üçün" section.** No Collector entity, CRUD or endpoint; `/collectors` and `/api/v1/pages/collectors` answer 404 ([E3](#e3-get-pages)).
 - **Online payments / checkout / cart / accounts / login for visitors.** Enquiries are the only conversion path.
 - **Search** (no search endpoint) and **facet/count endpoints**; no endpoint lists price ranges (genres and mediums: [E18](#e18-get-genres) / [E19](#e19-get-mediums)); no size bands/presets (use `size_min` / `size_max`).
 - **Public endpoints for SEO overrides, media alt text or image dimensions/`srcset`.** Alt text and sizing are the frontend's job ([§11](#11-images-media-urls-and-variants)).

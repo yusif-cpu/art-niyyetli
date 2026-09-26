@@ -129,8 +129,13 @@ export default function ArtworkDetailPage({ params }) {
                 </div>
             </div>
 
+            {/* The wall comes straight after the work: the reader checks the size against a person before reading on. */}
+            <div className="mt-step-9">
+                <DetailWallView artwork={data} />
+            </div>
+
             {data.short_description && (
-                <p className="mt-step-8 max-w-prose font-editorial text-reading whitespace-pre-line">{data.short_description}</p>
+                <p className="mt-step-9 max-w-prose font-editorial text-reading whitespace-pre-line">{data.short_description}</p>
             )}
 
             {data.video && (
@@ -138,10 +143,6 @@ export default function ArtworkDetailPage({ params }) {
                     <YoutubeEmbed video={data.video} title={data.title} />
                 </div>
             )}
-
-            <div className="mt-step-9">
-                <DetailWallView artwork={data} />
-            </div>
 
             <section aria-labelledby="enquiry-title" className="mt-step-9 max-w-xl">
                 <h2 id="enquiry-title" className="text-subheading">{t(locale, 'artwork.enquireTitle')}</h2>

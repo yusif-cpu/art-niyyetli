@@ -107,16 +107,38 @@ describe('ArtworkDetailPage', () => {
         expect(calls('/api/v1/artists')).toHaveLength(0);
     });
 
-    it('sizes the main field from centimetres (fits the 900px width and 70% of the viewport height)', async () => {
+    it('sizes the main field from centimetres (900px width, 70% of the viewport height, at most 6 px/cm)', async () => {
         renderPage();
 
         const field = await screen.findByTestId('artwork-main-field');
-        const k = Math.min(900 / 80, Math.round(768 * 0.7) / 60);
+        const k = Math.min(900 / 80, Math.round(768 * 0.7) / 60, 6);
+        expect(k).toBe(6); // 80 × 60 cm is capped: 480 × 360px, not the 717px the width alone would allow
         expect(field).toHaveStyle({ width: `${Math.round(80 * k)}px`, height: `${Math.round(60 * k)}px` });
         expect(field).toHaveClass('shadow-hang');
         expect(within(field).getByRole('img', { name: 'Sunset Over Baku, Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/full.webp');
         expect(within(field).getByRole('img')).toHaveAttribute('loading', 'eager');
         expect(within(field).getByRole('img')).toHaveAttribute('fetchpriority', 'high');
+    });
+
+    it('shows a 40 × 30 work at 6 px/cm: 240 × 180px, not stretched to the width', async () => {
+        artwork = { ...detail, width_cm: 40, height_cm: 30 };
+        mockApi();
+        renderPage();
+
+        expect(await screen.findByTestId('artwork-main-field')).toHaveStyle({ width: '240px', height: '180px' });
+    });
+
+    it('puts "divarda gör" right after the work and its details, before the description, video and form', async () => {
+        artwork = { ...detail, video: { id: 'dQw4w9WgXcQ', embed_url: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ' } };
+        mockApi();
+        renderPage();
+
+        const wall = await screen.findByRole('heading', { name: 'Divarda gör' });
+        const follows = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+        expect(follows(screen.getByTestId('artwork-price'), wall)).toBe(true);
+        expect(follows(wall, screen.getByText('A description.'))).toBe(true);
+        expect(follows(wall, screen.getByTitle(detail.title))).toBe(true);
+        expect(follows(wall, screen.getByRole('heading', { name: 'Bu əsər haqqında soruş' }))).toBe(true);
     });
 
     it('switches the main image from the thumbnails and moves aria-current', async () => {

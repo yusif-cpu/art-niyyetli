@@ -8,8 +8,8 @@ import ScaleRule from './ScaleRule.jsx';
 
 /**
  * The artwork itself: the largest element of its page. The field is sized from centimetres at a k that fills the
- * container width without the work growing taller than 70% of the viewport (lib/wall.js, detailMain preset); a
- * one-metre ScaleRule states the scale. Several images: a row of thumbnails switches the main image (no lightbox),
+ * container width without the work growing taller than 70% of the viewport, capped at 6 px/cm so small works stay
+ * smaller than big ones (lib/wall.js, detailMain preset); a ScaleRule states the scale. Several images: a row of thumbnails switches the main image (no lightbox),
  * keyboard reachable, aria-current on the chosen one. The field carries the page's one hung-work shadow.
  */
 export default function ArtworkViewer({ artwork }) {
@@ -23,7 +23,7 @@ export default function ArtworkViewer({ artwork }) {
     const valid = isValidDims(w, h);
     const preset = PRESETS.detailMain;
     const maxItemHeightPx = window.innerHeight > 0 ? Math.round(window.innerHeight * preset.maxItemHeightRatio) : Infinity;
-    const { k } = valid ? computeScale([artwork], { mode: preset.mode, width, share: preset.share, maxItemHeightPx }) : { k: 0 };
+    const { k } = valid ? computeScale([artwork], { mode: preset.mode, width, share: preset.share, maxItemHeightPx, maxK: preset.maxK }) : { k: 0 };
     const alt = [artwork.title, artwork.artist?.name].filter(Boolean).join(', ');
 
     const fieldClass = `overflow-hidden border border-line shadow-hang ${current ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`;

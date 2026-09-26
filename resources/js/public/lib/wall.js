@@ -63,7 +63,9 @@ export const PRESETS = {
     catalogue: { mode: 'grid', share: 0.44, shareVertical: 0.86, maxItemHeightRatio: 0.7, minItemPx: 48 },
     similar: { mode: 'grid', share: 0.3, shareVertical: 0.8, maxItemHeightRatio: 0.7, minItemPx: 48 },
     artistWorks: { mode: 'grid', share: 0.4, shareVertical: 0.86, maxItemHeightRatio: 0.7, minItemPx: 48 },
-    detailMain: { mode: 'grid', share: 1, maxItemHeightRatio: 0.7 },
+    // The artwork page's main field: fill the width / 70% of the viewport height, but never above 6 px/cm — so a small
+    // work is not shown as large as a big one (at 1440: 180 cm → 810px, 40 cm → 240px). One cap for every width.
+    detailMain: { mode: 'grid', share: 1, maxItemHeightRatio: 0.7, maxK: 6 },
     homeWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, topCm: 30, minK: 0.4, gapCm: 43, minGapPx: 210, captionPx: 64 },
     detailWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, sideCm: 30, gapCm: 60, maxK: 1.6 },
 };

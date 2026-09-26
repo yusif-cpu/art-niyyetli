@@ -23,4 +23,9 @@ class Genre extends Model
     {
         return $this->hasMany(GenreTranslation::class);
     }
+
+    public function artworks(): HasMany
+    {
+        return $this->hasMany(Artwork::class);
+    }
 }

@@ -11,21 +11,28 @@ use Illuminate\Validation\ValidationException;
 
 class ExhibitionService
 {
+    public function __construct(private SeoMetadataService $seo) {}
+
     public function create(array $data): Exhibition
     {
         $translations = $data['translations'];
         $artists = $data['artists'] ?? [];
         $artworks = $data['artworks'] ?? [];
         $media = $data['media'] ?? [];
-        unset($data['translations'], $data['artists'], $data['artworks'], $data['media'], $data['youtube_url']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['artists'], $data['artworks'], $data['media'], $data['youtube_url'], $data['seo']);
 
-        return DB::transaction(function () use ($data, $translations, $artists, $artworks, $media) {
+        return DB::transaction(function () use ($data, $translations, $artists, $artworks, $media, $seo) {
             $exhibition = Exhibition::create($data);
 
             $this->syncTranslations($exhibition, $translations);
             $this->syncArtists($exhibition, $artists);
             $this->syncArtworks($exhibition, $artworks);
             $this->syncMedia($exhibition, $media);
+
+            if ($seo !== null) {
+                $this->seo->sync($exhibition, $seo);
+            }
 
             return $exhibition->fresh();
         });
@@ -37,9 +44,10 @@ class ExhibitionService
         $artists = array_key_exists('artists', $data) ? $data['artists'] : null;
         $artworks = array_key_exists('artworks', $data) ? $data['artworks'] : null;
         $media = array_key_exists('media', $data) ? $data['media'] : null;
-        unset($data['translations'], $data['artists'], $data['artworks'], $data['media'], $data['youtube_url']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['artists'], $data['artworks'], $data['media'], $data['youtube_url'], $data['seo']);
 
-        return DB::transaction(function () use ($exhibition, $data, $translations, $artists, $artworks, $media) {
+        return DB::transaction(function () use ($exhibition, $data, $translations, $artists, $artworks, $media, $seo) {
             $exhibition->update($data);
 
             if ($translations !== null) {
@@ -56,6 +64,10 @@ class ExhibitionService
 
             if ($media !== null) {
                 $this->syncMedia($exhibition, $media);
+            }
+
+            if ($seo !== null) {
+                $this->seo->sync($exhibition, $seo);
             }
 
             return $exhibition->fresh();

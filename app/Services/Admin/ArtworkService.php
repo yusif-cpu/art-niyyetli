@@ -14,7 +14,7 @@ class ArtworkService
 {
     private const MAX_INVENTORY_CODE_ATTEMPTS = 10;
 
-    public function __construct(private InventoryCodeGenerator $inventoryCodeGenerator) {}
+    public function __construct(private InventoryCodeGenerator $inventoryCodeGenerator, private SeoMetadataService $seo) {}
 
     public function create(array $data): Artwork
     {
@@ -22,7 +22,8 @@ class ArtworkService
         $year = (int) $data['year_created'];
         $translations = $data['translations'];
         $images = $data['images'] ?? [];
-        unset($data['translations'], $data['images'], $data['inventory_code'], $data['youtube_url']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['images'], $data['inventory_code'], $data['youtube_url'], $data['seo']);
 
         $sequence = $this->inventoryCodeGenerator->suggestSequenceStart($year);
         $attempt = 0;
@@ -32,10 +33,14 @@ class ArtworkService
             $code = $manualCode ?? $this->inventoryCodeGenerator->format($year, $sequence + $attempt - 1);
 
             try {
-                return DB::transaction(function () use ($data, $code, $translations, $images) {
+                return DB::transaction(function () use ($data, $code, $translations, $images, $seo) {
                     $artwork = Artwork::create([...$data, 'inventory_code' => $code]);
                     $this->syncTranslations($artwork, $translations);
                     $this->syncImages($artwork, $images);
+
+                    if ($seo !== null) {
+                        $this->seo->sync($artwork, $seo);
+                    }
 
                     return $artwork->fresh();
                 });
@@ -57,9 +62,10 @@ class ArtworkService
     {
         $translations = $data['translations'] ?? null;
         $images = array_key_exists('images', $data) ? $data['images'] : null;
-        unset($data['translations'], $data['images'], $data['youtube_url']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['images'], $data['youtube_url'], $data['seo']);
 
-        return DB::transaction(function () use ($artwork, $data, $translations, $images) {
+        return DB::transaction(function () use ($artwork, $data, $translations, $images, $seo) {
             $artwork->update($data);
 
             if ($translations !== null) {
@@ -68,6 +74,10 @@ class ArtworkService
 
             if ($images !== null) {
                 $this->syncImages($artwork, $images);
+            }
+
+            if ($seo !== null) {
+                $this->seo->sync($artwork, $seo);
             }
 
             return $artwork->fresh();

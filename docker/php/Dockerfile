@@ -24,6 +24,7 @@ RUN apk add --no-cache \
         opcache
 
 COPY docker/php/conf.d/local.ini /usr/local/etc/php/conf.d/zz-local.ini
+COPY --chmod=0755 docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
@@ -34,4 +35,5 @@ USER www
 
 EXPOSE 9000
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]

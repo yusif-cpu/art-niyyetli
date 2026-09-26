@@ -53,6 +53,7 @@ class ExhibitionController extends Controller
                 'artworks.images.media.variants',
                 'artworks.artist.translations', 'artworks.genre.translations', 'artworks.medium.translations',
                 'media.media.variants',
+                'seoMetadata.ogImage.variants',
             ])
             ->first();
 

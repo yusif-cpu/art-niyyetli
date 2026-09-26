@@ -95,7 +95,7 @@ describe('ArtistsScreen', () => {
 
         expect(screen.getByDisplayValue('Əliyev')).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('tab', { name: 'EN' }));
+        await userEvent.click(screen.getAllByRole('tab', { name: 'EN' })[0]);
 
         expect(screen.getByDisplayValue('Aliyev')).toBeInTheDocument();
     });
@@ -126,7 +126,7 @@ describe('ArtistsScreen', () => {
     it('explains the required AZ translation and switches to the AZ tab when the API rejects the save', async () => {
         setupFetch();
         await openEditor();
-        await userEvent.click(screen.getByRole('tab', { name: 'EN' }));
+        await userEvent.click(screen.getAllByRole('tab', { name: 'EN' })[0]);
 
         global.fetch.mockImplementationOnce(() =>
             Promise.resolve(jsonResponse(422, { message: 'An Azerbaijani (az) translation with a slug is required.', errors: { translations: ['An Azerbaijani (az) translation with a slug is required.'] } }))
@@ -135,7 +135,7 @@ describe('ArtistsScreen', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
 
         expect(await screen.findByText(/AZ tərcüməsi mütləqdir/)).toBeInTheDocument();
-        expect(screen.getByRole('tab', { name: 'AZ' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getAllByRole('tab', { name: 'AZ' })[0]).toHaveAttribute('aria-selected', 'true');
     });
 
     it('deletes an artist after confirmation', async () => {

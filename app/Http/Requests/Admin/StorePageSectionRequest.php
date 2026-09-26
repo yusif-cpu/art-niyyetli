@@ -36,6 +36,7 @@ class StorePageSectionRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->rejectDuplicateTranslationLocales($validator);
+            $this->rejectInvalidKeyFormat($validator);
             $this->rejectDuplicateKeyWithinPage($validator, (int) $this->route('page')->id);
             $this->rejectUnsafeRichText($validator);
         });

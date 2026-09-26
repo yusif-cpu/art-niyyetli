@@ -41,8 +41,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::apiResource('artworks', ArtworkController::class)->except(['create', 'edit']);
 
             Route::apiResource('artists', ArtistController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
-            Route::get('genres', [GenreController::class, 'index'])->name('genres.index');
-            Route::get('mediums', [MediumController::class, 'index'])->name('mediums.index');
+            Route::apiResource('genres', GenreController::class);
+            Route::apiResource('mediums', MediumController::class);
 
             Route::apiResource('exhibitions', ExhibitionController::class)->except(['create', 'edit']);
 

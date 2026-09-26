@@ -8,18 +8,25 @@ use Illuminate\Support\Facades\DB;
 
 class ArtistService
 {
+    public function __construct(private SeoMetadataService $seo) {}
+
     public function create(array $data): Artist
     {
         $translations = $data['translations'];
         $exhibitions = $data['exhibitions'] ?? [];
         $awards = $data['awards'] ?? [];
-        unset($data['translations'], $data['exhibitions'], $data['awards']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['exhibitions'], $data['awards'], $data['seo']);
 
-        return DB::transaction(function () use ($data, $translations, $exhibitions, $awards) {
+        return DB::transaction(function () use ($data, $translations, $exhibitions, $awards, $seo) {
             $artist = Artist::create($data);
             $this->syncTranslations($artist, $translations);
             $this->syncExhibitions($artist, $exhibitions);
             $this->syncAwards($artist, $awards);
+
+            if ($seo !== null) {
+                $this->seo->sync($artist, $seo);
+            }
 
             return $artist->fresh();
         });
@@ -30,9 +37,10 @@ class ArtistService
         $translations = $data['translations'] ?? null;
         $exhibitions = array_key_exists('exhibitions', $data) ? $data['exhibitions'] : null;
         $awards = array_key_exists('awards', $data) ? $data['awards'] : null;
-        unset($data['translations'], $data['exhibitions'], $data['awards']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['exhibitions'], $data['awards'], $data['seo']);
 
-        return DB::transaction(function () use ($artist, $data, $translations, $exhibitions, $awards) {
+        return DB::transaction(function () use ($artist, $data, $translations, $exhibitions, $awards, $seo) {
             $artist->update($data);
 
             if ($translations !== null) {
@@ -45,6 +53,10 @@ class ArtistService
 
             if ($awards !== null) {
                 $this->syncAwards($artist, $awards);
+            }
+
+            if ($seo !== null) {
+                $this->seo->sync($artist, $seo);
             }
 
             return $artist->fresh();

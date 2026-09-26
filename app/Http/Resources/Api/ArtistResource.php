@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api;
 
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
+use App\Http\Resources\Api\Concerns\ResolvesSeoOverride;
 use App\Support\Api\LocaleResolver;
 use App\Support\Api\LocalizedFields;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ArtistResource extends JsonResource
 {
     use ResolvesMediaUrl;
+    use ResolvesSeoOverride;
 
     public function toArray(Request $request): array
     {
@@ -47,6 +49,7 @@ class ArtistResource extends JsonResource
                     return ['year' => $award->year, 'title' => $f['title']];
                 });
             }),
+            'seo' => $this->when($this->relationLoaded('seoMetadata'), fn () => $this->seoOverrideBlock($request)),
             'artworks' => $this->when(
                 $this->relationLoaded('artworks'),
                 fn () => ArtworkCardResource::collection($this->artworks->where('is_active', true)->values())

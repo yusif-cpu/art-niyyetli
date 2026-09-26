@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesArtistPayload;
+use App\Http\Requests\Admin\Concerns\ValidatesSeoPayload;
 use App\Rules\Slug;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -12,6 +13,7 @@ use Illuminate\Validation\Validator;
 class StoreArtistRequest extends FormRequest
 {
     use ValidatesArtistPayload;
+    use ValidatesSeoPayload;
 
     public function authorize(): bool
     {
@@ -52,12 +54,15 @@ class StoreArtistRequest extends FormRequest
             'awards.*.translations' => ['required', 'array', 'min:1'],
             'awards.*.translations.*.locale' => ['required', Rule::enum(Locale::class)],
             'awards.*.translations.*.title' => ['required', 'string', 'max:255'],
+
+            ...$this->seoRules(),
         ];
     }
 
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            $this->rejectDuplicateSeoLocales($validator);
             $this->rejectDuplicateTranslationLocales($validator);
             if ($this->has('translations')) {
                 $this->requireAzTranslation($validator);

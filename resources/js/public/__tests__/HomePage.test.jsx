@@ -36,6 +36,57 @@ describe('HomePage', () => {
         expect(screen.getByText('Necə sifariş verə bilərəm?')).toBeInTheDocument();
     });
 
+    it('renders both current and upcoming exhibitions from the single homepage response', async () => {
+        const ex = (slug, title, status) => ({ ...homepageData.exhibition, slug, title, status });
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({
+            data: {
+                ...homepageData,
+                exhibition: ex('now', 'Now Show', 'current'),
+                exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming'), ex('later', 'Later Show', 'upcoming')] },
+            },
+        }));
+
+        render(<LocaleProvider><HomePage /></LocaleProvider>);
+
+        expect(await screen.findByText('Now Show')).toBeInTheDocument();
+        expect(screen.getByText('Soon Show')).toBeInTheDocument();
+        expect(screen.getByText('Later Show')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Cari sərgilər' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Gələcək sərgilər' })).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledTimes(1); // no second request for the upcoming list
+    });
+
+    it('omits the heading of an empty exhibitions group', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({
+            data: { ...homepageData, exhibitions: { current: [], upcoming: [{ ...homepageData.exhibition, slug: 'soon', title: 'Soon Show', status: 'upcoming' }] } },
+        }));
+
+        render(<LocaleProvider><HomePage /></LocaleProvider>);
+
+        expect(await screen.findByText('Soon Show')).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Gələcək sərgilər' })).toBeInTheDocument();
+    });
+
+    it('falls back to the single exhibition for a response without the exhibitions lists', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: homepageData }));
+
+        render(<LocaleProvider><HomePage /></LocaleProvider>);
+
+        expect(await screen.findByText('Winter Show')).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
+    });
+
+    it('renders no exhibition section when both lists are empty', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...homepageData, exhibition: null, exhibitions: { current: [], upcoming: [] } } }));
+
+        render(<LocaleProvider><HomePage /></LocaleProvider>);
+
+        await screen.findByText('Wall Piece');
+        expect(screen.queryByText('Winter Show')).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Gələcək sərgilər' })).not.toBeInTheDocument();
+    });
+
     it('renders without crashing when page and exhibition are null', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...homepageData, page: null, exhibition: null } }));
 

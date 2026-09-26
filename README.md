@@ -37,6 +37,14 @@ No local PHP, Composer, or MySQL installation is required — everything runs in
 
 5. Visit the app at **http://localhost:8080**.
 
+Uploaded media is served from `/storage/...`. The `app` container's entrypoint ([`docker/php/docker-entrypoint.sh`](docker/php/docker-entrypoint.sh)) creates the `public/storage` link for you on every start, as a **relative** link (`public/storage -> ../storage/app/public`) that resolves identically on the host and in both containers. You do not need to run `storage:link` yourself — and do not run it on the host, which creates an absolute host-path link that does not exist inside the containers (media URLs then return 404). If media 404s after an upgrade, run `docker compose up -d --force-recreate app`. (Production is unaffected: it keeps its own `php artisan storage:link` deploy step, see `.env.production.example`.)
+
+Optional: load sample content (4 artists, 8 artworks, 2 exhibitions in AZ + EN, all marked as demo) for local development. It is idempotent, refuses to run in production and is not part of `db:seed`:
+```bash
+docker compose exec app php artisan db:seed --class=DemoContentSeeder
+```
+It creates no images; upload media in the admin to see artworks with pictures.
+
 ## Stopping the project
 
 ```bash
@@ -204,6 +212,13 @@ docker compose logs mysql
 Confirm the bind mount is intact:
 ```bash
 docker compose exec app ls -la /var/www/html
+```
+
+**Uploaded images return 404 (`/storage/...`)**
+`public/storage` is probably a stale absolute link (from running `php artisan storage:link` on the host). Recreate the `app` container so the entrypoint replaces it with the relative link:
+```bash
+docker compose up -d --force-recreate app
+docker compose exec app ls -l public/storage   # -> ../storage/app/public
 ```
 
 **"No application encryption key has been specified"**

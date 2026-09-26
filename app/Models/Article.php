@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['type', 'status', 'published_at', 'is_active'])]
+#[Fillable(['type', 'status', 'published_at', 'is_active', 'youtube_video_id'])]
 class Article extends Model
 {
     /** @use HasFactory<ArticleFactory> */

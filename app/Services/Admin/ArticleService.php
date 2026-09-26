@@ -9,17 +9,24 @@ use Illuminate\Support\Facades\DB;
 
 class ArticleService
 {
+    public function __construct(private SeoMetadataService $seo) {}
+
     public function create(array $data): Article
     {
         $translations = $data['translations'];
         $media = $data['media'] ?? [];
-        unset($data['translations'], $data['media']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['media'], $data['youtube_url'], $data['seo']);
 
-        return DB::transaction(function () use ($data, $translations, $media) {
+        return DB::transaction(function () use ($data, $translations, $media, $seo) {
             $article = Article::create($data);
 
             $this->syncTranslations($article, $translations);
             $this->syncMedia($article, $media);
+
+            if ($seo !== null) {
+                $this->seo->sync($article, $seo);
+            }
 
             return $article->fresh();
         });
@@ -29,9 +36,10 @@ class ArticleService
     {
         $translations = $data['translations'] ?? null;
         $media = array_key_exists('media', $data) ? $data['media'] : null;
-        unset($data['translations'], $data['media']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['media'], $data['youtube_url'], $data['seo']);
 
-        return DB::transaction(function () use ($article, $data, $translations, $media) {
+        return DB::transaction(function () use ($article, $data, $translations, $media, $seo) {
             $article->update($data);
 
             if ($translations !== null) {
@@ -40,6 +48,10 @@ class ArticleService
 
             if ($media !== null) {
                 $this->syncMedia($article, $media);
+            }
+
+            if ($seo !== null) {
+                $this->seo->sync($article, $seo);
             }
 
             return $article->fresh();

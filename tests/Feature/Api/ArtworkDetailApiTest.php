@@ -68,6 +68,21 @@ class ArtworkDetailApiTest extends TestCase
         $response->assertJsonPath('data.year_created', $artwork->year_created);
     }
 
+    public function test_nested_artist_exposes_id_slug_and_name(): void
+    {
+        $artist = Artist::factory()->create();
+        $artist->translations()->create(['locale' => 'az', 'slug' => 'aygun-mammadova', 'first_name' => 'Aygün', 'last_name' => 'Məmmədova']);
+        $artist->translations()->create(['locale' => 'en', 'slug' => 'aygun-mammadova-en', 'first_name' => 'Aygun', 'last_name' => 'Mammadova']);
+        $artwork = $this->makeArtwork(['artist_id' => $artist->id]);
+
+        $this->getJson("/api/v1/artworks/{$artwork->inventory_code}")
+            ->assertOk()
+            ->assertJsonPath('data.artist', ['id' => $artist->id, 'slug' => 'aygun-mammadova', 'name' => 'Aygün Məmmədova']);
+
+        $this->getJson("/api/v1/artworks/{$artwork->inventory_code}?locale=en")
+            ->assertJsonPath('data.artist', ['id' => $artist->id, 'slug' => 'aygun-mammadova-en', 'name' => 'Aygun Mammadova']);
+    }
+
     public function test_images_ordered_and_use_full_variant_distinct_from_catalogue(): void
     {
         $artwork = $this->makeArtwork();

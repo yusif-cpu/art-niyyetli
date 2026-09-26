@@ -46,6 +46,7 @@ class PageController extends Controller
             'sections' => fn ($q) => $q->orderBy('sort_order'),
             'sections.translations',
             'sections.image.variants',
+            'seoMetadata.ogImage.variants',
         ]);
 
         return new PageResource($page);

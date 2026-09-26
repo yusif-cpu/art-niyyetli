@@ -11,6 +11,8 @@ const NAV_SECTIONS = [
         items: [
             { key: 'artists', label: 'Rəssamlar' },
             { key: 'artworks', label: 'Əsərlər' },
+            { key: 'genres', label: 'Janrlar' },
+            { key: 'mediums', label: 'Texnikalar' },
             { key: 'exhibitions', label: 'Sərgilər' },
             { key: 'articles', label: 'Məqalələr' },
             { key: 'pages', label: 'Səhifələr' },

@@ -34,6 +34,7 @@ class PageController extends Controller
                 'sections' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
                 'sections.translations',
                 'sections.image.variants',
+                'seoMetadata.ogImage.variants',
             ])
             ->first();
 

@@ -2,6 +2,7 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
+import { seoMeta } from '../lib/seoMeta.js';
 import { getArtwork } from '../services/artworks.js';
 import ImageWithFallback from '../components/ImageWithFallback.jsx';
 import YoutubeEmbed from '../components/YoutubeEmbed.jsx';
@@ -15,7 +16,7 @@ export default function ArtworkDetailPage({ params }) {
     const { locale } = useLocale();
     const { data, loading, error } = useApiData(() => getArtwork(locale, params.code), [locale, params.code]);
 
-    usePageMeta(data ? { title: `${data.title} — ArtNiyyətli`, description: data.short_description } : {});
+    usePageMeta(data ? seoMeta(data, { title: data.title, description: data.short_description }) : {});
 
     if (loading) return <LoadingState />;
     if (error?.status === 404) return <NotFoundPage />;

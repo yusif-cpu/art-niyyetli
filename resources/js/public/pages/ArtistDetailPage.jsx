@@ -2,6 +2,7 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
+import { seoMeta } from '../lib/seoMeta.js';
 import { getArtist } from '../services/artists.js';
 import ImageWithFallback from '../components/ImageWithFallback.jsx';
 import ArtworkCard from '../components/ArtworkCard.jsx';
@@ -13,7 +14,7 @@ export default function ArtistDetailPage({ params }) {
     const { locale } = useLocale();
     const { data, loading, error } = useApiData(() => getArtist(locale, params.slug), [locale, params.slug]);
 
-    usePageMeta(data ? { title: `${data.first_name} ${data.last_name} — ArtNiyyətli`, description: data.biography } : {});
+    usePageMeta(data ? seoMeta(data, { title: `${data.first_name} ${data.last_name}`, description: data.biography }) : {});
 
     if (loading) return <LoadingState />;
     if (error?.status === 404) return <NotFoundPage />;

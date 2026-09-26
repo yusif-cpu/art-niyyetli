@@ -23,4 +23,7 @@ return [
     // sort_order. Server-side only; not a query parameter.
     'wall_limit' => (int) env('GALLERY_WALL_LIMIT', 16),
 
+    // Safety cap on each list of the homepage `exhibitions` (`current` and `upcoming`). Server-side only.
+    'homepage_exhibitions_limit' => (int) env('GALLERY_HOMEPAGE_EXHIBITIONS_LIMIT', 3),
+
 ];

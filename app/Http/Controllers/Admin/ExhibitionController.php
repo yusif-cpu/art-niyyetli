@@ -67,7 +67,7 @@ class ExhibitionController extends Controller
     {
         $exhibition->load([
             'translations', 'artists.translations', 'artworks.translations',
-            'media.media.variants',
+            'media.media.variants', 'seoMetadata.ogImage.variants',
         ]);
 
         return new ExhibitionResource($exhibition);

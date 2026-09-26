@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from '../lib/api.js';
+import SeoFields from '../components/SeoFields.jsx';
+import { seoToState, seoToPayload } from '../lib/seo.js';
 import { useToast } from '../components/ToastContext.jsx';
 import TextField from '../components/TextField.jsx';
 import TextArea from '../components/TextArea.jsx';
@@ -35,10 +37,12 @@ export default function PageEditorScreen({ pageId, onBack }) {
     const [locale, setLocale] = useState('az');
     const [fields, setFields] = useState(null);
     const [isActive, setIsActive] = useState(true);
+    const [seo, setSeo] = useState(seoToState(null));
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
     const [banner, setBanner] = useState('');
     const [sectionForm, setSectionForm] = useState(null); // null | 'new' | section object
+    const [sectionErrors, setSectionErrors] = useState({});
     const [deleteConfirm, setDeleteConfirm] = useState(false);
 
     function load() {
@@ -46,6 +50,7 @@ export default function PageEditorScreen({ pageId, onBack }) {
             setPage(res.data);
             setFields(translationsToState(res.data.translations || [res.data.translation].filter(Boolean)));
             setIsActive(res.data.is_active);
+            setSeo(seoToState(res.data.seo));
         });
     }
 
@@ -66,7 +71,7 @@ export default function PageEditorScreen({ pageId, onBack }) {
             .map(([loc, t]) => ({ locale: loc, slug: t.slug, title: t.title, content: t.content }));
 
         try {
-            await apiFetch(`/pages/${pageId}`, { method: 'PUT', body: { is_active: isActive, translations } });
+            await apiFetch(`/pages/${pageId}`, { method: 'PUT', body: { is_active: isActive, translations, seo: seoToPayload(seo) } });
             show('Yadda saxlanıldı', 'success');
             load();
         } catch (err) {
@@ -88,10 +93,12 @@ export default function PageEditorScreen({ pageId, onBack }) {
             }
             show('Bölmə yadda saxlanıldı', 'success');
             setSectionForm(null);
+            setSectionErrors({});
             load();
         } catch (err) {
             if (err instanceof ApiError) {
-                show(err.message, 'error');
+                setSectionErrors(err.errors);
+                show(err.errors?.key?.[0] || err.message, 'error');
             }
         }
     }
@@ -150,6 +157,8 @@ export default function PageEditorScreen({ pageId, onBack }) {
                 <TextField label="Başlıq" value={fields[locale].title} onChange={(v) => updateField('title', v)} error={errors?.[`translations.0.title`]?.[0]} />
                 <TextArea label="Məzmun" rows={6} value={fields[locale].content} onChange={(v) => updateField('content', v)} />
 
+                <SeoFields value={seo} onChange={setSeo} errors={errors} />
+
                 <div className="flex items-center justify-between">
                     <Button type="button" variant="danger" onClick={() => setDeleteConfirm(true)}>
                         Sil
@@ -182,9 +191,15 @@ export default function PageEditorScreen({ pageId, onBack }) {
                 {sectionForm && (
                     <div className="mb-4">
                         <PageSectionForm
+                            key={sectionForm === 'new' ? 'new' : sectionForm.id}
                             section={sectionForm === 'new' ? null : sectionForm}
+                            supportedKeys={page.section_keys || []}
+                            errors={sectionErrors}
                             onSave={saveSection}
-                            onCancel={() => setSectionForm(null)}
+                            onCancel={() => {
+                                setSectionForm(null);
+                                setSectionErrors({});
+                            }}
                         />
                     </div>
                 )}

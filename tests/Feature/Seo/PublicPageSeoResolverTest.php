@@ -9,10 +9,13 @@ use App\Models\Artist;
 use App\Models\Artwork;
 use App\Models\Exhibition;
 use App\Models\Genre;
+use App\Models\Media;
+use App\Models\MediaVariant;
 use App\Models\Medium;
 use App\Models\Page;
 use App\Services\Seo\PublicPageSeoResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PublicPageSeoResolverTest extends TestCase
@@ -65,6 +68,26 @@ class PublicPageSeoResolverTest extends TestCase
         $this->assertTrue($seo->index);
         $this->assertSame(200, $seo->httpStatus);
         $this->assertNull($seo->jsonLd);
+    }
+
+    public function test_static_page_honours_the_seo_override_including_its_og_image(): void
+    {
+        $page = Page::create(['type' => PageType::Custom, 'is_active' => true]);
+        $page->translations()->create(['locale' => 'az', 'slug' => 'about', 'title' => 'Haqqımızda', 'content' => 'Qalereya haqqında məlumat.']);
+        $media = Media::factory()->create();
+        MediaVariant::create([
+            'media_id' => $media->id, 'variant' => 'detail-webp', 'disk' => 'public', 'path' => 'seo/about.webp',
+            'mime_type' => 'image/webp', 'size_bytes' => 100, 'width' => 100, 'height' => 100,
+        ]);
+        $page->seoMetadata()->create(['locale' => 'az', 'title' => 'SEO başlıq', 'description' => 'SEO təsvir', 'og_image_id' => $media->id]);
+
+        $seo = $this->resolver()->resolve(['about'], Locale::Az);
+
+        $this->assertSame('SEO başlıq — ArtNiyyətli', $seo->title);
+        $this->assertSame('SEO təsvir', $seo->description);
+        $this->assertSame(Storage::disk('public')->url('seo/about.webp'), $seo->ogImageUrl);
+
+        $this->assertNull($this->resolver()->resolve(['about'], Locale::En)->ogImageUrl); // no EN override
     }
 
     public function test_static_page_applies_the_same_indexable_policy_to_a_custom_type_legal_page(): void

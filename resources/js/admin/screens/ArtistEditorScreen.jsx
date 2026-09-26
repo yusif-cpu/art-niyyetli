@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from '../lib/api.js';
+import SeoFields from '../components/SeoFields.jsx';
+import { seoToState, seoToPayload } from '../lib/seo.js';
 import { useToast } from '../components/ToastContext.jsx';
 import TextField from '../components/TextField.jsx';
 import TextArea from '../components/TextArea.jsx';
@@ -71,6 +73,7 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
     const [fields, setFields] = useState(translationsToState(null));
     const [core, setCore] = useState(EMPTY_CORE);
     const [portraitPreview, setPortraitPreview] = useState(null);
+    const [seo, setSeo] = useState(seoToState(null));
     const [exhibitions, setExhibitions] = useState([]);
     const [awards, setAwards] = useState([]);
     const [saving, setSaving] = useState(false);
@@ -94,6 +97,7 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
                 is_active: data.is_active,
                 representation_image_id: data.representation_image_id,
             });
+            setSeo(seoToState(data.seo));
             setPortraitPreview(data.portrait_url);
             setExhibitions(repeaterToState(data.exhibitions, true));
             setAwards(repeaterToState(data.awards, false));
@@ -129,6 +133,7 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
             ...core,
             birth_year: core.birth_year === '' ? null : core.birth_year,
             translations,
+            seo: seoToPayload(seo),
             exhibitions: repeaterToPayload(exhibitions, true),
             awards: repeaterToPayload(awards, false),
         };
@@ -288,6 +293,8 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
                         </div>
                     ))}
                 </section>
+
+                <SeoFields value={seo} onChange={setSeo} errors={errors} />
 
                 <div className="flex items-center justify-between">
                     {!isNew && (

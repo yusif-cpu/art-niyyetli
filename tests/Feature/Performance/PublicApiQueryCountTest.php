@@ -38,18 +38,18 @@ class PublicApiQueryCountTest extends TestCase
      * @var array<string, int>
      */
     private const CEILINGS = [
-        'api homepage' => 56,
+        'api homepage' => 58, // 56 + one id query per exhibition status (current and upcoming lists)
         'api artworks' => 12,
         'api artworks filtered+sorted' => 12,
-        'api artwork detail' => 25,
+        'api artwork detail' => 26, // 25 + the one seo_metadata eager load (SEO overrides in detail responses)
         'api artists' => 4,
-        'api artist detail' => 18,
+        'api artist detail' => 19, // 18 + the seo_metadata eager load
         'api exhibitions' => 19,
         'api exhibitions current' => 19,
-        'api exhibition detail' => 19,
+        'api exhibition detail' => 20, // 19 + the seo_metadata eager load
         'api articles' => 5,
-        'api article detail' => 5,
-        'api page (with image sections)' => 7,
+        'api article detail' => 6, // 5 + the seo_metadata eager load
+        'api page (with image sections)' => 8, // 7 + the seo_metadata eager load
         'api pages' => 2,
         'api navigation' => 3,
         'api site-settings' => 3,

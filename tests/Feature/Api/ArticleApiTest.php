@@ -79,4 +79,25 @@ class ArticleApiTest extends TestCase
         $this->assertSame('Başlıq '.$article->id, $response->json('data.title'));
         $this->assertSame('EN short', $response->json('data.short_text'));
     }
+
+    public function test_video_is_null_when_article_has_no_youtube_video(): void
+    {
+        $article = $this->makeArticle();
+
+        $this->getJson("/api/v1/articles/article-{$article->id}")->assertOk()->assertJsonPath('data.video', null);
+        $this->getJson('/api/v1/articles')->assertOk()->assertJsonPath('data.0.video', null);
+    }
+
+    public function test_video_block_is_exposed_on_show_and_index_when_article_has_a_youtube_video(): void
+    {
+        $article = $this->makeArticle(['youtube_video_id' => 'dQw4w9WgXcQ']);
+
+        $show = $this->getJson("/api/v1/articles/article-{$article->id}");
+        $show->assertOk();
+        $show->assertJsonPath('data.video.id', 'dQw4w9WgXcQ');
+        $show->assertJsonPath('data.video.embed_url', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+        $show->assertJsonPath('data.media', []); // the video is its own field, not a media[] entry
+
+        $this->getJson('/api/v1/articles')->assertOk()->assertJsonPath('data.0.video.id', 'dQw4w9WgXcQ');
+    }
 }

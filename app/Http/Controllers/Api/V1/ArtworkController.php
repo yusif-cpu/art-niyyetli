@@ -8,6 +8,7 @@ use App\Http\Resources\Api\ArtworkCardResource;
 use App\Http\Resources\Api\ArtworkDetailResource;
 use App\Models\Artwork;
 use App\Support\Api\PaginationParams;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ArtworkController extends Controller
@@ -41,6 +42,14 @@ class ArtworkController extends Controller
             $query->where('availability', $request->query('status'));
         }
 
+        // An artwork whose price is hidden (show_price = false) is "price on request": its stored price must not leak
+        // through the price filters or the price sorts (a visitor could bisect it with price_min/price_max or read
+        // its rank from price_asc/price_desc). A price filter therefore only ever matches artworks with a visible
+        // price, and the price sorts rank only those, with price-on-request artworks after them.
+        if ($request->filled('price_min') || $request->filled('price_max')) {
+            $query->where('show_price', true);
+        }
+
         if ($request->filled('price_min')) {
             $query->where('price', '>=', $request->float('price_min'));
         }
@@ -64,14 +73,26 @@ class ArtworkController extends Controller
 
         match ($request->query('sort')) {
             'newest' => $query->orderBy('created_at', 'desc'),
-            'price_asc' => $query->orderBy('price', 'asc'),
-            'price_desc' => $query->orderBy('price', 'desc'),
+            'price_asc' => $this->orderByVisiblePrice($query, 'asc'),
+            'price_desc' => $this->orderByVisiblePrice($query, 'desc'),
             default => $query->orderBy('sort_order')->orderBy('id'),
         };
 
         $artworks = $query->paginate(PaginationParams::perPage($request))->withQueryString();
 
         return ArtworkCardResource::collection($artworks);
+    }
+
+    /**
+     * Visible prices first (ranked by price), then every price-on-request artwork in the default order. The CASE
+     * yields NULL for hidden prices, so their stored value takes no part in the ordering.
+     */
+    private function orderByVisiblePrice(Builder $query, string $direction): void
+    {
+        $query->orderByDesc('show_price')
+            ->orderByRaw('CASE WHEN show_price = 1 THEN price END '.($direction === 'desc' ? 'DESC' : 'ASC'))
+            ->orderBy('sort_order')
+            ->orderBy('id');
     }
 
     public function show(string $inventoryCode): ArtworkDetailResource
@@ -82,6 +103,7 @@ class ArtworkController extends Controller
             ->with([
                 'translations', 'artist.translations', 'genre.translations', 'medium.translations',
                 'images' => fn ($q) => $q->orderBy('sort_order'), 'images.media.variants',
+                'seoMetadata.ogImage.variants',
             ])
             ->first();
 

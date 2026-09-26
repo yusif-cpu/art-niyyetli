@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from '../lib/api.js';
+import SeoFields from '../components/SeoFields.jsx';
+import { seoToState, seoToPayload } from '../lib/seo.js';
 import { useToast } from '../components/ToastContext.jsx';
 import TextField from '../components/TextField.jsx';
 import TextArea from '../components/TextArea.jsx';
@@ -63,6 +65,7 @@ export default function ArtworkEditorScreen({ artworkId, onBack }) {
     const [fields, setFields] = useState(translationsToState(null));
     const [core, setCore] = useState(EMPTY_CORE);
     const [images, setImages] = useState([]);
+    const [seo, setSeo] = useState(seoToState(null));
     const [youtubeVideoId, setYoutubeVideoId] = useState(null);
     const [artists, setArtists] = useState([]);
     const [genres, setGenres] = useState([]);
@@ -109,6 +112,7 @@ export default function ArtworkEditorScreen({ artworkId, onBack }) {
                 is_active: data.is_active,
                 youtube_url: data.youtube_url ?? '',
             });
+            setSeo(seoToState(data.seo));
             setImages(data.images || []);
             setYoutubeVideoId(data.youtube_video_id ?? null);
             setLoaded(true);
@@ -140,6 +144,7 @@ export default function ArtworkEditorScreen({ artworkId, onBack }) {
             year_sold: core.year_sold === '' ? null : core.year_sold,
             inventory_code: core.inventory_code || undefined,
             translations,
+            seo: seoToPayload(seo),
             images: images.map(({ id, media_id, type, sort_order, is_main }) => ({ id, media_id, type, sort_order, is_main })),
         };
 
@@ -330,6 +335,8 @@ export default function ArtworkEditorScreen({ artworkId, onBack }) {
                     <TextArea label="Qısa açıqlama" value={fields[locale].short_description} onChange={(v) => updateField('short_description', v)} />
                     <TextArea label="Mənşə (provenance)" value={fields[locale].provenance} onChange={(v) => updateField('provenance', v)} />
                 </section>
+
+                <SeoFields value={seo} onChange={setSeo} errors={errors} />
 
                 <div className="flex items-center justify-between">
                     {!isNew && (

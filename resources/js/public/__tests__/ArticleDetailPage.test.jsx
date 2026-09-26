@@ -50,4 +50,30 @@ describe('ArticleDetailPage', () => {
 
         await waitFor(() => expect(screen.getAllByText('An Interview').length).toBeGreaterThan(0));
     });
+
+    it('does not render a YouTube embed when video is null', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, {
+            data: { slug: 'a', title: 'An Interview', type: 'interview', short_text: 'Teaser.', content: 'Body text', published_at: '2026-01-05T10:00:00+00:00', media: [], video: null },
+        }));
+
+        render(<LocaleProvider><ArticleDetailPage params={{ slug: 'a' }} /></LocaleProvider>);
+
+        await screen.findByText('Body text');
+        expect(screen.queryByTitle('An Interview')).not.toBeInTheDocument();
+        expect(document.querySelector('iframe')).not.toBeInTheDocument();
+    });
+
+    it('renders a YouTube embed from the video block, separate from media', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, {
+            data: {
+                slug: 'a', title: 'An Interview', type: 'video_project', short_text: 'Teaser.', content: 'Body text', published_at: '2026-01-05T10:00:00+00:00', media: [],
+                video: { id: 'dQw4w9WgXcQ', embed_url: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ' },
+            },
+        }));
+
+        render(<LocaleProvider><ArticleDetailPage params={{ slug: 'a' }} /></LocaleProvider>);
+
+        const iframe = await screen.findByTitle('An Interview');
+        expect(iframe).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    });
 });

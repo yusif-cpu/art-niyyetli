@@ -56,7 +56,7 @@ class ArtistController extends Controller
 
     public function show(Artist $artist, Request $request): ArtistResource
     {
-        $artist->load(['translations', 'representationImage.variants', 'exhibitions.translations', 'awards.translations']);
+        $artist->load(['translations', 'representationImage.variants', 'exhibitions.translations', 'awards.translations', 'seoMetadata.ogImage.variants']);
 
         return new ArtistResource($artist);
     }

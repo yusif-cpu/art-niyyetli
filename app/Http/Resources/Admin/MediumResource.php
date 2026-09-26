@@ -17,7 +17,13 @@ class MediumResource extends JsonResource
             'id' => $this->id,
             'slug' => $this->slug,
             'name' => $translation?->name,
+            'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
+            'translations' => $this->translations->map(fn ($t) => [
+                'locale' => $t->locale->value, 'name' => $t->name,
+            ])->values(),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
 }

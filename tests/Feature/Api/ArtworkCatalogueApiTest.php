@@ -7,6 +7,7 @@ use App\Models\Artwork;
 use App\Models\Genre;
 use App\Models\Medium;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ArtworkCatalogueApiTest extends TestCase
@@ -207,5 +208,67 @@ class ArtworkCatalogueApiTest extends TestCase
         $this->getJson('/api/v1/artworks?size_min=abc')->assertStatus(422)->assertJsonValidationErrors('size_min');
         $this->getJson('/api/v1/artworks?size_min=-5')->assertStatus(422)->assertJsonValidationErrors('size_min');
         $this->getJson('/api/v1/artworks?size_max=abc')->assertStatus(422)->assertJsonValidationErrors('size_max');
+    }
+
+    public function test_price_filters_never_match_an_artwork_whose_price_is_hidden(): void
+    {
+        $visible = $this->makeArtwork(['price' => 2000, 'show_price' => true]);
+        $hidden = $this->makeArtwork(['price' => 2000, 'show_price' => false]);
+
+        foreach (['price_min=1500', 'price_max=2500', 'price_min=1500&price_max=2500', 'price_min=2000&price_max=2000'] as $query) {
+            $codes = collect($this->getJson("/api/v1/artworks?{$query}")->assertOk()->json('data'))->pluck('inventory_code')->all();
+
+            $this->assertSame([$visible->inventory_code], $codes, "?{$query} must not surface the hidden-price artwork");
+        }
+
+        // Without a price filter the hidden-price artwork is still listed (as price on request).
+        $all = $this->getJson('/api/v1/artworks')->json('data');
+        $this->assertContains($hidden->inventory_code, collect($all)->pluck('inventory_code')->all());
+    }
+
+    public function test_a_hidden_price_cannot_be_probed_by_bisecting_the_filters(): void
+    {
+        $hidden = $this->makeArtwork(['price' => 7777, 'show_price' => false]);
+
+        foreach (['price_min=7777', 'price_max=7777', 'price_min=7000&price_max=8000', 'price_max=100000'] as $query) {
+            $codes = collect($this->getJson("/api/v1/artworks?{$query}")->json('data'))->pluck('inventory_code')->all();
+
+            $this->assertNotContains($hidden->inventory_code, $codes, "?{$query}");
+        }
+    }
+
+    #[DataProvider('priceSorts')]
+    public function test_price_sorts_rank_only_visible_prices_and_put_price_on_request_last(string $sort, array $expectedPrices): void
+    {
+        $this->makeArtwork(['price' => 3000, 'show_price' => true, 'sort_order' => 3]);
+        $this->makeArtwork(['price' => 1, 'show_price' => false, 'sort_order' => 1]);   // hidden: would sort first ascending
+        $this->makeArtwork(['price' => 1000, 'show_price' => true, 'sort_order' => 4]);
+        $this->makeArtwork(['price' => 99999, 'show_price' => false, 'sort_order' => 2]); // hidden: would sort first descending
+        $this->makeArtwork(['price' => 2000, 'show_price' => true, 'sort_order' => 5]);
+
+        $prices = collect($this->getJson("/api/v1/artworks?sort={$sort}")->assertOk()->json('data'))->pluck('price')->all();
+
+        $this->assertEquals($expectedPrices, $prices);
+    }
+
+    /** @return array<string, array{0: string, 1: array<int, ?int>}> */
+    public static function priceSorts(): array
+    {
+        return [
+            'ascending' => ['price_asc', [1000, 2000, 3000, null, null]],
+            'descending' => ['price_desc', [3000, 2000, 1000, null, null]],
+        ];
+    }
+
+    public function test_price_on_request_artworks_keep_the_default_order_among_themselves_in_price_sorts(): void
+    {
+        $second = $this->makeArtwork(['price' => 50, 'show_price' => false, 'sort_order' => 2]);
+        $first = $this->makeArtwork(['price' => 90000, 'show_price' => false, 'sort_order' => 1]);
+
+        foreach (['price_asc', 'price_desc'] as $sort) {
+            $codes = collect($this->getJson("/api/v1/artworks?sort={$sort}")->json('data'))->pluck('inventory_code')->all();
+
+            $this->assertSame([$first->inventory_code, $second->inventory_code], $codes, $sort);
+        }
     }
 }

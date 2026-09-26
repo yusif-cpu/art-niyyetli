@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from '../lib/api.js';
+import SeoFields from '../components/SeoFields.jsx';
+import { seoToState, seoToPayload } from '../lib/seo.js';
 import { useToast } from '../components/ToastContext.jsx';
 import TextField from '../components/TextField.jsx';
 import TextArea from '../components/TextArea.jsx';
@@ -8,6 +10,7 @@ import Toggle from '../components/Toggle.jsx';
 import Button from '../components/Button.jsx';
 import Banner from '../components/Banner.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import YoutubeVideoField from '../components/YoutubeVideoField.jsx';
 import MediaListManager from '../components/MediaListManager.jsx';
 
 const STATUS_LABELS = { draft: 'Qaralama', published: 'Dərc edilib' };
@@ -20,7 +23,7 @@ const TYPE_LABELS = {
     announcement: 'Elan',
 };
 
-const EMPTY_CORE = { type: 'news', status: 'draft', published_at: '', is_active: true };
+const EMPTY_CORE = { type: 'news', status: 'draft', published_at: '', is_active: true, youtube_url: '' };
 
 function translationsToState(translations) {
     const byLocale = {};
@@ -40,7 +43,9 @@ export default function ArticleEditorScreen({ articleId, onBack }) {
     const [locale, setLocale] = useState('az');
     const [fields, setFields] = useState(translationsToState(null));
     const [core, setCore] = useState(EMPTY_CORE);
+    const [youtubeVideoId, setYoutubeVideoId] = useState(null);
     const [media, setMedia] = useState([]);
+    const [seo, setSeo] = useState(seoToState(null));
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
     const [banner, setBanner] = useState('');
@@ -61,7 +66,10 @@ export default function ArticleEditorScreen({ articleId, onBack }) {
                 status: data.status,
                 published_at: data.published_at ? data.published_at.slice(0, 10) : '',
                 is_active: data.is_active,
+                youtube_url: data.youtube_url ?? '',
             });
+            setYoutubeVideoId(data.youtube_video_id ?? null);
+            setSeo(seoToState(data.seo));
             setMedia((data.media || []).map((m) => ({ media_id: m.id, sort_order: m.sort_order, url: m.url })));
             setLoaded(true);
         });
@@ -91,6 +99,7 @@ export default function ArticleEditorScreen({ articleId, onBack }) {
             ...core,
             published_at: core.published_at || null,
             translations,
+            seo: seoToPayload(seo),
             media: media.map(({ media_id, sort_order }) => ({ media_id, sort_order })),
         };
 
@@ -184,9 +193,21 @@ export default function ArticleEditorScreen({ articleId, onBack }) {
                 </section>
 
                 <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                    <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">YouTube video</h2>
+                    <YoutubeVideoField
+                        url={core.youtube_url}
+                        onChange={(v) => updateCore('youtube_url', v)}
+                        videoId={youtubeVideoId}
+                        error={errors.youtube_url?.[0]}
+                    />
+                </section>
+
+                <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                     <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Media</h2>
                     <MediaListManager items={media} onChange={setMedia} />
                 </section>
+
+                <SeoFields value={seo} onChange={setSeo} errors={errors} />
 
                 <div className="flex items-center justify-between">
                     {!isNew && (

@@ -91,6 +91,8 @@ describe('Screen routing completeness', () => {
         'enquiries',
         'artworks',
         'artists',
+        'genres',
+        'mediums',
         'exhibitions',
         'articles',
         'media',

@@ -79,10 +79,23 @@ class HomepageController extends Controller
             'media.media.variants',
         ];
 
-        $exhibition = Exhibition::query()->where('is_active', true)->where('status', ExhibitionStatus::Current)
-            ->with($exhibitionWith)->orderBy('start_date')->first()
-            ?? Exhibition::query()->where('is_active', true)->where('status', ExhibitionStatus::Upcoming)
-                ->with($exhibitionWith)->orderBy('start_date')->first();
+        // Current and upcoming exhibitions, each soonest start first (the same ordering `exhibition` always used) and
+        // capped so the payload stays bounded. Past exhibitions are never part of the homepage.
+        // The ids are picked first (a cheap query per status) so the heavy eager loads run once for both lists.
+        $limit = (int) config('gallery.homepage_exhibitions_limit', 3);
+        $idsWithStatus = fn (ExhibitionStatus $status) => Exhibition::query()
+            ->where('is_active', true)->where('status', $status)
+            ->orderBy('start_date')->orderBy('id')->limit($limit)->pluck('id');
+
+        $currentIds = $idsWithStatus(ExhibitionStatus::Current);
+        $upcomingIds = $idsWithStatus(ExhibitionStatus::Upcoming);
+        $loaded = Exhibition::query()->whereIn('id', $currentIds->merge($upcomingIds))->with($exhibitionWith)->get()->keyBy('id');
+
+        $currentExhibitions = $currentIds->map(fn ($id) => $loaded[$id]);
+        $upcomingExhibitions = $upcomingIds->map(fn ($id) => $loaded[$id]);
+
+        // Kept for existing clients: the earliest current exhibition, else the earliest upcoming one.
+        $exhibition = $currentExhibitions->first() ?? $upcomingExhibitions->first();
 
         $faqs = $homePage
             ? Faq::query()->where('page_id', $homePage->id)->where('is_active', true)->with('translations')->orderBy('sort_order')->get()
@@ -104,6 +117,10 @@ class HomepageController extends Controller
             'wall' => ArtworkCardResource::collection($wall)->resolve($request),
             'featured' => ArtworkCardResource::collection($featured)->resolve($request),
             'artists' => ArtistResource::collection($artists)->resolve($request),
+            'exhibitions' => [
+                'current' => ExhibitionResource::collection($currentExhibitions)->resolve($request),
+                'upcoming' => ExhibitionResource::collection($upcomingExhibitions)->resolve($request),
+            ],
             'exhibition' => $exhibition ? (new ExhibitionResource($exhibition))->resolve($request) : null,
             'faqs' => FaqResource::collection($faqs)->resolve($request),
             'social_links' => SocialLinkResource::collection($socialLinks)->resolve($request),

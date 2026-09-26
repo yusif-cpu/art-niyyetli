@@ -79,6 +79,7 @@ class ArtworkController extends Controller
         $artwork->load([
             'artist.translations', 'medium.translations', 'genre.translations',
             'translations', 'images' => fn ($q) => $q->orderBy('sort_order'), 'images.media.variants',
+            'seoMetadata.ogImage.variants',
         ]);
 
         return new ArtworkResource($artwork);

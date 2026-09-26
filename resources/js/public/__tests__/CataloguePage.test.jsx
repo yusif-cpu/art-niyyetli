@@ -79,4 +79,27 @@ describe('CataloguePage', () => {
 
         await waitFor(() => expect(document.title).toBe('Əsərlər — ArtNiyyətli'));
     });
+
+    it('sends the price sort to the API and keeps the API order, showing price on request for hidden prices', async () => {
+        const priced = { ...artwork, inventory_code: 'AN-P', title: 'Priced Piece', price: 500 };
+        const hidden = { ...artwork, inventory_code: 'AN-H', title: 'Hidden Price Piece', price: null, currency: null };
+        global.fetch = vi.fn((url) => {
+            if (url.startsWith('/api/v1/artists')) return Promise.resolve(jsonResponse({ data: [] }));
+            // The API ranks visible prices first and puts price-on-request works after them.
+            return Promise.resolve(jsonResponse({ data: [priced, hidden], meta: { current_page: 1, last_page: 1, total: 2 } }));
+        });
+
+        render(<LocaleProvider><CataloguePage /></LocaleProvider>);
+        await screen.findByText('Priced Piece');
+
+        await userEvent.selectOptions(screen.getByLabelText('Sıralama'), 'price_asc');
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('sort=price_asc'), expect.anything());
+        });
+        const titles = screen.getAllByText(/Piece$/).map((el) => el.textContent);
+        expect(titles).toEqual(['Priced Piece', 'Hidden Price Piece']);
+        expect(screen.getByText('500 AZN')).toBeInTheDocument();
+        expect(screen.getByText('Qiymət tələb üzrə')).toBeInTheDocument();
+    });
 });

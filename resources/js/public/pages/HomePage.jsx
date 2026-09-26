@@ -36,6 +36,19 @@ export default function HomePage() {
         description: data ? hero?.body : undefined,
     });
 
+    // `exhibitions` ({current, upcoming}) is the homepage list; the single `exhibition` is only the fallback for a
+    // response that predates it (e.g. one still cached from before the API change).
+    const exhibitionGroups = data
+        ? data.exhibitions
+            ? [
+                  { key: 'current', heading: t(locale, 'home.currentExhibitions'), items: data.exhibitions.current ?? [] },
+                  { key: 'upcoming', heading: t(locale, 'home.upcomingExhibitions'), items: data.exhibitions.upcoming ?? [] },
+              ].filter((group) => group.items.length > 0)
+            : data.exhibition
+              ? [{ key: 'single', heading: null, items: [data.exhibition] }]
+              : []
+        : [];
+
     if (loading) return <LoadingState />;
     if (error) return <ErrorState error={error} />;
 
@@ -48,11 +61,14 @@ export default function HomePage() {
                 </section>
             )}
 
-            {data.exhibition && (
-                <section>
-                    <ExhibitionCard exhibition={data.exhibition} />
+            {exhibitionGroups.map(({ key, heading, items }) => (
+                <section key={key}>
+                    {heading && <h2 className="mb-4 text-lg font-semibold">{heading}</h2>}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {items.map((exhibition) => <ExhibitionCard key={exhibition.slug} exhibition={exhibition} />)}
+                    </div>
                 </section>
-            )}
+            ))}
 
             {data.wall.length > 0 && (
                 <section>

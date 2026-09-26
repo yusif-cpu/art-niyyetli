@@ -104,6 +104,7 @@ class PublicPageSeoResolver
 
         $fields = LocalizedFields::resolve($page->translations, $locale, ['title', 'content']);
         $override = $page->seoOverride($locale);
+        $ogImageUrl = $override?->ogImage ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail') : null;
 
         return new PageSeo(
             title: SeoText::pageTitle($override?->title ?? $fields['title']),
@@ -112,7 +113,7 @@ class PublicPageSeoResolver
             index: true,
             follow: true,
             ogType: 'website',
-            ogImageUrl: null,
+            ogImageUrl: $ogImageUrl,
             ogLocale: SeoText::ogLocale($locale),
             jsonLd: null,
         );

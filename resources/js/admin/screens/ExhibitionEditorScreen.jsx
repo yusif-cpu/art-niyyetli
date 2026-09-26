@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch, ApiError } from '../lib/api.js';
+import SeoFields from '../components/SeoFields.jsx';
+import { seoToState, seoToPayload } from '../lib/seo.js';
 import { useToast } from '../components/ToastContext.jsx';
 import TextField from '../components/TextField.jsx';
 import TextArea from '../components/TextArea.jsx';
@@ -40,6 +42,7 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
     const [participants, setParticipants] = useState([]);
     const [artworks, setArtworks] = useState([]);
     const [media, setMedia] = useState([]);
+    const [seo, setSeo] = useState(seoToState(null));
     const [youtubeVideoId, setYoutubeVideoId] = useState(null);
     const [allArtists, setAllArtists] = useState([]);
     const [allArtworks, setAllArtworks] = useState([]);
@@ -75,6 +78,7 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
             });
             setParticipants(data.artists || []);
             setArtworks(data.artworks || []);
+            setSeo(seoToState(data.seo));
             setMedia(data.media || []);
             setYoutubeVideoId(data.youtube_video_id ?? null);
             setLoaded(true);
@@ -118,6 +122,7 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
         const payload = {
             ...core,
             translations,
+            seo: seoToPayload(seo),
             artists: participants.map((p, i) => ({ artist_id: p.id, sort_order: i })),
             artworks: artworks.map((a, i) => ({ artwork_id: a.id, sort_order: i })),
             media: media.map(({ media_id, type, sort_order }) => ({ media_id, type, sort_order })),
@@ -281,6 +286,8 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
                         error={errors.youtube_url?.[0]}
                     />
                 </section>
+
+                <SeoFields value={seo} onChange={setSeo} errors={errors} />
 
                 <div className="flex items-center justify-between">
                     {!isNew && (

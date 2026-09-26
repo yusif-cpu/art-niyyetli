@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api;
 
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
+use App\Http\Resources\Api\Concerns\ResolvesSeoOverride;
 use App\Http\Resources\Api\Concerns\ResolvesYoutubeVideo;
 use App\Services\Admin\SiteSettingService;
 use App\Support\Api\LocaleResolver;
@@ -13,6 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ArtworkDetailResource extends JsonResource
 {
     use ResolvesMediaUrl;
+    use ResolvesSeoOverride;
     use ResolvesYoutubeVideo;
 
     public function toArray(Request $request): array
@@ -39,6 +41,7 @@ class ArtworkDetailResource extends JsonResource
                 fn () => ArtworkCardResource::collection($this->similar)
             ),
             'video' => $this->videoResource(),
+            'seo' => $this->when($this->relationLoaded('seoMetadata'), fn () => $this->seoOverrideBlock($request)),
             'whatsapp_link' => $this->buildWhatsAppLink($card['title']),
         ]);
     }

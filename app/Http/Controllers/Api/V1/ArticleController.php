@@ -39,7 +39,7 @@ class ArticleController extends Controller
             ->where('is_active', true)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
-            ->with(['translations', 'media.variants'])
+            ->with(['translations', 'media.variants', 'seoMetadata.ogImage.variants'])
             ->first();
 
         abort_if(! $article, 404);

@@ -115,6 +115,8 @@ npm ci                                           # on the host; .npmrc sets igno
 npm run build                                    # or `npm run dev`, see below
 ```
 
+**Media URLs (`/storage/...`):** the `app` container's entrypoint (`docker/php/docker-entrypoint.sh`) creates `public/storage` as a **relative** link (`../storage/app/public`) on every start, so it works inside the containers with no manual step. Do **not** run `php artisan storage:link` on the host (it makes an absolute host-path link that is broken inside Docker, and media returns 404); if that happened, `docker compose up -d --force-recreate app` repairs it. Production keeps its own `php artisan storage:link` deploy step.
+
 Then open **http://localhost:8080** (public site) and **http://localhost:8080/admin** (admin SPA).
 
 | Service | What | Access |
@@ -132,7 +134,7 @@ Then open **http://localhost:8080** (public site) and **http://localhost:8080/ad
 - **Backend (only when coordinated):** `docker compose exec app php artisan test` (1135 PHPUnit tests / 7590 assertions at `23ce451`), `docker compose exec app vendor/bin/pint --test`.
 - **Laravel Boost is not a project dependency.** It is not in `composer.json` / `composer.lock`, and you should **not** install it (`composer require laravel/boost` / `php artisan boost:install`). The "install Laravel Boost" block at the top of `AGENTS.md` / `CLAUDE.md` is generic bootstrap boilerplate from the initial commit; ignore it for this project.
 
-**Getting data to work with.** `db:seed` creates the CMS pages, the six enquiry subjects, roles and (if configured) a dev administrator — it does **not** create artists, artworks, exhibitions or articles. Create those in the admin at `/admin` (the dev administrator is created from the `ADMIN_DEV_USERNAME` / `ADMIN_DEV_EMAIL` / `ADMIN_DEV_PASSWORD` variables of your local `.env`; the account created by `DatabaseSeeder` for `test@example.com` has no role and **cannot** sign in to the admin). `BenchmarkSeeder` builds bulk data but is additive and meant for scratch databases — do not run it against your development database. Expect sparse or odd data (e.g. the dev database has artists without a translation — the public artist list now hides them, see [E5](#e5-get-artists)); the UI must cope ([§22](#22-known-gaps-and-gotchas-in-the-current-implementation)).
+**Getting data to work with.** `db:seed` creates the CMS pages, the six enquiry subjects, roles and (if configured) a dev administrator — it does **not** create artists, artworks, exhibitions or articles. Create those in the admin at `/admin` (the dev administrator is created from the `ADMIN_DEV_USERNAME` / `ADMIN_DEV_EMAIL` / `ADMIN_DEV_PASSWORD` variables of your local `.env`; the account created by `DatabaseSeeder` for `test@example.com` has no role and **cannot** sign in to the admin). **Sample content for development:** `docker compose exec app php artisan db:seed --class=DemoContentSeeder` adds 4 artists, 8 artworks and 2 exhibitions (one current, one upcoming) in AZ and EN, marked as demo (`demo-` slugs, `DEMO-2026-NNN` codes, "[Demo]" texts). It is idempotent (re-running creates no duplicates and keeps your edits to demo texts; the two exhibitions get their dates and status refreshed), refuses to run in production, and is never part of a plain `db:seed`. It creates **no images** (the artworks show the fallback until you upload media in the admin). `BenchmarkSeeder` builds bulk data but is additive and meant for scratch databases — do not run it against your development database. Expect sparse or odd data (e.g. the dev database has artists without a translation — the public artist list now hides them, see [E5](#e5-get-artists)); the UI must cope ([§22](#22-known-gaps-and-gotchas-in-the-current-implementation)).
 
 **Caching while you develop.** Public API `GET` responses are cacheable for **60 seconds** by the browser (`Cache-Control: public, max-age=60`), and the server also caches site settings, navigation, homepage and sitemap (60–600 s) — see [§24](#24-http-caching-cookies-security-headers-and-csp). Saving in the admin invalidates the server-side cache immediately, but a browser may keep an earlier response for up to 60 s: hard-reload or tick *Disable cache* in DevTools. After changing the database outside the admin run `docker compose exec app php artisan public-cache:flush`.
 
@@ -418,7 +420,7 @@ All paths are relative to `/api/v1`. All are throttled by `public-api` (60/min/I
 
 **Not API, but public and relevant** (defined in `routes/web.php`): `GET /` and `GET /{any}` (SPA shell with server-side SEO head), `GET /robots.txt`, `GET /sitemap.xml`. See [§16](#16-seo-and-page-metadata). A framework health route `GET /up` also exists.
 
-**There is no endpoint** for price ranges, SEO overrides, media alt text, or a global search (genres and mediums: [E18](#e18-get-genres) / [E19](#e19-get-mediums)). See [§21](#21-things-that-could-not-be-determined-from-the-repository).
+**There is no endpoint** for price ranges, media alt text, or a global search (genres and mediums: [E18](#e18-get-genres) / [E19](#e19-get-mediums)). See [§21](#21-things-that-could-not-be-determined-from-the-repository).
 
 ---
 
@@ -503,6 +505,7 @@ Conventions used below: **Nullable** column = may be `null` in the JSON. "Loc" =
     "wall": [ /* artwork cards (E7 item) */ ],
     "featured": [ /* artwork cards, max 6 */ ],
     "artists": [ /* artist objects (E5 item) */ ],
+    "exhibitions": { "current": [ /* exhibition objects (E10 shape) */ ], "upcoming": [ /* exhibition objects */ ] },
     "exhibition": null,
     "faqs": [ { "id": 2, "question": "…", "answer": "…", "sort_order": 1 } ],
     "social_links": [
@@ -523,7 +526,7 @@ Conventions used below: **Nullable** column = may be `null` in the JSON. "Loc" =
 | `page` | object | **yes** | The CMS page of type `home` **if it is active**; otherwise `null`. |
 | `page.title` | string | yes (Loc) | |
 | `page.sections[]` | array | no | **Active** sections only, ascending `sort_order`. |
-| `sections[].key` | string | no | Free-form identifier chosen in the admin — **not** a fixed backend enum (see *Section keys* below). The seeder creates `hero`, `steps`, `cta` as a convention. Do not assume the set or the order. |
+| `sections[].key` | string | no | Identifier chosen in the admin. On the home page `hero`, `steps` and `cta` are a **stable contract** (locked against renaming, see *Section keys* below); any other key is free-form and ignored by the homepage. Do not assume the order, or that an (inactive) section is present. |
 | `sections[].heading`, `.body` | string | yes (Loc) | |
 | `sections[].sort_order` | int | no | |
 | `sections[].image_url` | string | yes | `detail` variant (max 1600 px); `null` if no image. |
@@ -531,19 +534,20 @@ Conventions used below: **Nullable** column = may be `null` in the JSON. "Loc" =
 | `wall` | array | no | Active artworks with `show_on_wall = true`, ordered by curator `sort_order` (the same admin ordering as before). **Capped server-side at 16** by default (`config('gallery.wall_limit')`, env `GALLERY_WALL_LIMIT`); if more artworks are flagged, only the first 16 in curator order are returned. The cap is **not** a query parameter (`?limit=` / `?wall_limit=` are ignored) and the wall is not paginated. Render for *up to* 16 and tolerate fewer. |
 | `featured` | array | no | Active artworks with `featured = true`, curator order, **max 6**. |
 | `artists` | array | no | Active artists **that have a usable AZ slug** (curator order), the same rule as [E5](#e5-get-artists); not limited. Note `stats.artists` still counts all active artists, including any hidden here. |
-| `exhibition` | object | **yes** | The earliest-`start_date` active exhibition with status `current`; if none, the earliest active `upcoming`; else `null`. Full shape of [E10](#e10-get-exhibitionsslug) (artists, artworks, media, video). |
+| `exhibitions` | `{current: array, upcoming: array}` | no | **Both lists in one response** (no second request needed). `current` = active exhibitions with status `current`, `upcoming` = active ones with status `upcoming`; each ordered by `start_date` ascending (soonest first, then `id`) and **capped server-side at 3 per list** by default (`config('gallery.homepage_exhibitions_limit')` / `GALLERY_HOMEPAGE_EXHIBITIONS_LIMIT`). Past, inactive and soft-deleted exhibitions never appear. Either list may be `[]`. Each item has the full shape of [E10](#e10-get-exhibitionsslug) (artists, artworks, media, video). The SPA renders a "Cari sərgilər" / "Current exhibitions" block and a "Gələcək sərgilər" / "Upcoming exhibitions" block, skipping an empty one, and falls back to `exhibition` only if `exhibitions` is missing (a response cached from before this field existed). |
+| `exhibition` | object | **yes** | *Kept for existing clients (unchanged behaviour).* The earliest-`start_date` active exhibition with status `current`; if none, the earliest active `upcoming`; else `null`. Full shape of [E10](#e10-get-exhibitionsslug) (artists, artworks, media, video). |
 | `faqs` | array | no | Active FAQs **attached to the home page** only (not all FAQs). `[]` if there is no home page. Differs from `GET /faqs`. |
 | `social_links` | array | no | Identical to `GET /social-links` (a test enforces parity). |
 
 **Notes:** sections are ordered and copy is admin-editable — render headings/body from data, not hardcoded.
 
-**Section keys are not a stable backend contract.**
-- `page_sections.key` is a free string (max 255 characters, unique within a page). There is no enum or allow-list: the admin can create a section with any key, rename an existing key (`PUT/PATCH /admin/pages/sections/{section}`), deactivate a section and reorder sections. There is no delete route for sections, only deactivate.
-- `hero`, `steps` and `cta` are only what `PageSeeder` creates by default (`updateOrCreate` by key). They are a convention the frontend can look for, not a guarantee. The dev database also holds an extra `test` section, and its `cta` is inactive (so it is absent from the API).
-- The API returns **active** sections only, ordered by `sort_order`. So a deactivated, renamed or reordered `hero` means **`sections[0]` is not necessarily the hero**, and a section you expect may be missing.
-- Recommended handling: identify known sections **by key** (`sections.find((s) => s.key === 'hero')`), render known keys in their designed slots, **ignore unknown keys** without error, and fall back to built-in defaults (e.g. brand text for the page title/description) when an expected key is missing. Do not use `sections[0]` / array index as a stand-in for `hero`. 
-- **What the current SPA does (`HomePage.jsx`, since `2c64176`):** it finds `hero`, `steps` and `cta` **by key** and never by position. `hero` renders as the page `<h1>` and supplies the document title (`"{hero.heading} — ArtNiyyətli"`) and description; `steps` renders as an `<h2>` block under it; `cta` renders as an `<h2>` block at the bottom of the page. **Any other key is ignored** (not rendered). If `hero` is missing the page has no `<h1>` and the title falls back to `ArtNiyyətli` with no description; if `page` is `null` or `sections` is empty/absent nothing breaks. A section whose `heading` or `body` is empty just skips that part.
-- The sections of [E4](#e4-get-pagesslug) are a separate case: the static-page template (`StaticPage.jsx`) renders **every** section in order and does not filter by key.
+**Section keys: `hero`, `steps` and `cta` are a stable contract on the home page.**
+- `page_sections.key` is a string (max 255 characters, unique within a page). For the **home page** the backend guarantees the meaning of three keys, and the SPA (`HomePage.jsx`) looks them up **by key**, never by position: `hero` (page `<h1>`, document title and description), `steps` (the "how it works" block) and `cta` (the closing call to action). `PageSeeder` creates all three (`updateOrCreate` by key) and the admin API (`GET /admin/pages/{id}` → `section_keys`) reports them.
+- **Keys cannot be changed away:** in the admin, renaming a home-page `hero`, `steps` or `cta` section is rejected (`422` on `key`; the admin form shows the key read-only). Their content, image, `is_active` and `sort_order` remain editable, so a section can still be deactivated or reordered, and there is no delete route. Renaming is only refused for those three keys on the home page; it does not touch any existing data.
+- **Key format for new or changed keys:** lower-case letters and digits with single `-` or `_` between them (`hero`, `how-it-works`, `promo_2`), otherwise `422`. A key a section already has is never re-validated, so an older key with another format stays untouched and its section stays editable; it just cannot be changed to another non-conforming key.
+- **Unknown keys are allowed and safe:** any other key (`promo`, `test`, …) can be created and is returned by the API, but the homepage **ignores** it (nothing is rendered, nothing breaks). The static-page template (E4) renders every section regardless of key.
+- **What can still be missing:** the API returns **active** sections only, ordered by `sort_order`. A deactivated section is absent, so still look each key up with `sections.find((s) => s.key === 'hero')` and fall back when it is missing — if `hero` is missing the page has no `<h1>` and the title falls back to `ArtNiyyətli` with no description; if `page` is `null` or `sections` is empty/absent nothing breaks. A section whose `heading` or `body` is empty just skips that part. Do not use `sections[0]` / an array index as a stand-in for `hero`.
+- The dev database may also hold an extra `test` section; being an unknown key it is ignored by the homepage.
 
 ### E3 `GET /pages`
 
@@ -604,6 +608,8 @@ Frontend implication: nothing to build or handle for collectors; an unknown or i
 ```
 
 Fields: as E3 plus `sections[]` (same shape as homepage sections; **active only**, ascending `sort_order`; may be `[]`).
+
+**SEO override:** the response also carries `seo` — an object `{title, description, image_url}` with the admin-set values for the request locale, or `null` when there is none. Contract and rules: [§16](#seo-detail-contract).
 
 **Errors:** `404` if the slug is unknown, the page is inactive, or the page is soft-deleted.
 
@@ -706,6 +712,8 @@ The list omits `exhibitions`, `awards`, `artworks` (the keys are **absent**, not
 
 > **Important quirk:** the artist's `artworks[]` cards **do not contain the `artist` key** (that relation is not loaded here). `genre`, `medium`, `image_url` etc. are present. Write card components to tolerate a missing `artist` (`artwork.artist?.name`) — the existing `ArtworkCard` does.
 
+**SEO override:** the response also carries `seo` — an object `{title, description, image_url}` with the admin-set values for the request locale, or `null` when there is none. Contract and rules: [§16](#seo-detail-contract).
+
 **Errors:** `404` for unknown slug, inactive artist, or soft-deleted artist.
 
 ### E7 `GET /artworks`
@@ -721,11 +729,11 @@ The list omits `exhibitions`, `awards`, `artworks` (the keys are **absent**, not
 | `genre` | string ≤ 100 | Genre **slug** (the `genre.slug` on cards — a stable, non-localized slug). |
 | `medium` | string ≤ 100 | Medium **slug** (`medium.slug` on cards). |
 | `status` | `available`\|`reserved`\|`sold` | Availability. |
-| `price_min` | numeric ≥ 0 | Inclusive lower bound on the stored price. May be sent alone. |
-| `price_max` | numeric ≥ 0; `>= price_min` **only when `price_min` is also sent** | Inclusive upper bound. **May be sent alone** (fixed in `b2bab8d`; earlier it returned `422` without `price_min`). |
+| `price_min` | numeric ≥ 0 | Inclusive lower bound on the **visible** price. May be sent alone. Artworks with a hidden price (`show_price = false`) never match a price filter. |
+| `price_max` | numeric ≥ 0; `>= price_min` **only when `price_min` is also sent** | Inclusive upper bound (visible prices only, as above). **May be sent alone** (fixed in `b2bab8d`; earlier it returned `422` without `price_min`). |
 | `size_min` | numeric ≥ 0 | Inclusive lower bound on the artwork's **size in cm**. May be sent alone. |
 | `size_max` | numeric ≥ 0; `>= size_min` **only when `size_min` is also sent** | Inclusive upper bound on the size in cm. May be sent alone. |
-| `sort` | `newest`\|`price_asc`\|`price_desc` | `newest` = `created_at` desc. **Default (param absent):** curator `sort_order` asc, then `id`. |
+| `sort` | `newest`\|`price_asc`\|`price_desc` | `newest` = `created_at` desc. `price_asc` / `price_desc` rank **only artworks with a visible price**; price-on-request artworks (`show_price = false`) come **after** them, in the default curator order (`sort_order`, `id`), for both directions. **Default (param absent):** curator `sort_order` asc, then `id`. |
 | `page`, `per_page` | see [§4](#4-pagination) | |
 
 Empty-string params (`artist=`) are treated as absent.
@@ -744,7 +752,7 @@ Empty-string params (`artist=`) are treated as absent.
     {
       "inventory_code": "AN-2026-014",
       "title": "Səhər işığı",
-      "artist": { "id": 3, "name": "Leyla Məmmədova" },
+      "artist": { "id": 3, "slug": "leyla-mammadova", "name": "Leyla Məmmədova" },
       "image_url": "http://localhost:8080/storage/media/10/catalogue-webp.webp",
       "genre":  { "slug": "abstract", "name": "Abstrakt" },
       "medium": { "slug": "oil-on-canvas", "name": "Kətan üzərində yağlı boya" },
@@ -766,7 +774,7 @@ Empty-string params (`artist=`) are treated as absent.
 |---|---|---|---|
 | `inventory_code` | string | no | Public identifier, used in URLs (`/artworks/{code}`). Unique. Format produced by the admin generator: `AN-<year>-<3-digit zero-padded sequence>`, e.g. `AN-2026-014`. Admins can also enter other codes, so treat it as an opaque string. |
 | `title` | string | yes (Loc) | |
-| `artist` | `{id:int, name:string}` | key **absent** on some endpoints (see E6) | `name` may be `""`. |
+| `artist` | `{id:int, slug:string\|null, name:string}` | key **absent** on some endpoints (see E6) | `slug` is the artist's slug for the request locale (falls back to the AZ slug; use it for `/artists/{slug}`, same value as `artists[].slug` on E10). `name` may be `""`. Added alongside the existing fields — `id` and `name` are unchanged. |
 | `image_url` | string | yes | `catalogue` variant (≤ 800 px) of the image flagged `is_main`; `null` if no main image or no variant exists. |
 | `genre` | `{slug:string, name:string\|null}` | key absent if relation not loaded | `name` is Loc; can be `null`. |
 | `medium` | `{slug:string, name:string\|null}` | as above | |
@@ -779,7 +787,7 @@ Empty-string params (`artist=`) are treated as absent.
 
 **Frontend notes:**
 - The list endpoint returns **no facets/counts**. Build the genre and medium filters from [E18](#e18-get-genres) / [E19](#e19-get-mediums) (their `slug` is what `genre` / `medium` expect). To build an artist filter, use E5.
-- **Known follow-up / security consideration (not fixed):** the price filters (`price_min`, `price_max`) and price sorts (`price_asc`, `price_desc`) operate on the real stored price **even when `show_price` is false**. Hidden-price works still participate, so a client can infer a hidden price from filter results or ordering. The card still returns `price: null`. `b2bab8d` did not change this; it is tracked as a separate backend task.
+- **Hidden prices are not probeable (fixed):** an artwork with `show_price = false` ("price on request") is excluded whenever `price_min` or `price_max` is sent, and it is not ranked by `price_asc` / `price_desc` (it is listed after the priced works), so neither filtering nor sorting reveals its stored price. Without a price filter it is listed like any other artwork with `price: null`. Consequence for the UI: a price-filtered list never contains price-on-request works — say so if you offer a price filter. Pagination totals reflect this.
 - The current `listArtworks` service forwards only `page, artist, status, sort, price_min, price_max` — it does **not** forward `genre`, `medium`, `per_page`, `size_min` or `size_max`. Extend `services/artworks.js` if you need them; the API already supports them.
 - Filters and page are kept in component state on the catalogue page, not in the URL.
 
@@ -794,7 +802,7 @@ Empty-string params (`artist=`) are treated as absent.
   "data": {
     "inventory_code": "AN-2026-014",
     "title": "Səhər işığı",
-    "artist": { "id": 3, "name": "Leyla Məmmədova" },
+    "artist": { "id": 3, "slug": "leyla-mammadova", "name": "Leyla Məmmədova" },
     "image_url": "http://localhost:8080/storage/media/10/catalogue-webp.webp",
     "genre":  { "slug": "abstract", "name": "Abstrakt" },
     "medium": { "slug": "oil-on-canvas", "name": "Kətan üzərində yağlı boya" },
@@ -840,6 +848,8 @@ Everything in the card (E7) **plus**:
 | `whatsapp_link` | string | **yes** | See [§13](#13-whatsapp-behaviour). |
 
 Not exposed: `year_sold`, `featured`, `show_on_wall`, `sort_order`, internal notes, storage paths/disks.
+
+**SEO override:** the response also carries `seo` — an object `{title, description, image_url}` with the admin-set values for the request locale, or `null` when there is none. Contract and rules: [§16](#seo-detail-contract).
 
 **Errors:** `404` for an unknown code, an inactive artwork, or a soft-deleted artwork.
 
@@ -903,6 +913,8 @@ Not exposed: `year_sold`, `featured`, `show_on_wall`, `sort_order`, internal not
 | `media[]` | `{type, url}` | no | Ordered by `sort_order`. `type` ∈ `photo`\|`video` (enum `ExhibitionMediaType`). `url` is the `detail` variant (≤ 1600 px) and can be `null`. |
 | `video` | `{id, embed_url}` | **yes** | YouTube, see [§12](#12-youtube-video). |
 
+**SEO override:** the response also carries `seo` — an object `{title, description, image_url}` with the admin-set values for the request locale, or `null` when there is none. Contract and rules: [§16](#seo-detail-contract).
+
 **Errors:** `404` for unknown / inactive / soft-deleted.
 
 ### E11 `GET /articles`
@@ -911,7 +923,7 @@ Not exposed: `year_sold`, `featured`, `show_on_wall`, `sort_order`, internal not
 
 **Visibility rule** (all must hold): `status = published` **and** `is_active` **and** `published_at` is set **and** `published_at <= now` **and** not soft-deleted. Drafts and future-dated articles are invisible.
 
-**Query:** `locale`, `page`, `per_page`. **Body:** none. **Item shape:** identical to E12 (the list includes the full `content`).
+**Query:** `locale`, `page`, `per_page`. **Body:** none. **Item shape:** identical to E12, including `video` (the list includes the full `content`).
 
 ### E12 `GET /articles/{slug}`
 
@@ -928,7 +940,8 @@ Not exposed: `year_sold`, `featured`, `show_on_wall`, `sort_order`, internal not
     "published_at": "2026-09-10T09:30:00+04:00",
     "media": [
       { "type": "image", "url": "http://localhost:8080/storage/media/52/detail-webp.webp" }
-    ]
+    ],
+    "video": { "id": "Faw55XUneOM", "embed_url": "https://www.youtube-nocookie.com/embed/Faw55XUneOM" }
   }
 }
 ```
@@ -939,6 +952,9 @@ Not exposed: `year_sold`, `featured`, `show_on_wall`, `sort_order`, internal not
 | `type` | `interview`\|`video_project`\|`art_article`\|`exhibition_review`\|`news`\|`announcement` | no | Enum `ArticleType`. |
 | `published_at` | string (ISO 8601 with offset) | practically no | Always set for anything visible (see rule above); the resource itself is null-safe. |
 | `media[]` | `{type, url}` | no | Ordered by `sort_order`. `type` is the media type `image`\|`video` (enum `MediaType`). `url` is the `detail` variant and can be `null`. The SPA uses `media[0]` as the cover. |
+| `video` | `{id, embed_url}` | **yes** | The article's YouTube video (its own field, **not** part of `media[]`); `null` when none is set. On list items as well as the detail. See [§12](#12-youtube-video). |
+
+**SEO override:** the response also carries `seo` — an object `{title, description, image_url}` with the admin-set values for the request locale, or `null` when there is none. Contract and rules: [§16](#seo-detail-contract).
 
 **Errors:** `404` for unknown, draft, future-dated, inactive, or soft-deleted.
 
@@ -1160,7 +1176,7 @@ Other real error bodies:
 | `name` | string | yes (Loc) | Same field-level fallback as elsewhere ([§3](#3-locale-handling-az--en)): the requested locale, else AZ. `null` when the genre has no translation (the dev database has such genres) — hide the entry or fall back to the slug. |
 | `sort_order` | int | no | The curator order the list is already in. |
 
-Rules: only **active** genres (`is_active = true`; the flag itself is not exposed), ordered by `sort_order` then `id`. There are no counts/facets, and genres cannot yet be managed from the admin (only listed in the artwork editor), so the list changes only through the database. Same cache headers and rate limit as every public GET ([§24](#24-http-caching-cookies-security-headers-and-csp)): `Cache-Control: public, max-age=60`, strong `ETag`, `304` on `If-None-Match`.
+Rules: only **active** genres (`is_active = true`; the flag itself is not exposed), ordered by `sort_order` then `id`. There are no counts/facets, and genres are managed in Admin → Janrlar. Same cache headers and rate limit as every public GET ([§24](#24-http-caching-cookies-security-headers-and-csp)): `Cache-Control: public, max-age=60`, strong `ETag`, `304` on `If-None-Match`.
 
 ### E19 `GET /mediums`
 
@@ -1286,7 +1302,7 @@ Encoding: WebP quality 82, JPEG quality 85. Allowed uploads: JPEG, PNG, WebP (ma
 
 ## 12. YouTube video
 
-Present on: **artwork detail** (E8), **exhibition** items (E9, E10, and therefore `homepage.exhibition`). Not on artists, articles, pages or cards.
+Present on: **artwork detail** (E8), **exhibition** items (E9, E10, and therefore `homepage.exhibition`) and **articles** (E11 list items and E12 detail). Not on artists, pages or cards.
 
 ```json
 "video": { "id": "Faw55XUneOM", "embed_url": "https://www.youtube-nocookie.com/embed/Faw55XUneOM" }
@@ -1296,7 +1312,7 @@ Present on: **artwork detail** (E8), **exhibition** items (E9, E10, and therefor
 - `id` is the 11-character YouTube id (`[A-Za-z0-9_-]{11}`). `embed_url` uses the privacy-enhanced domain **`youtube-nocookie.com`**.
 - Render via an `<iframe src={video.embed_url}>` — the SPA's `YoutubeEmbed` uses `aspect-video`, `loading="lazy"`, `allowFullScreen`, and an `allow` list (`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`), with the entity title as the iframe `title`.
 - The API does **not** return a watch URL; if you need one, it is `https://www.youtube.com/watch?v={id}`.
-- Admins paste a URL (watch, `youtu.be`, `embed`, or `shorts` forms are understood); only the extracted id is stored/exposed.
+- Admins paste a URL (watch, `youtu.be`, `embed`, or `shorts` forms are understood); only the extracted id is stored/exposed. The admin API (`POST`/`PUT /admin/articles`, like artworks and exhibitions) takes `youtube_url` (empty string clears it; omitting it leaves the video unchanged) and returns `youtube_video_id` and `youtube_url`; an invalid URL is a `422` on `youtube_url`. The article page renders it with the same `YoutubeEmbed` component, between the cover image and the text.
 
 ---
 
@@ -1333,7 +1349,7 @@ Two independent sources:
 
 - `price` and `currency` are both `null` when the gallery hides the price → show `t('artwork.priceOnRequest')`.
 - Otherwise render `"{price} {currency}"`.
-- Remember that price filters/sorting still use the hidden real price (E7).
+- Price filters and price sorts ignore hidden prices (see [E7](#e7-get-artworks)): price-on-request works are excluded from price-filtered lists and listed last when sorting by price.
 
 **Enquiring about an artwork**
 
@@ -1401,7 +1417,7 @@ There are **two layers** and they must be kept in sync.
   | `/articles/{slug}` | override or title | override OG image only; `og:type=article` | `Article` + `BreadcrumbList` |
   | `/{slug}` (CMS page) | override or page title | — | — |
 
-- **SEO overrides:** admins can set a per-entity, per-locale title / description / OG image for pages, artworks, artists, exhibitions and articles. The server head honours them. **The public API does not expose them** (see below).
+- **SEO overrides:** admins can set a per-entity, per-locale title / description / share (OG) image for pages, artworks, artists, exhibitions and articles (Admin → the *SEO* section of each editor; see [SEO detail contract](#seo-detail-contract)). The server head honours them, and the five detail endpoints expose them as `seo`, so the client can keep them after load.
 - The page-list labels ("Əsərlər", "Artworks", …) are **duplicated** in `App\Support\Seo\SeoLabels` (copied from `dictionary.js` `nav.*`). If you change those `nav.*` dictionary strings, update `SeoLabels` too.
 
 ### Layer 2 — client-side updates (`usePageMeta`)
@@ -1415,13 +1431,49 @@ There are **two layers** and they must be kept in sync.
 
 It does **not** touch Open Graph / Twitter tags, JSON-LD or `<html lang>`.
 
-**What each page passes today:** Home → hero heading (or `ArtNiyyətli`) + hero body; catalogue/artists/exhibitions/articles → `"{nav label} — ArtNiyyətli"`; artwork → `"{title} — ArtNiyyətli"` + `short_description`; artist → `"{first} {last} — ArtNiyyətli"` + `biography`; exhibition → `title` + `short_text`; article → `title` + `short_text`; static page → `title` + `content`; not-found → `noIndex`.
+**What each page passes today:** Home → hero heading (or `ArtNiyyətli`) + hero body; catalogue/artists/exhibitions/articles → `"{nav label} — ArtNiyyətli"`; the five detail pages go through `lib/seoMeta.js` (`seoMeta(data, {title, description})`): the `seo.title` / `seo.description` override when present, otherwise artwork → `title` + `short_description`; artist → `"{first} {last}"` + `biography`; exhibition → `title` + `short_text`; article → `title` + `short_text`; static page → `title` + `content` (always with the `— ArtNiyyətli` suffix); not-found → `noIndex`.
 
 **Frontend requirements / cautions**
 1. Every routed page should call `usePageMeta`; not-found and any placeholder/error page should set `noIndex: true`.
-2. Because the API does not return SEO overrides, the client update **replaces** the server-rendered title with the plain entity title after hydration. If an admin has set an override title/description, the browser tab (and any JS-rendering crawler) will show the non-override value. This is current behaviour, not a bug in your code — see [§21](#21-things-that-could-not-be-determined-from-the-repository).
+2. On the five detail pages, pass `data.seo` through `seoMeta` so the client update **keeps** an admin override instead of replacing the server-rendered title/description with the plain entity values. (Before the `seo` field existed the client overwrote overrides after hydration; that gap is closed.)
 3. Descriptions passed from the client are **not** truncated/stripped (e.g. the static page passes the whole `content`); the server head truncates to 160 chars. Consider truncating client-side for consistency.
 4. Keep the `— ArtNiyyətli` title suffix format consistent with `SeoText::pageTitle`.
+
+<a id="seo-detail-contract"></a>
+### SEO detail contract (`seo`)
+
+Five detail responses carry an optional `seo` object: [`GET /pages/{slug}`](#e4-get-pagesslug), [`/artists/{slug}`](#e6-get-artistsslug), [`/artworks/{inventoryCode}`](#e8-get-artworksinventorycode), [`/exhibitions/{slug}`](#e10-get-exhibitionsslug) and [`/articles/{slug}`](#e12-get-articlesslug).
+
+```json
+{ "data": { "slug": "about", "title": "Haqqımızda", "seo": { "title": "Bizim qalereya", "description": "Müasir Azərbaycan sənəti.", "image_url": "http://localhost:8080/storage/media/31/detail-webp.webp" } } }
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `seo` | object \| `null` | `null` when the record has **no override for the request locale** (this is the normal case). Absent from list endpoints (`GET /pages`, `/artists`, …) and from the homepage, which have no overrides. |
+| `seo.title` | string \| `null` | The admin's title, **without** the `— ArtNiyyətli` suffix (add it, as `seoMeta` and `SeoText::pageTitle` do). |
+| `seo.description` | string \| `null` | Max 160 characters (validated by the admin API). |
+| `seo.image_url` | string \| `null` | Absolute URL of the share image's `detail` variant, built like every other media URL (`{APP_URL}/storage/...`). `null` if no image is set. |
+
+Rules:
+- **Locale:** resolved from `?locale=az|en` exactly like the rest of the response (default `az`). There is **no fallback to another locale**: with `?locale=en` and only an AZ override, `seo` is `null`. This matches the server-rendered `<head>`.
+- **Overrides only:** the API never copies the fallback values (entity title, short description, main image) into `seo`. When `seo` or one of its keys is `null`, use the page's own value — `seoMeta(data, {title, description})` does this.
+- Each key is independent: an override may set only a description, for instance.
+- The server-rendered `<head>` (title, description, canonical, robots, `og:*`, `twitter:*`, JSON-LD) honours the same overrides, including the OG image of static pages. Client code only updates `document.title` and the description meta; Open Graph/Twitter tags stay as the server rendered them.
+
+**Managing overrides (admin API):** every `POST`/`PUT` of `/admin/pages`, `/admin/artworks`, `/admin/artists`, `/admin/exhibitions` and `/admin/articles` accepts an optional `seo` list, and their `GET` responses return it:
+
+```json
+"seo": [
+  { "locale": "az", "title": "Bizim qalereya", "description": "…", "og_image_id": 31 },
+  { "locale": "en", "title": null, "description": null, "og_image_id": null }
+]
+```
+
+- One entry per locale (`az`, `en`; no duplicates). `title` ≤ 255 characters, `description` ≤ 160, `og_image_id` must be an existing, not deleted **image** media id (upload/pick it in Media). Responses add `og_image_url` (the `detail` variant) for previews.
+- **Create/update:** a locale with any value is created or updated (one row per record and locale). **Clear:** an entry whose title, description and image are all empty (`null` or blank) deletes that locale's override. Locales not sent are untouched, and omitting `seo` changes nothing.
+- A media file used as a share image cannot be deleted (`409`) until the override no longer references it.
+- Same authorization as the rest of the admin (`admin.access`). Editors expose these as the *SEO (AZ / EN)* section.
 
 ### `robots.txt` and `sitemap.xml`
 
@@ -1586,7 +1638,7 @@ Build UI options from these values; do not assume that new values will never be 
 
 - **Production base URL / domain / CDN host.** Only the local Docker origin (`http://localhost:8080`) and `APP_URL` (env) are known. Media URLs come from the storage disk (`MEDIA_PUBLIC_DISK`); the production disk/host is not in the repository.
 - **Production values of env-driven settings:** `APP_TIMEZONE` (affects the offset in `published_at`), `GALLERY_CURRENCY` (default `AZN`), `ALLOW_SOLD_ENQUIRIES` (default off), `PUBLIC_API_CORS_ORIGINS`, `GALLERY_WHATSAPP_NUMBER`, `ENQUIRY_NOTIFICATION_EMAIL`.
-- **Whether the API will ever expose SEO overrides, media alt text, or price-range lists.** None of them is exposed today (price ranges exist as database tables but have no public endpoint). Genres and mediums are exposed since `b2bab8d` ([E18](#e18-get-genres), [E19](#e19-get-mediums)).
+- **Whether the API will ever expose media alt text or price-range lists.** Neither is exposed today (price ranges exist as database tables but have no public endpoint). SEO overrides *are* exposed on the five detail endpoints ([§16](#seo-detail-contract)). Genres and mediums are exposed since `b2bab8d` ([E18](#e18-get-genres), [E19](#e19-get-mediums)).
 - **Tie-breaking for equal navigation `sort_order`** — the query orders by placement and `sort_order` only; the order of ties is not defined by the code.
 - **Slug collisions across locales.** Uniqueness is enforced per `(slug, locale)`; a slug that is the AZ slug of one record and the EN slug of another would make the locale-agnostic lookup ambiguous (first match wins). No rule preventing this was found.
 - **Server-side sanitisation of authored text** (`content`, `body`, `biography`, …). Nothing in the public API strips or escapes markup; treat as untrusted plain text.
@@ -1611,11 +1663,11 @@ These are facts observed in the current code — useful when you start work, and
 6. **`/contact` ignores the CMS "contact" page content.** `ContactPage` shows the form only; `GET /pages/contact` is never called.
 7. **Artist `slug` can still be `null` outside the artist list.** Since `b2bab8d`, [E5](#e5-get-artists) and `homepage.artists` only return artists with a usable AZ slug, but `artists[]` inside exhibitions (E10) is not filtered and can carry `slug: null`; guard those links.
 8. **Locale, filters and page are not in the URL**, and `<html lang>` never changes; the server head is AZ unless the page URL carries `?locale=en`.
-9. **Client `usePageMeta` overwrites server-rendered SEO overrides** with plain entity titles/descriptions ([§16](#16-seo-and-page-metadata)).
+9. ~~Client `usePageMeta` overwrites server-rendered SEO overrides~~ — fixed: the detail pages now apply `seo` from the API ([§16](#seo-detail-contract)). Pages that pass no `seo` (home, list pages, contact) still set their own plain title.
 10. **`services/artworks.js` doesn't forward `genre`, `medium`, `per_page`, `size_min`, `size_max`;** `services/articles.js` doesn't forward `per_page`; `listFaqs` is unused.
 11. **`ArtworkDetailPage` reads `data.artist.name`** without optional chaining in the subtitle (`<p>{data.artist.name}</p>`); the detail endpoint always includes `artist`, so this works, but keep the `?.` pattern used elsewhere if you refactor.
 12. **404 body is `{ "message": "" }`** in production — don't display `error.message` for 404s (the SPA renders `NotFoundPage` instead).
-13. **Price sorting/filtering uses hidden prices** ([E7](#e7-get-artworks)) — a known follow-up / security consideration, still unfixed.
+13. ~~Price sorting/filtering uses hidden prices~~ — fixed: hidden-price artworks are excluded from price filters and ranked after priced ones in price sorts ([E7](#e7-get-artworks)).
 14. **Rate-limit headers:** `X-RateLimit-Remaining` is available on every response if you want to throttle your own request bursts.
 15. **Slugs and codes are interpolated into URLs without `encodeURIComponent`.** `services/*.js` build `` `/artists/${slug}` `` / `` `/artworks/${inventoryCode}` `` and the cards/pages build `href`s the same way. Browsers percent-encode spaces and Unicode automatically, and the router decodes route params, so Azerbaijani slugs work. But an inventory code containing `?`, `#`, `/` or `%` (the admin accepts any string up to 50 characters) would break both the API call and the link. If you touch these files, wrap path segments in `encodeURIComponent` (the server already encodes them in canonical URLs and the sitemap). A code containing `/` can never resolve at all (it splits into extra path segments).
 16. **Inline `style` in `EnquiryForm` (honeypot).** The honeypot wrapper uses `style={{ position:'absolute', left:'-9999px' }}`. This is allowed under the enforced CSP because React applies style objects through the CSSOM (not an inline `style` *attribute* in HTML); do not replace it with HTML strings, `dangerouslySetInnerHTML`, or a `<style>` tag ([§24](#24-http-caching-cookies-security-headers-and-csp)).
@@ -1742,7 +1794,7 @@ These are **not implemented**. Do not build UI that assumes them, and do not doc
 - **A "collectors" / "Kolleksionerlər üçün" section.** No Collector entity, CRUD or endpoint; `/collectors` and `/api/v1/pages/collectors` answer 404 ([E3](#e3-get-pages)).
 - **Online payments / checkout / cart / accounts / login for visitors.** Enquiries are the only conversion path.
 - **Search** (no search endpoint) and **facet/count endpoints**; no endpoint lists price ranges (genres and mediums: [E18](#e18-get-genres) / [E19](#e19-get-mediums)); no size bands/presets (use `size_min` / `size_max`).
-- **Public endpoints for SEO overrides, media alt text or image dimensions/`srcset`.** Alt text and sizing are the frontend's job ([§11](#11-images-media-urls-and-variants)).
+- **Public endpoints for media alt text or image dimensions/`srcset`.** Alt text and sizing are the frontend's job ([§11](#11-images-media-urls-and-variants)).
 - **Rich text / HTML content.** `content`, `body`, `biography`, `full_text` are plain text; no sanitiser exists — never render as HTML.
 - **hreflang / localized URLs.** The locale is not in the URL; the server-rendered head is Azerbaijani unless the page URL carries `?locale=en`.
 - **Server-side rendering of page bodies.** Only the `<head>` is server-rendered ([§16](#16-seo-and-page-metadata)); crawlers that do not run JavaScript do not see page content.

@@ -113,6 +113,70 @@ class HomepageApiTest extends TestCase
         $this->assertNull($response->json('data.exhibition'));
     }
 
+    private function makeHomeExhibition(string $slug, string $status, array $overrides = []): Exhibition
+    {
+        $exhibition = Exhibition::factory()->create(array_merge(['status' => $status, 'is_active' => true], $overrides));
+        $exhibition->translations()->create(['locale' => 'az', 'slug' => $slug, 'title' => ucfirst($slug), 'venue' => 'V', 'short_text' => 'S', 'full_text' => 'F']);
+
+        return $exhibition;
+    }
+
+    public function test_exhibitions_lists_both_current_and_upcoming_soonest_first(): void
+    {
+        $this->makeHomeExhibition('current-late', 'current', ['start_date' => now()->subDays(2), 'end_date' => now()->addMonth()]);
+        $this->makeHomeExhibition('current-early', 'current', ['start_date' => now()->subMonth(), 'end_date' => now()->addWeek()]);
+        $this->makeHomeExhibition('upcoming-later', 'upcoming', ['start_date' => now()->addMonths(3), 'end_date' => now()->addMonths(4)]);
+        $this->makeHomeExhibition('upcoming-sooner', 'upcoming', ['start_date' => now()->addWeek(), 'end_date' => now()->addMonth()]);
+
+        $data = $this->getJson('/api/v1/homepage')->assertOk()->json('data');
+
+        $this->assertSame(['current-early', 'current-late'], collect($data['exhibitions']['current'])->pluck('slug')->all());
+        $this->assertSame(['upcoming-sooner', 'upcoming-later'], collect($data['exhibitions']['upcoming'])->pluck('slug')->all());
+        // Same full exhibition shape as GET /exhibitions/{slug}.
+        $this->assertArrayHasKey('artists', $data['exhibitions']['current'][0]);
+        $this->assertArrayHasKey('video', $data['exhibitions']['upcoming'][0]);
+    }
+
+    public function test_exhibitions_excludes_past_inactive_and_soft_deleted_ones(): void
+    {
+        $this->makeHomeExhibition('past', 'past', ['start_date' => now()->subYear(), 'end_date' => now()->subMonths(11)]);
+        $this->makeHomeExhibition('hidden', 'current', ['is_active' => false]);
+        $this->makeHomeExhibition('trashed', 'upcoming')->delete();
+        $this->makeHomeExhibition('shown', 'upcoming');
+
+        $exhibitions = $this->getJson('/api/v1/homepage')->json('data.exhibitions');
+
+        $this->assertSame([], $exhibitions['current']);
+        $this->assertSame(['shown'], collect($exhibitions['upcoming'])->pluck('slug')->all());
+    }
+
+    public function test_exhibitions_are_empty_lists_when_none_exist(): void
+    {
+        $this->getJson('/api/v1/homepage')->assertOk()->assertJsonPath('data.exhibitions', ['current' => [], 'upcoming' => []]);
+    }
+
+    public function test_each_exhibitions_list_is_capped(): void
+    {
+        config(['gallery.homepage_exhibitions_limit' => 2]);
+        foreach (range(1, 4) as $i) {
+            $this->makeHomeExhibition("c{$i}", 'current', ['start_date' => now()->subDays(10 - $i)]);
+            $this->makeHomeExhibition("u{$i}", 'upcoming', ['start_date' => now()->addDays($i)]);
+        }
+
+        $exhibitions = $this->getJson('/api/v1/homepage')->json('data.exhibitions');
+
+        $this->assertSame(['c1', 'c2'], collect($exhibitions['current'])->pluck('slug')->all());
+        $this->assertSame(['u1', 'u2'], collect($exhibitions['upcoming'])->pluck('slug')->all());
+    }
+
+    public function test_the_single_exhibition_key_is_unchanged_for_existing_clients(): void
+    {
+        $this->makeHomeExhibition('current', 'current', ['start_date' => now()->subDay()]);
+        $this->makeHomeExhibition('upcoming', 'upcoming');
+
+        $this->assertSame('current', $this->getJson('/api/v1/homepage')->json('data.exhibition.slug'));
+    }
+
     public function test_faqs_scoped_to_home_page_only(): void
     {
         $home = $this->makeHomePage();

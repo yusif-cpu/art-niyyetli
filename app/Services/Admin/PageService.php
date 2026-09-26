@@ -11,15 +11,22 @@ use Illuminate\Support\Facades\DB;
 
 class PageService
 {
+    public function __construct(private SeoMetadataService $seo) {}
+
     public function create(array $data): Page
     {
         $translations = $data['translations'];
-        unset($data['translations']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['seo']);
 
-        return DB::transaction(function () use ($data, $translations) {
+        return DB::transaction(function () use ($data, $translations, $seo) {
             $page = Page::create($data);
 
             $this->syncTranslations($page, $translations);
+
+            if ($seo !== null) {
+                $this->seo->sync($page, $seo);
+            }
 
             return $page->fresh();
         });
@@ -28,13 +35,18 @@ class PageService
     public function update(Page $page, array $data): Page
     {
         $translations = $data['translations'] ?? null;
-        unset($data['translations']);
+        $seo = $data['seo'] ?? null;
+        unset($data['translations'], $data['seo']);
 
-        return DB::transaction(function () use ($page, $data, $translations) {
+        return DB::transaction(function () use ($page, $data, $translations, $seo) {
             $page->update($data);
 
             if ($translations !== null) {
                 $this->syncTranslations($page, $translations);
+            }
+
+            if ($seo !== null) {
+                $this->seo->sync($page, $seo);
             }
 
             return $page->fresh();

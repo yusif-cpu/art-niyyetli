@@ -36,6 +36,8 @@ class UpdatePageSectionRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->rejectDuplicateTranslationLocales($validator);
+            $this->rejectInvalidKeyFormat($validator);
+            $this->rejectRenamingContractKey($validator);
             $this->rejectDuplicateKeyWithinPage($validator, (int) $this->route('section')->page_id);
             $this->rejectUnsafeRichText($validator);
         });

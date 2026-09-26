@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api;
 
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
+use App\Http\Resources\Api\Concerns\ResolvesSeoOverride;
 use App\Http\Resources\Api\Concerns\ResolvesYoutubeVideo;
 use App\Support\Api\LocaleResolver;
 use App\Support\Api\LocalizedFields;
@@ -12,6 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ExhibitionResource extends JsonResource
 {
     use ResolvesMediaUrl;
+    use ResolvesSeoOverride;
     use ResolvesYoutubeVideo;
 
     public function toArray(Request $request): array
@@ -48,6 +50,7 @@ class ExhibitionResource extends JsonResource
                 'url' => $this->mediaVariantUrl($item->media, 'detail'),
             ])),
             'video' => $this->videoResource(),
+            'seo' => $this->when($this->relationLoaded('seoMetadata'), fn () => $this->seoOverrideBlock($request)),
         ];
     }
 }

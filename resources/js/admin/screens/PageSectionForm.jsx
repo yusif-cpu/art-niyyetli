@@ -19,7 +19,10 @@ function emptyTranslations(section) {
     };
 }
 
-export default function PageSectionForm({ section, onSave, onCancel, errors }) {
+// `supportedKeys`: the keys the public site relies on for this page (from the API); the sections that already hold
+// one cannot be renamed, and the others are offered as suggestions when adding a section.
+export default function PageSectionForm({ section, supportedKeys = [], onSave, onCancel, errors }) {
+    const keyLocked = !!section && supportedKeys.includes(section.key);
     const [key, setKey] = useState(section?.key || '');
     const [isActive, setIsActive] = useState(section?.is_active ?? true);
     const [mediaId, setMediaId] = useState(section?.media_id ?? null);
@@ -39,7 +42,7 @@ export default function PageSectionForm({ section, onSave, onCancel, errors }) {
             .map(([loc, t]) => ({ locale: loc, heading: t.heading, body: t.body }));
 
         onSave({
-            key,
+            ...(keyLocked ? {} : { key }),
             is_active: isActive,
             media_id: mediaId,
             translations: payloadTranslations.length ? payloadTranslations : undefined,
@@ -48,7 +51,30 @@ export default function PageSectionForm({ section, onSave, onCancel, errors }) {
 
     return (
         <form onSubmit={submit} className="space-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-            <TextField label="Açar (key)" value={key} onChange={setKey} error={errors?.key?.[0]} required />
+            <TextField
+                label="Açar (key)"
+                value={key}
+                onChange={setKey}
+                error={errors?.key?.[0]}
+                required
+                disabled={keyLocked}
+                list={supportedKeys.length > 0 ? 'section-key-suggestions' : undefined}
+            />
+            {supportedKeys.length > 0 && (
+                <datalist id="section-key-suggestions">
+                    {supportedKeys.map((supported) => (
+                        <option key={supported} value={supported} />
+                    ))}
+                </datalist>
+            )}
+            {keyLocked && (
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">Bu açar ana səhifənin quruluşuna aiddir və dəyişdirilə bilməz.</p>
+            )}
+            {!keyLocked && supportedKeys.length > 0 && (
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Ana səhifədə istifadə olunan açarlar: {supportedKeys.join(', ')}. Digər açarlar saytda göstərilmir.
+                </p>
+            )}
             <Toggle checked={isActive} onChange={setIsActive} label="Aktiv" />
             <div>
                 <span className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Şəkil</span>

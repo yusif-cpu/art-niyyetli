@@ -22,10 +22,11 @@ class ArtworkCardResource extends JsonResource
             'inventory_code' => $this->inventory_code,
             'title' => $fields['title'],
             'artist' => $this->whenLoaded('artist', function () use ($locale) {
-                $f = LocalizedFields::resolve($this->artist->translations, $locale, ['first_name', 'last_name']);
+                $f = LocalizedFields::resolve($this->artist->translations, $locale, ['slug', 'first_name', 'last_name']);
 
                 return [
                     'id' => $this->artist->id,
+                    'slug' => $f['slug'],
                     'name' => trim(($f['first_name'] ?? '').' '.($f['last_name'] ?? '')),
                 ];
             }),

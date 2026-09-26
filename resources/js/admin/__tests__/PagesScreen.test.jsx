@@ -53,7 +53,7 @@ describe('PagesScreen', () => {
 
         expect(screen.getByDisplayValue('Ana səhifə başlığı')).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('tab', { name: 'EN' }));
+        await userEvent.click(screen.getAllByRole('tab', { name: 'EN' })[0]);
 
         expect(screen.getByDisplayValue('Home title')).toBeInTheDocument();
     });

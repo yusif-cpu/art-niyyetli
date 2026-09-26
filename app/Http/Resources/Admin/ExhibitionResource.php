@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Http\Resources\Admin\Concerns\SerializesSeoOverrides;
 use App\Support\Youtube;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 class ExhibitionResource extends JsonResource
 {
+    use SerializesSeoOverrides;
+
     public function toArray(Request $request): array
     {
         $locale = $request->query('locale', 'az');
@@ -58,6 +61,7 @@ class ExhibitionResource extends JsonResource
                 ->values()),
             'youtube_video_id' => $this->youtube_video_id,
             'youtube_url' => $this->youtube_video_id ? Youtube::watchUrl($this->youtube_video_id) : null,
+            'seo' => $this->when($this->relationLoaded('seoMetadata'), fn () => $this->seoOverrides()),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -119,7 +119,7 @@ describe('ArtworksScreen', () => {
 
         expect(screen.getByDisplayValue('Payız mənzərəsi')).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('tab', { name: 'EN' }));
+        await userEvent.click(screen.getAllByRole('tab', { name: 'EN' })[0]);
 
         expect(screen.getByDisplayValue('Autumn Landscape')).toBeInTheDocument();
     });

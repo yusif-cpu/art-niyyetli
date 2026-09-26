@@ -6,6 +6,7 @@ use App\Enums\ArtworkAvailability;
 use App\Enums\ArtworkImageType;
 use App\Enums\Locale;
 use App\Http\Requests\Admin\Concerns\ValidatesArtworkPayload;
+use App\Http\Requests\Admin\Concerns\ValidatesSeoPayload;
 use App\Http\Requests\Admin\Concerns\ValidatesYoutubeVideoPayload;
 use App\Rules\Slug;
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,6 +16,7 @@ use Illuminate\Validation\Validator;
 class UpdateArtworkRequest extends FormRequest
 {
     use ValidatesArtworkPayload;
+    use ValidatesSeoPayload;
     use ValidatesYoutubeVideoPayload;
 
     public function authorize(): bool
@@ -71,6 +73,8 @@ class UpdateArtworkRequest extends FormRequest
 
             'youtube_url' => ['nullable', 'string', 'max:500'],
             'youtube_video_id' => ['sometimes', 'nullable', 'string', 'regex:/^[A-Za-z0-9_-]{11}$/'],
+
+            ...$this->seoRules(),
         ];
     }
 
@@ -85,6 +89,7 @@ class UpdateArtworkRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            $this->rejectDuplicateSeoLocales($validator);
             $this->rejectDuplicateTranslationLocales($validator);
             $this->rejectDuplicateSlugPerLocaleWithinRequest($validator);
             $this->rejectSlugCollisionsWithOtherArtworks($validator);

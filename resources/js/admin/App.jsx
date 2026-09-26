@@ -14,6 +14,8 @@ import SocialLinksScreen from './screens/SocialLinksScreen.jsx';
 import EnquiriesScreen from './screens/EnquiriesScreen.jsx';
 import ArtworksScreen from './screens/ArtworksScreen.jsx';
 import ArtistsScreen from './screens/ArtistsScreen.jsx';
+import GenresScreen from './screens/GenresScreen.jsx';
+import MediumsScreen from './screens/MediumsScreen.jsx';
 import ExhibitionsScreen from './screens/ExhibitionsScreen.jsx';
 import ArticlesScreen from './screens/ArticlesScreen.jsx';
 import MediaScreen from './screens/MediaScreen.jsx';
@@ -30,6 +32,8 @@ const SCREENS = {
     enquiries: EnquiriesScreen,
     artworks: ArtworksScreen,
     artists: ArtistsScreen,
+    genres: GenresScreen,
+    mediums: MediumsScreen,
     exhibitions: ExhibitionsScreen,
     articles: ArticlesScreen,
     media: MediaScreen,

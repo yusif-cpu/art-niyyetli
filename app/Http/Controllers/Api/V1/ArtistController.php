@@ -37,6 +37,7 @@ class ArtistController extends Controller
                 'artworks' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
                 'artworks.translations', 'artworks.medium.translations', 'artworks.genre.translations',
                 'artworks.images' => fn ($q) => $q->orderBy('sort_order'), 'artworks.images.media.variants',
+                'seoMetadata.ogImage.variants',
             ])
             ->first();
 

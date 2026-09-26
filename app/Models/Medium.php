@@ -25,4 +25,9 @@ class Medium extends Model
     {
         return $this->hasMany(MediumTranslation::class);
     }
+
+    public function artworks(): HasMany
+    {
+        return $this->hasMany(Artwork::class);
+    }
 }

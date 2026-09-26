@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Http\Resources\Admin\Concerns\SerializesSeoOverrides;
+use App\Support\Youtube;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
@@ -9,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 class ArticleResource extends JsonResource
 {
+    use SerializesSeoOverrides;
+
     public function toArray(Request $request): array
     {
         $locale = $request->query('locale', 'az');
@@ -20,6 +24,8 @@ class ArticleResource extends JsonResource
             'status' => $this->status->value,
             'published_at' => $this->published_at?->toIso8601String(),
             'is_active' => $this->is_active,
+            'youtube_video_id' => $this->youtube_video_id,
+            'youtube_url' => $this->youtube_video_id ? Youtube::watchUrl($this->youtube_video_id) : null,
             'translation' => $translation ? [
                 'locale' => $translation->locale->value,
                 'slug' => $translation->slug,
@@ -38,6 +44,7 @@ class ArticleResource extends JsonResource
                 ->sortBy(fn ($item) => $item->pivot->sort_order)
                 ->map(fn ($item) => $this->mediaResource($item))
                 ->values()),
+            'seo' => $this->when($this->relationLoaded('seoMetadata'), fn () => $this->seoOverrides()),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

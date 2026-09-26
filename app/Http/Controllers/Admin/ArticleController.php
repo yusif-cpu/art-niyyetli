@@ -65,7 +65,7 @@ class ArticleController extends Controller
 
     public function show(Article $article, Request $request): ArticleResource
     {
-        $article->load(['translations', 'media.variants']);
+        $article->load(['translations', 'media.variants', 'seoMetadata.ogImage.variants']);
 
         return new ArticleResource($article);
     }

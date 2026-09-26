@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Enums\Locale;
 use App\Enums\PageType;
 use App\Http\Requests\Admin\Concerns\ValidatesPagePayload;
+use App\Http\Requests\Admin\Concerns\ValidatesSeoPayload;
 use App\Rules\Slug;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,7 @@ use Illuminate\Validation\Validator;
 class StorePageRequest extends FormRequest
 {
     use ValidatesPagePayload;
+    use ValidatesSeoPayload;
 
     public function authorize(): bool
     {
@@ -37,12 +39,15 @@ class StorePageRequest extends FormRequest
             'translations.*.slug' => ['required', 'string', new Slug(topLevel: true)],
             'translations.*.title' => ['required', 'string', 'max:255'],
             'translations.*.content' => ['required', 'string'],
+
+            ...$this->seoRules(),
         ];
     }
 
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            $this->rejectDuplicateSeoLocales($validator);
             $this->rejectDuplicateTranslationLocales($validator);
             $this->rejectDuplicateSlugPerLocaleWithinRequest($validator);
             $this->rejectSlugCollisionsWithOtherPages($validator);

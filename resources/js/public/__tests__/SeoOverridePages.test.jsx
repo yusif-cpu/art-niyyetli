@@ -1,6 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import { SiteDataProvider } from '../layout/SiteDataContext.jsx';
 import { seoMeta } from '../lib/seoMeta.js';
 import ArtworkDetailPage from '../pages/ArtworkDetailPage.jsx';
 import ArtistDetailPage from '../pages/ArtistDetailPage.jsx';
@@ -20,7 +21,8 @@ const PAGES = {
         Page: ArtworkDetailPage,
         params: { code: 'AN-1' },
         data: { ...artworkCard, title: 'Sunset', year_created: 2023, short_description: 'Artwork fallback.', provenance: 'P', certificate: false, frame_condition: null, delivery_note: null, images: [], similar: [], whatsapp_link: null, video: null },
-        fallback: { title: 'Sunset — ArtNiyyətli', description: 'Artwork fallback.' },
+        // Stage 5: the artwork page's fallback title is "title, artist" (the suffix still comes from seoMeta).
+        fallback: { title: 'Sunset, A B — ArtNiyyətli', description: 'Artwork fallback.' },
     },
     artist: {
         Page: ArtistDetailPage,
@@ -60,7 +62,8 @@ describe.each(Object.entries(PAGES))('%s detail page SEO', (name, { Page, params
 
     function renderWith(seo) {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: { ...data, seo } }));
-        render(<LocaleProvider><Page params={params} /></LocaleProvider>);
+        // The artwork page reads the shared site data (the artist link, S3), so every page renders inside the provider.
+        render(<LocaleProvider><SiteDataProvider><Page params={params} /></SiteDataProvider></LocaleProvider>);
     }
 
     it('uses the SEO override title and description, keeping the site-name suffix', async () => {

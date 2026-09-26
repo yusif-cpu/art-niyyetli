@@ -196,28 +196,28 @@ describe('ArtworkDetailPage', () => {
         expect(within(section).getByTestId('artwork-field')).not.toHaveClass('shadow-hang');
     });
 
-    it('sets the title "<title>, <artist> | ArtNiyyətli", a word-safe 155-character description and Open Graph tags', async () => {
+    it('sets the title "<title>, <artist> — ArtNiyyətli" (seoMeta suffix), a word-safe 155-character description and Open Graph tags', async () => {
         const long = `${'Rəssamın bu dövrünə aid sakit ölçülü bir əsər '.repeat(5)}sonu.`;
         artwork = { ...detail, short_description: long };
         mockApi();
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe('Sunset Over Baku, Aygün Məmmədova | ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Sunset Over Baku, Aygün Məmmədova — ArtNiyyətli'));
         const description = document.head.querySelector('meta[name="description"]').getAttribute('content');
         expect(description.length).toBeLessThanOrEqual(155);
         expect(description.endsWith('…')).toBe(true);
         expect(long.startsWith(description.slice(0, -1))).toBe(true);
         expect(long.charAt(description.length - 1)).toBe(' '); // cut at a word boundary
         expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/full.webp');
-        expect(document.head.querySelector('meta[property="og:title"]')).toHaveAttribute('content', 'Sunset Over Baku, Aygün Məmmədova | ArtNiyyətli');
+        expect(document.head.querySelector('meta[property="og:title"]')).toHaveAttribute('content', 'Sunset Over Baku, Aygün Məmmədova — ArtNiyyətli');
     });
 
-    it('lets backend SEO overrides win once the API sends them (S6)', async () => {
-        artwork = { ...detail, seo: { title: 'Override title', description: 'Override description', og_image_url: 'https://example.test/og.jpg' } };
+    it('lets the backend SEO override (data.seo: title, description, image_url) win (S6)', async () => {
+        artwork = { ...detail, seo: { title: 'Override title', description: 'Override description', image_url: 'https://example.test/og.jpg' } };
         mockApi();
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe('Override title'));
+        await waitFor(() => expect(document.title).toBe('Override title — ArtNiyyətli'));
         expect(document.head.querySelector('meta[name="description"]')).toHaveAttribute('content', 'Override description');
         expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/og.jpg');
     });

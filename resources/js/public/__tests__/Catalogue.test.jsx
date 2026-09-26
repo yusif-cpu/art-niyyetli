@@ -230,6 +230,26 @@ describe('Catalogue', () => {
         expect(screen.queryByTestId('artwork-field')).not.toBeInTheDocument();
     });
 
+    // Ported from upstream CataloguePage.test.jsx (0abf6fe, Yusif Ibrahimov) to the rebuilt catalogue.
+    it('sends the price sort to the API and keeps the API order, showing price on request for hidden prices', async () => {
+        const priced = { ...artwork('AN-P', 'Priced Piece'), price: 500 };
+        const hidden = { ...artwork('AN-H', 'Hidden Price Piece'), price: null, currency: null };
+        // The API ranks visible prices first and puts price-on-request works after them.
+        artworksResponse = () => jsonResponse({ data: [priced, hidden], meta: { current_page: 1, last_page: 1, total: 2 } });
+        mockApi();
+        renderPage();
+        await screen.findByText('Priced Piece', {}, { timeout: 3000 });
+
+        await userEvent.selectOptions(screen.getByLabelText('Sıralama'), 'price_asc');
+
+        await waitFor(() => expect(artworkUrls().some((url) => url.includes('sort=price_asc'))).toBe(true));
+        await screen.findByText('Priced Piece');
+        const titles = screen.getAllByText(/Piece$/).map((el) => el.textContent);
+        expect(titles).toEqual(['Priced Piece', 'Hidden Price Piece']);
+        expect(screen.getByText((_, el) => el?.tagName === 'P' && el.textContent === '500 AZN')).toBeInTheDocument();
+        expect(screen.getByText('Qiymət sorğu ilə')).toBeInTheDocument();
+    });
+
     it('sets a static catalogue document title', async () => {
         renderPage();
         await waitFor(() => expect(document.title).toBe('Əsərlər — ArtNiyyətli'));

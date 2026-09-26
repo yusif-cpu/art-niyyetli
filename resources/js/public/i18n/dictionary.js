@@ -22,7 +22,7 @@ export const dictionary = {
             of: 'səhifə',
         },
         artwork: {
-            priceOnRequest: 'Qiymət tələb üzrə',
+            priceOnRequest: 'Qiymət sorğu ilə',
             sold: 'Satılıb',
             reserved: 'Rezerv edilib',
             available: 'Mövcuddur',

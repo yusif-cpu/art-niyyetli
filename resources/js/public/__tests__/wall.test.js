@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     HUMAN_HEIGHT_CM, MAX_DIMENSION_CM, PRESETS, VERTICAL_BELOW_PX, WALL_HEIGHTS_CM,
-    computeScale, detailWallLayout, figureAt, isValidDims, layoutRow, partition, roundSpan, sizeItems, wallLayout,
+    computeScale, detailWallLayout, figureAt, isValidDims, layoutRow, packRows, partition, roundSpan, sizeItems, wallLayout,
 } from '../lib/wall.js';
 
 // The eight works in the local demo database (API shape).
@@ -282,6 +282,87 @@ describe('wall: the home wall (horizontal and vertical)', () => {
         expect(skipped).toEqual([]);
         expect(sizes.map((s) => s.width)).toEqual([570, 475, 380, 317, 285, 222, 190, 127]);
         expect(sizes.map((s) => s.height)).toEqual([444, 348, 285, 253, 190, 158, 143, 95]);
+    });
+});
+
+describe('wall: packRows (the catalogue grid)', () => {
+    const K = (1296 * 0.44) / 180; // the catalogue preset at 1296px: k = 3.168
+    const pack = (list, opts = {}) => packRows(list, { containerWidth: 1296, k: K, gap: 24, ...opts });
+
+    it('packs the eight local works into three rows at 1296px, with exact pixels', () => {
+        const { rows, skipped } = pack(LOCAL);
+        expect(skipped).toEqual([]);
+        expect(rows.map((r) => r.items.map((i) => i.item.inventory_code))).toEqual([
+            ['AN-2024-031', 'AN-2023-018'],
+            ['AN-2025-014', 'AN-2022-047', 'AN-2026-005', 'AN-2023-009'],
+            ['AN-2021-022', 'AN-2019-003'],
+        ]);
+        expect(rows.map((r) => r.items.map((i) => [i.left, i.cardWidth, i.fieldWidth, i.fieldHeight]))).toEqual([
+            [[0, 570, 570, 444], [594, 475, 475, 348]],
+            [[0, 380, 380, 285], [404, 317, 317, 253], [745, 285, 285, 190], [1054, 222, 222, 158]],
+            [[0, 190, 190, 143], [214, 155, 127, 95]],
+        ]);
+        expect(rows.map((r) => r.zoneHeight)).toEqual([444, 285, 143]);
+        expect(rows.map((r) => r.width)).toEqual([1069, 1276, 369]);
+    });
+
+    it('keeps one k across rows', () => {
+        const { rows } = pack(LOCAL);
+        const ks = rows.flatMap((r) => r.items.map((i) => i.fieldHeight / i.heightCm));
+        ks.forEach((k) => expect(k).toBeCloseTo(K, 1));
+    });
+
+    it('gives each row the zone of its own tallest field, not the tallest of the list', () => {
+        const { rows } = pack(LOCAL);
+        rows.forEach((r) => expect(r.zoneHeight).toBe(Math.max(...r.items.map((i) => i.fieldHeight))));
+        expect(rows[2].zoneHeight).toBeLessThan(rows[0].zoneHeight);
+    });
+
+    it('bottom-aligns the fields of a row: every field ends on the zone line', () => {
+        pack(LOCAL).rows.forEach((r) => r.items.forEach((i) => expect(i.fieldTop + i.fieldHeight).toBe(r.zoneHeight)));
+    });
+
+    it('keeps a lone card that is wider than the container at its size', () => {
+        const { rows } = packRows([work(300, 100), work(40, 30)], { containerWidth: 500, k: 2, gap: 24 });
+        expect(rows).toHaveLength(2);
+        expect(rows[0].items[0].cardWidth).toBe(600);
+        expect(rows[0].items[0].fieldWidth).toBe(600);
+    });
+
+    it('leaves the last row left-aligned and unstretched', () => {
+        const { rows } = pack(LOCAL);
+        const last = rows[rows.length - 1];
+        expect(last.items[0].left).toBe(0);
+        expect(last.width).toBeLessThan(1296);
+        expect(last.items.map((i) => i.cardWidth)).toEqual([190, 155]);
+    });
+
+    it('centres a narrow field in its 155px card', () => {
+        const small = pack(LOCAL).rows[2].items[1];
+        expect(small.cardWidth).toBe(155);
+        expect(small.fieldLeft).toBe(Math.round((155 - 127) / 2));
+    });
+
+    it('drops invalid sizes into skipped without disturbing the packing', () => {
+        const withBad = pack([...LOCAL.slice(0, 4), work(0, 50, 'bad'), { inventory_code: 'none' }, ...LOCAL.slice(4)]);
+        expect(withBad.skipped.map((s) => [s.item.inventory_code, s.reason])).toEqual([['bad', 'not-positive'], ['none', 'missing']]);
+        expect(withBad.rows.map((r) => r.items.map((i) => i.item.inventory_code))).toEqual(pack(LOCAL).rows.map((r) => r.items.map((i) => i.item.inventory_code)));
+    });
+
+    it('returns no rows while the width or k is not known yet', () => {
+        expect(packRows(LOCAL, { containerWidth: 0, k: K }).rows).toEqual([]);
+        expect(packRows(LOCAL, { containerWidth: 1296, k: 0 }).rows).toEqual([]);
+    });
+
+    it('never lets rounding push a row past the container', () => {
+        const ten = Array.from({ length: 10 }, (_, i) => work(33.3 + i * 7.7, 41.1 + i));
+        for (const width of [733, 999, 1287]) {
+            const { k } = computeScale(ten, { mode: 'grid', width, share: 0.44 });
+            packRows(ten, { containerWidth: width, k, gap: 24 }).rows.forEach((r) => {
+                if (r.items.length > 1) expect(r.width).toBeLessThanOrEqual(width);
+                r.items.forEach((i) => expect(i.fieldWidth).toBeLessThanOrEqual(i.cardWidth));
+            });
+        }
     });
 });
 

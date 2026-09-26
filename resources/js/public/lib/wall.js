@@ -210,6 +210,71 @@ export function layoutRow(entries, k, { gap = 0, start = 0 } = {}) {
     return { items, width: Math.round(end) - Math.round(start), height: items.reduce((m, i) => Math.max(m, i.height), 0) };
 }
 
+/** A catalogue card never gets narrower than this, so its text block stays readable; the FIELD keeps its true size. */
+export const MIN_CARD_PX = 155;
+
+/**
+ * One card at k: the field is the work at true size, the card is at least MIN_CARD_PX wide, and the field is centred
+ * in it (the empty space either side is plain surface, so the field's own edge still shows the real width).
+ */
+export function cardSize(w, h, k, { minCardPx = MIN_CARD_PX } = {}) {
+    const fieldWidth = Math.round(w * k);
+    const fieldHeight = Math.round(h * k);
+    const cardWidth = Math.max(minCardPx, fieldWidth);
+
+    return { fieldWidth, fieldHeight, cardWidth, fieldLeft: Math.round((cardWidth - fieldWidth) / 2) };
+}
+
+/**
+ * The catalogue grid: cards at ONE k for the whole list, packed left to right into rows.
+ *  - a card that does not fit starts a new row; a lone card that is wider than the container keeps its size
+ *  - each row's zone height = the tallest field IN THAT ROW (no shared zone for the whole list, so a row of small
+ *    works gets no empty band above it)
+ *  - fields are bottom-aligned in their row, so every text block of a row starts on one line (the catalogue reads
+ *    as a list; the wall keeps its 150 cm centre line — the difference is deliberate)
+ *  - the last row stays left-aligned, never stretched; the gap is a fixed px token, not centimetres
+ *  - invalid sizes go to `skipped` (see partition) and do not disturb the packing
+ * Card positions use edge rounding, like layoutRow.
+ * @returns {{ rows: Array<{ items: Array, zoneHeight: number, width: number }>, skipped: Array }}
+ */
+export function packRows(items, { containerWidth = 0, k = 0, gap = 0, minCardPx = MIN_CARD_PX, maxCm = MAX_DIMENSION_CM } = {}) {
+    const { valid, skipped } = partition(items, { maxCm });
+    if (!positive(containerWidth) || !positive(k)) return { rows: [], skipped };
+
+    const rows = [];
+    let current = null;
+    for (const e of valid) {
+        const size = cardSize(e.w, e.h, k, { minCardPx });
+        const exactCard = Math.max(minCardPx, e.w * k);
+        if (!current || (current.items.length > 0 && current.x + exactCard > containerWidth + 0.5)) {
+            current = { items: [], x: 0 };
+            rows.push(current);
+        }
+        const span = roundSpan(current.x, exactCard);
+        current.items.push({ item: e.item, index: e.index, widthCm: e.w, heightCm: e.h, left: span.start, ...size, cardWidth: span.length });
+        current.x += exactCard + gap;
+    }
+
+    return {
+        rows: rows.map((row) => {
+            const zoneHeight = Math.max(...row.items.map((i) => i.fieldHeight));
+            const last = row.items[row.items.length - 1];
+
+            return {
+                zoneHeight,
+                width: last.left + last.cardWidth,
+                items: row.items.map((i) => {
+                    // edge rounding can make a field-wide card 1px narrower than the rounded field: never overflow the card
+                    const fieldWidth = Math.min(i.fieldWidth, i.cardWidth);
+
+                    return { ...i, fieldWidth, fieldLeft: Math.round((i.cardWidth - fieldWidth) / 2), fieldTop: zoneHeight - i.fieldHeight };
+                }),
+            };
+        }),
+        skipped,
+    };
+}
+
 /** The 170 cm silhouette at k — always the same k as the works next to it. */
 export function figureAt(k) {
     const f = FIGURE_CM;

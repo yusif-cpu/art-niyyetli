@@ -103,13 +103,14 @@ describe('SiteDataProvider', () => {
         expect(shellRequests()).toHaveLength(3);
     });
 
-    it('gives every consumer the same data, so the header and the footer show the same social links', async () => {
+    it('renders the social links from the shared shell data once, in the footer only', async () => {
         renderShell();
 
         const links = await screen.findAllByRole('link', { name: 'instagram' });
 
-        expect(links).toHaveLength(2);
-        links.forEach((link) => expect(link).toHaveAttribute('href', 'https://instagram.com/artniyyetli'));
+        expect(links).toHaveLength(1);
+        expect(screen.getByRole('contentinfo')).toContainElement(links[0]);
+        expect(links[0]).toHaveAttribute('href', 'https://instagram.com/artniyyetli');
     });
 
     it('exposes { data, loading, error } for each shell resource, loading first', async () => {
@@ -162,9 +163,9 @@ describe('SiteDataProvider', () => {
 
         renderShell();
 
-        // Settings and social links still render in the header and the footer ...
+        // Settings and social links still render (social links in the footer) ...
         expect(await screen.findByText('hello@artniyyetli.az')).toBeInTheDocument();
-        expect(screen.getAllByRole('link', { name: 'instagram' })).toHaveLength(2);
+        expect(screen.getAllByRole('link', { name: 'instagram' })).toHaveLength(1);
         // ... the page still renders, and only the navigation is missing.
         expect(screen.getByText('Page content')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Ana səhifə' })).not.toBeInTheDocument();
@@ -183,7 +184,7 @@ describe('SiteDataProvider', () => {
 
         expect(await screen.findByRole('link', { name: 'Ana səhifə' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toBeInTheDocument();
-        expect(screen.getAllByRole('link', { name: 'instagram' })).toHaveLength(2);
+        expect(screen.getAllByRole('link', { name: 'instagram' })).toHaveLength(1);
         expect(screen.getAllByText('ArtNiyyətli')).toHaveLength(2);
         expect(screen.queryByText('hello@artniyyetli.az')).not.toBeInTheDocument();
     });

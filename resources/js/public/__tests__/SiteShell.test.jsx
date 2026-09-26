@@ -78,10 +78,11 @@ describe('SiteShell', () => {
 
         expect(await screen.findByText('hello@artniyyetli.az')).toBeInTheDocument();
         expect(screen.getByText('ArtNiyyətli qalereyası')).toBeInTheDocument();
-        // Social links render in both the header and the footer.
+        // Social links render in the footer only.
         const instagramLinks = screen.getAllByRole('link', { name: 'instagram' });
-        expect(instagramLinks).toHaveLength(2);
-        instagramLinks.forEach((link) => expect(link).toHaveAttribute('href', 'https://instagram.com/artniyyetli'));
+        expect(instagramLinks).toHaveLength(1);
+        expect(screen.getByRole('contentinfo')).toContainElement(instagramLinks[0]);
+        expect(instagramLinks[0]).toHaveAttribute('href', 'https://instagram.com/artniyyetli');
         expect(screen.queryByText('null')).not.toBeInTheDocument();
 
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toHaveAttribute('href', '/privacy-policy');
@@ -104,7 +105,7 @@ describe('SiteShell', () => {
         logos.forEach((logo) => expect(logo).toHaveAttribute('src', 'https://example.test/logo.webp'));
     });
 
-    it('renders social links as plain text in the header and by their saved display mode in the footer', async () => {
+    it('renders social links only in the footer, by their saved display mode', async () => {
         const defaultFetch = global.fetch;
         global.fetch = vi.fn((url) => {
             if (url.includes('/social-links')) {
@@ -134,16 +135,9 @@ describe('SiteShell', () => {
         const header = screen.getByRole('banner');
         const footer = screen.getByRole('contentinfo');
 
-        // Header: platform names only, whatever the display mode; no social icon is loaded there.
-        expect(await within(header).findByText('Instagram')).toBeInTheDocument();
-        expect(within(header).getByRole('link', { name: 'Instagram' })).toHaveAttribute('href', 'https://instagram.com/a');
-        expect(within(header).getByRole('link', { name: 'Facebook' })).toBeInTheDocument();
-        expect(within(header).getByRole('link', { name: 'WhatsApp' })).toBeInTheDocument();
-        expect(header.querySelector('img[src^="https://example.test/ig"], img[src^="https://example.test/fb"], img[src^="https://example.test/wa"]')).toBeNull();
-
         // Footer: by the saved display mode.
         // logo_only: image named by the platform, no visible text
-        expect(within(footer).getByRole('img', { name: 'Instagram' })).toHaveAttribute('src', 'https://example.test/ig.webp');
+        expect(await within(footer).findByRole('img', { name: 'Instagram' })).toHaveAttribute('src', 'https://example.test/ig.webp');
         expect(within(footer).queryByText('Instagram')).not.toBeInTheDocument();
         // logo_text: the link is named by its text; the icon is decorative
         expect(within(footer).getByRole('link', { name: 'Facebook' })).toBeInTheDocument();
@@ -151,6 +145,11 @@ describe('SiteShell', () => {
         // text_only: text link, its logo is never rendered
         expect(within(footer).getByRole('link', { name: 'WhatsApp' })).toBeInTheDocument();
         expect(document.querySelector('img[src="https://example.test/wa.webp"]')).toBeNull();
+
+        // Header: no social links at all (they would repeat the footer and cost the navigation ~140px).
+        for (const name of ['Instagram', 'Facebook', 'WhatsApp']) {
+            expect(within(header).queryByRole('link', { name })).not.toBeInTheDocument();
+        }
     });
 
     it('switches header and footer labels to English on locale change', async () => {

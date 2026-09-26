@@ -77,6 +77,10 @@ export const dictionary = {
             featured: 'Seçilmişlər',
             artists: 'Rəssamlar',
             faqs: 'Suallar',
+            wallLabel: 'Divar: əsərlər həqiqi ölçüdə, sürüşdürmək üçün ox düymələri',
+            position: 'mövqe',
+            articles: 'Jurnal',
+            contact: 'Əlaqə saxla',
         },
         filters: {
             artist: 'Rəssam',
@@ -200,6 +204,10 @@ export const dictionary = {
             featured: 'Featured',
             artists: 'Artists',
             faqs: 'FAQ',
+            wallLabel: 'Wall: works at true size, use the arrow keys to scroll',
+            position: 'position',
+            articles: 'Journal',
+            contact: 'Get in touch',
         },
         filters: {
             artist: 'Artist',

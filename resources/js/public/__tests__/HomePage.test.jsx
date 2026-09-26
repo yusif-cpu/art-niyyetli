@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
 import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
 import HomePage from '../pages/HomePage.jsx';
@@ -9,59 +9,101 @@ function jsonResponse(body) {
     return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body };
 }
 
+const card = (code, title, w, h, extra = {}) => ({
+    inventory_code: code, title, artist: { id: 1, name: 'Kamran Səfərli' }, image_url: null, genre: { slug: 'painting', name: 'Painting' },
+    medium: { slug: 'oil', name: 'Oil' }, price: 9800, currency: 'AZN', availability: 'available', width_cm: w, height_cm: h, ...extra,
+});
+
 const homepageData = {
     page: { title: 'Ana səhifə', sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Müasir Azərbaycan sənətini kəşf edin.', sort_order: 0, image_url: null }] },
     stats: { artists: 5, artworks: 12, exhibitions: 2 },
-    wall: [{ inventory_code: 'AN-1', title: 'Wall Piece', artist: { id: 1, name: 'A' }, image_url: null, genre: { slug: 'painting', name: 'Painting' }, medium: { slug: 'oil', name: 'Oil' }, price: 100, currency: 'AZN', availability: 'available', width_cm: 10, height_cm: 10 }],
-    featured: [{ inventory_code: 'AN-2', title: 'Featured Piece', artist: { id: 2, name: 'B' }, image_url: null, genre: { slug: 'painting', name: 'Painting' }, medium: { slug: 'oil', name: 'Oil' }, price: null, currency: null, availability: 'available', width_cm: 20, height_cm: 20 }],
+    wall: [card('AN-1', 'Wall Piece', 180, 140), card('AN-2', 'Small Piece', 40, 30)],
+    featured: [card('AN-3', 'Featured Piece', 20, 20, { price: null, currency: null })],
     artists: [{ id: 1, slug: 'a', first_name: 'A', last_name: 'B', direction: 'Modern', portrait_url: null }],
     exhibition: { slug: 'winter-show', title: 'Winter Show', status: 'current', start_date: '2026-01-10', end_date: '2026-02-10', venue: 'Main Gallery', short_text: '...', full_text: '...', artists: [], artworks: [], media: [] },
     faqs: [{ id: 1, question: 'Necə sifariş verə bilərəm?', answer: 'Sorğu göndərin.', sort_order: 0 }],
     social_links: [],
 };
+const ARTICLES = [{ slug: 'musahibe', title: 'Kamran Səfərli ilə müsahibə', type: 'interview', short_text: 'Xətt və boşluq haqqında.', content: '…', published_at: '2026-09-10T09:30:00+04:00', media: [] }];
+
+let homepage;
+let articles;
+function mockApi() {
+    global.fetch = vi.fn((url) => {
+        if (url.startsWith('/api/v1/articles')) return Promise.resolve(jsonResponse({ data: articles, meta: { current_page: 1, last_page: 1, total: articles.length } }));
+        return Promise.resolve(typeof homepage === 'function' ? homepage() : jsonResponse({ data: homepage }));
+    });
+}
+const homepageCalls = () => global.fetch.mock.calls.filter(([url]) => url.startsWith('/api/v1/homepage'));
+
+function renderHome(extra = null) {
+    return render(<LocaleProvider>{extra}<HomePage /></LocaleProvider>);
+}
 
 describe('HomePage', () => {
-    it('shows loading, then renders hero, wall, featured, artists, exhibition banner, and FAQs', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: homepageData }));
+    const originalRO = global.ResizeObserver;
 
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
+    beforeEach(() => {
+        localStorage.removeItem('public-locale'); // the locale test switches to EN; every test starts in AZ
+        homepage = homepageData;
+        articles = ARTICLES;
+        mockApi();
+        // jsdom has no layout: the wall container is 1296px wide; window.innerWidth (1024) keeps it horizontal,
+        // window.innerHeight (768) gives a 445px wall area → k = (445 − 64) / 270.
+        global.ResizeObserver = class {
+            constructor(cb) { this.cb = cb; }
+            observe() { this.cb([{ contentRect: { width: 1296 } }]); }
+            disconnect() {}
+        };
+    });
 
-        expect(screen.getByText('Yüklənir...')).toBeInTheDocument();
+    afterEach(() => {
+        global.ResizeObserver = originalRO;
+    });
 
-        expect(await screen.findByText('ArtNiyyətli')).toBeInTheDocument();
+    const K = (445 - 64) / 270;
+    const wallFields = () => screen.getAllByTestId('wall-field');
+
+    // ── existing behaviour, adapted to the rebuilt page ──────────────────────────────────────────────────────────
+
+    it('shows a static skeleton, then the hero, the wall, artists, exhibition and FAQs', async () => {
+        renderHome();
+
+        // (was: the "Yüklənir..." text) — a static skeleton with aria-busy, no shimmer
+        expect(screen.getByTestId('home-skeleton')).toHaveAttribute('aria-busy', 'true');
+
+        expect(await screen.findByRole('heading', { level: 1, name: 'ArtNiyyətli' })).toBeInTheDocument();
         expect(screen.getByText('Wall Piece')).toBeInTheDocument();
-        expect(screen.getByText('Featured Piece')).toBeInTheDocument();
         expect(screen.getByText('A B')).toBeInTheDocument();
         expect(screen.getByText('Winter Show')).toBeInTheDocument();
         expect(screen.getByText('Necə sifariş verə bilərəm?')).toBeInTheDocument();
+        // (was: the featured grid) — the wall is the home page's selection of works; `featured` is not rendered
+        expect(screen.queryByText('Featured Piece')).not.toBeInTheDocument();
     });
 
     it('renders both current and upcoming exhibitions from the single homepage response', async () => {
         const ex = (slug, title, status) => ({ ...homepageData.exhibition, slug, title, status });
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({
-            data: {
-                ...homepageData,
-                exhibition: ex('now', 'Now Show', 'current'),
-                exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming'), ex('later', 'Later Show', 'upcoming')] },
-            },
-        }));
-
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
+        homepage = {
+            ...homepageData,
+            exhibition: ex('now', 'Now Show', 'current'),
+            exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming'), ex('later', 'Later Show', 'upcoming')] },
+        };
+        mockApi();
+        renderHome();
 
         expect(await screen.findByText('Now Show')).toBeInTheDocument();
         expect(screen.getByText('Soon Show')).toBeInTheDocument();
         expect(screen.getByText('Later Show')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Cari sərgilər' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Gələcək sərgilər' })).toBeInTheDocument();
-        expect(global.fetch).toHaveBeenCalledTimes(1); // no second request for the upcoming list
+        // (was: fetch called once) — one homepage request; the journal block adds its own /articles request
+        expect(homepageCalls()).toHaveLength(1);
     });
 
     it('omits the heading of an empty exhibitions group', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({
-            data: { ...homepageData, exhibitions: { current: [], upcoming: [{ ...homepageData.exhibition, slug: 'soon', title: 'Soon Show', status: 'upcoming' }] } },
-        }));
-
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
+        homepage = { ...homepageData, exhibitions: { current: [], upcoming: [{ ...homepageData.exhibition, slug: 'soon', title: 'Soon Show', status: 'upcoming' }] } };
+        mockApi();
+        renderHome();
 
         expect(await screen.findByText('Soon Show')).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
@@ -69,59 +111,56 @@ describe('HomePage', () => {
     });
 
     it('falls back to the single exhibition for a response without the exhibitions lists', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: homepageData }));
-
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
+        renderHome();
 
         expect(await screen.findByText('Winter Show')).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
     });
 
     it('renders no exhibition section when both lists are empty', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...homepageData, exhibition: null, exhibitions: { current: [], upcoming: [] } } }));
-
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
+        homepage = { ...homepageData, exhibition: null, exhibitions: { current: [], upcoming: [] } };
+        mockApi();
+        renderHome();
 
         await screen.findByText('Wall Piece');
         expect(screen.queryByText('Winter Show')).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Gələcək sərgilər' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Sərgilər' })).not.toBeInTheDocument();
     });
 
     it('renders without crashing when page and exhibition are null', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...homepageData, page: null, exhibition: null } }));
-
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
+        homepage = { ...homepageData, page: null, exhibition: null };
+        mockApi();
+        renderHome();
 
         expect(await screen.findByText('Wall Piece')).toBeInTheDocument();
         expect(screen.queryByText('Winter Show')).not.toBeInTheDocument();
     });
 
-    it('renders ErrorState on a failed fetch', async () => {
-        global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500, headers: { get: () => 'application/json' }, json: async () => ({ message: 'Server error.' }) });
+    it('shows an error with a retry button that re-fetches', async () => {
+        let calls = 0;
+        homepage = () => (++calls === 1 ? { ok: false, status: 500, headers: { get: () => 'application/json' }, json: async () => ({ message: 'Server error.' }) } : jsonResponse({ data: homepageData }));
+        mockApi();
+        renderHome();
 
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
-
-        expect(await screen.findByText('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')).toBeInTheDocument();
+        const alert = await screen.findByRole('alert');
+        expect(within(alert).getByText('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')).toHaveClass('text-signal-ink');
+        await userEvent.click(within(alert).getByRole('button', { name: 'Yenidən cəhd et' }));
+        expect(await screen.findByText('Wall Piece')).toBeInTheDocument();
     });
 
     it('sets document.title from the hero section heading', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({
-            data: {
-                page: { sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Discover Azerbaijani art.', sort_order: 0, image_url: null }] },
-                stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [],
-            },
-        }));
-
-        render(<LocaleProvider><HomePage /></LocaleProvider>);
+        homepage = {
+            page: { sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Discover Azerbaijani art.', sort_order: 0, image_url: null }] },
+            stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [],
+        };
+        mockApi();
+        renderHome();
 
         await waitFor(() => expect(document.title).toBe('ArtNiyyətli — ArtNiyyətli'));
     });
 
     it('does not crash when the locale changes after the page has already loaded', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: homepageData }));
-
-        render(<LocaleProvider><LocaleSwitcher /><HomePage /></LocaleProvider>);
-
+        renderHome(<LocaleSwitcher />);
         await screen.findByText('Wall Piece');
 
         await userEvent.click(screen.getByRole('button', { name: 'EN' }));
@@ -134,8 +173,10 @@ describe('HomePage', () => {
         const section = (key, heading, sort_order = 0) => ({ key, heading, body: `${heading} body`, sort_order, image_url: null });
 
         function renderWith(sections) {
-            global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...empty, page: { title: 'Ana səhifə', sections } } }));
-            render(<LocaleProvider><HomePage /></LocaleProvider>);
+            homepage = { ...empty, page: { title: 'Ana səhifə', sections } };
+            articles = [];
+            mockApi();
+            renderHome();
         }
 
         it('uses the hero even when it is not the first section, for the h1, title and description', async () => {
@@ -168,9 +209,132 @@ describe('HomePage', () => {
             renderWith([]);
             await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
 
-            global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...empty, page: { title: 'Ana səhifə' } } }));
-            render(<LocaleProvider><HomePage /></LocaleProvider>);
+            homepage = { ...empty, page: { title: 'Ana səhifə' } };
+            mockApi();
+            renderHome();
             await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
         });
+    });
+
+    // ── the wall ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+    it('builds the wall from the API works, all at one k', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const [big, small] = wallFields();
+        expect(big.style.width).toBe(`${Math.round(180 * K)}px`);
+        expect(big.style.height).toBe(`${Math.round(140 * K)}px`);
+        expect(small.style.width).toBe(`${Math.round(40 * K)}px`);
+        expect(parseFloat(big.style.width) / parseFloat(small.style.width)).toBeCloseTo(4.5, 1);
+        expect(big).toHaveClass('shadow-hang');
+        expect(screen.getByTestId('scale-rule-line').style.width).toBe(`${Math.round(100 * K)}px`);
+    });
+
+    it('spaces neighbours by max(43 × k, 48px, caption overflow + 24px)', async () => {
+        homepage = { ...homepageData, wall: [card('AN-1', 'Wall Piece', 180, 140), card('AN-4', 'Middle', 150, 110), card('AN-2', 'Small Piece', 40, 30)] };
+        mockApi();
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const [a, b, c] = wallFields();
+        const right = (el) => parseFloat(el.style.left) + parseFloat(el.style.width);
+        const overflow = (w) => Math.max(0, 180 - w * K) / 2;
+        const expected = (w1, w2) => Math.max(43 * K, 48, overflow(w1) + overflow(w2) + 24);
+        expect(Math.abs(parseFloat(b.style.left) - right(a) - expected(180, 150))).toBeLessThanOrEqual(1);
+        expect(Math.abs(parseFloat(c.style.left) - right(b) - expected(150, 40))).toBeLessThanOrEqual(1);
+    });
+
+    it('stands the 170 cm figure at the left of the wall, 170 × k tall', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const figure = screen.getByTestId('human-figure');
+        expect(figure).toHaveAttribute('height', String(Math.round(170 * K)));
+        expect(parseFloat(figure.style.left)).toBeLessThan(parseFloat(wallFields()[0].style.left));
+        expect(screen.getByText('170 sm')).toBeInTheDocument();
+    });
+
+    it('updates the position counter as the wall scrolls', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const counter = screen.getByTestId('wall-position');
+        expect(counter).toHaveTextContent('1 / 2');
+        const scroller = screen.getByTestId('home-wall');
+        const [big] = wallFields();
+        scroller.scrollLeft = parseFloat(big.style.left) + parseFloat(big.style.width) + 5;
+        fireEvent.scroll(scroller);
+
+        expect(counter).toHaveTextContent('2 / 2');
+    });
+
+    it('leaves the wall section out entirely when there are no wall works', async () => {
+        homepage = { ...homepageData, wall: [] };
+        mockApi();
+        renderHome();
+        await screen.findByRole('heading', { level: 1 });
+
+        expect(screen.queryByTestId('home-wall')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('human-figure')).not.toBeInTheDocument();
+    });
+
+    it('still builds the wall, the figure and the scale for a single work', async () => {
+        homepage = { ...homepageData, wall: [card('AN-9', 'Only One', 100, 80)] };
+        mockApi();
+        renderHome();
+        await screen.findByText('Only One');
+
+        expect(wallFields()).toHaveLength(1);
+        expect(screen.getByTestId('human-figure')).toBeInTheDocument();
+        expect(screen.getByTestId('scale-rule')).toBeInTheDocument();
+        expect(screen.queryByTestId('wall-position')).not.toBeInTheDocument(); // "1 / 1" says nothing
+    });
+
+    it('shows no price on the wall', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const wall = screen.getByTestId('home-wall');
+        expect(within(wall).queryByText(/AZN|Qiymət/)).not.toBeInTheDocument();
+        expect(within(wall).getAllByText('Kamran Səfərli')).toHaveLength(2);
+    });
+
+    it('makes the wall keyboard-focusable and named', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const wall = screen.getByRole('region', { name: 'Divar: əsərlər həqiqi ölçüdə, sürüşdürmək üçün ox düymələri' });
+        expect(wall).toHaveAttribute('tabindex', '0');
+        wall.focus();
+        expect(document.activeElement).toBe(wall);
+        expect(within(wall).getByRole('link', { name: /^Wall Piece, Kamran Səfərli/ })).toHaveAttribute('href', '/artworks/AN-1');
+    });
+
+    it('leaves out empty blocks: artists, exhibitions, journal, FAQ', async () => {
+        homepage = { ...homepageData, artists: [], exhibition: null, exhibitions: { current: [], upcoming: [] }, faqs: [] };
+        articles = [];
+        mockApi();
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        for (const name of ['Rəssamlar', 'Sərgilər', 'Jurnal', 'Suallar']) {
+            expect(screen.queryByRole('heading', { level: 2, name })).not.toBeInTheDocument();
+        }
+    });
+
+    it('shows the latest journal articles and the contact block', async () => {
+        renderHome();
+
+        expect(await screen.findByRole('link', { name: /Kamran Səfərli ilə müsahibə/ })).toHaveAttribute('href', '/articles/musahibe');
+        expect(global.fetch.mock.calls.some(([url]) => url.startsWith('/api/v1/articles') && url.includes('per_page=3'))).toBe(true);
+        expect(screen.getByRole('link', { name: 'Əlaqə saxla' })).toHaveAttribute('href', '/contact');
+    });
+
+    it('uses no Signal on the page itself', async () => {
+        const { container } = renderHome();
+        await screen.findByText('Wall Piece');
+
+        expect(container.innerHTML).not.toMatch(/signal/);
     });
 });

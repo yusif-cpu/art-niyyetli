@@ -12,6 +12,13 @@ describe('ScaleRule', () => {
         expect(container.innerHTML).not.toMatch(/signal/);
     });
 
+    it('steps down from 1 m when a metre would be wider than the space (a small work shown large)', () => {
+        render(<ScaleRule k={21} maxWidth={840} />); // 1 m = 2100px, 50 cm = 1050px, 20 cm = 420px
+
+        expect(screen.getByText('20 sm')).toBeInTheDocument();
+        expect(screen.getByTestId('scale-rule-line')).toHaveStyle({ width: '420px' });
+    });
+
     it('renders nothing while k is 0 or unknown', () => {
         for (const k of [0, undefined, Number.NaN, -1]) {
             const { container, unmount } = render(<ScaleRule k={k} />);

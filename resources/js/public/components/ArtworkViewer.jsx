@@ -33,7 +33,7 @@ export default function ArtworkViewer({ artwork }) {
         <div ref={ref} className="w-full">
             {k > 0 && (
                 <>
-                    <ScaleRule k={k} className="mb-step-4" />
+                    <ScaleRule k={k} maxWidth={width} className="mb-step-4" />
                     <div className="flex justify-center">
                         <div data-testid="artwork-main-field" className={fieldClass} style={{ width: Math.round(w * k), height: Math.round(h * k) }}>
                             {image}

@@ -27,7 +27,7 @@ export default function ScaledArtworkGrid({ artworks, preset = PRESETS.catalogue
 
     return (
         <div ref={ref} className="flex flex-col gap-step-7" data-k={scale.k || undefined}>
-            {showScale && rows.length > 0 && <ScaleRule k={scale.k} className="-mb-step-3" />}
+            {showScale && rows.length > 0 && <ScaleRule k={scale.k} maxWidth={width} className="-mb-step-3" />}
             {rows.map((row, index) => (
                 <div key={index} className="flex gap-x-step-5 [&>*]:shrink-0">
                     {row.items.map((cell) => (

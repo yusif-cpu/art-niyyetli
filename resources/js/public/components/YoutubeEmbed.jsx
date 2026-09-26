@@ -2,7 +2,7 @@ export default function YoutubeEmbed({ video, title }) {
     if (!video?.embed_url) return null;
 
     return (
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
+        <div className="aspect-video w-full overflow-hidden bg-ink">
             <iframe
                 src={video.embed_url}
                 title={title || 'YouTube video'}

@@ -63,9 +63,20 @@ export const PRESETS = {
     catalogue: { mode: 'grid', share: 0.44, shareVertical: 0.86, maxItemHeightRatio: 0.7, minItemPx: 48 },
     similar: { mode: 'grid', share: 0.3, shareVertical: 0.8, maxItemHeightRatio: 0.7, minItemPx: 48 },
     artistWorks: { mode: 'grid', share: 0.4, shareVertical: 0.86, maxItemHeightRatio: 0.7, minItemPx: 48 },
-    homeWall: { minK: 0.4, gapCm: 43, minGapPx: 210, captionPx: 64, airPx: 48 },
+    homeWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, topCm: 30, minK: 0.4, gapCm: 43, minGapPx: 210, captionPx: 64 },
     detailWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, sideCm: 30, gapCm: 60, maxK: 1.6 },
 };
+
+/**
+ * The one physical wall model (home wall, artist wall, "divarda gör"): a wall of `wallCm` from the floor up, works
+ * hung with their centre at `centreCm` (never below the floor), and at least `topCm` of wall above the highest work —
+ * a work taller than the wall raises the wall instead of being clipped.
+ */
+export function effectiveWallCm(entries, { wallCm, centreCm = HANG_CENTRE_CM, topCm = 30 }) {
+    const highest = entries.reduce((max, e) => Math.max(max, Math.max(0, centreCm - e.h / 2) + e.h), 0);
+
+    return Math.max(wallCm, highest + topCm);
+}
 
 // ─── validation ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -214,10 +225,12 @@ export function figureAt(k) {
 // ─── the home wall ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 /**
- * The home wall. Horizontal (≥ VERTICAL_BELOW_PX): a scrolling strip whose k comes from the HEIGHT — the band from
- * the floor to the top of the highest work (at least the 170 cm figure) fills the available height minus caption
- * and air bands. Works hang with their centre at `centreCm` above the floor, the figure stands on the floor at the
- * left, gaps are `gapCm` but never below `minGapPx` so captions (≈190px wide) never collide.
+ * The home wall. Horizontal (≥ VERTICAL_BELOW_PX): a scrolling strip on the same physical model as "divarda gör" —
+ *     k = (available height − caption band) / wall_cm        (wall_cm = 270 by default; 240 / 270 / 320)
+ * The floor is the bottom edge of the wall; captions sit in a band below it. Works hang with their centre at
+ * `centreCm` (150) above the floor, the 170 cm figure stands on the floor at the left, a work taller than the wall
+ * raises the wall (effectiveWallCm), k never drops below minK (0.4). Gaps are `gapCm` but never below `minGapPx`
+ * so captions (≈190px wide) never collide.
  * Vertical (< VERTICAL_BELOW_PX): works stack top to bottom in one column right of the figure; k comes from the
  * WIDTH so the widest work fits next to the figure column.
  * The demo's hand-hung jitter/pairing offsets and its "cut" rule are cosmetic and deliberately not reproduced here.
@@ -226,11 +239,12 @@ export function wallLayout(items, {
     width = 0,
     height = 0,
     vertical = width > 0 && width < VERTICAL_BELOW_PX,
-    centreCm = HANG_CENTRE_CM,
+    wallCm = PRESETS.homeWall.wallCm,
+    centreCm = PRESETS.homeWall.centreCm,
+    topCm = PRESETS.homeWall.topCm,
     gapCm = PRESETS.homeWall.gapCm,
     minGapPx = PRESETS.homeWall.minGapPx,
     captionPx = PRESETS.homeWall.captionPx,
-    airPx = PRESETS.homeWall.airPx,
     gutterCm = 18,
     minItemPx = 0,
     maxItemHeightPx = Infinity,
@@ -262,13 +276,13 @@ export function wallLayout(items, {
     }
 
     const { valid, skipped } = partition(items, { maxCm });
-    const bandCm = Math.max(HUMAN_HEIGHT_CM, ...valid.map((e) => Math.max(0, centreCm - e.h / 2) + e.h));
-    const targetK = positive(height) ? (height - captionPx - 2 * airPx) / bandCm : 0;
+    const wallHeightCm = effectiveWallCm(valid, { wallCm, centreCm, topCm });
+    const targetK = positive(height) ? (height - captionPx) / wallHeightCm : 0;
     const scale = computeScale(items, { mode: 'scroll', targetK, minItemPx, maxItemHeightPx, minK, maxK, maxCm });
     if (!scale.ready) return { k: 0, ready: false, vertical, items: [], skipped, figure: null, width: 0, height: 0 };
 
     const k = scale.k;
-    const floorPx = airPx + bandCm * k;
+    const floorPx = wallHeightCm * k;
     let x = (figCm + figCm) * k; // figure column + the same again as air before the first work (demo: startPad)
     const gapPx = Math.max(gapCm * k, minGapPx);
     const placed = scale.valid.map((e) => {
@@ -288,8 +302,9 @@ export function wallLayout(items, {
         skipped: scale.skipped,
         figure: { ...fig, left: 0, top: Math.round(floorPx) - fig.height },
         floor: Math.round(floorPx),
+        wallCm: wallHeightCm,
         width: Math.round(x - gapPx),
-        height: Math.round(floorPx + captionPx + airPx),
+        height: Math.round(floorPx + captionPx),
     };
 }
 
@@ -318,16 +333,16 @@ export function detailWallLayout(item, {
     }
 
     const bottomCm = Math.max(0, centreCm - h / 2);
-    const effectiveWallCm = Math.max(wallCm, bottomCm + h + sideCm);
+    const wallHeightCm = effectiveWallCm([{ w, h }], { wallCm, centreCm, topCm: sideCm });
     const sceneCm = sideCm + w + gapCm + FIGURE_CM.width + sideCm;
-    const k = Math.min(width / sceneCm, height / effectiveWallCm, Number.isFinite(maxK) && maxK > 0 ? maxK : Infinity);
+    const k = Math.min(width / sceneCm, height / wallHeightCm, Number.isFinite(maxK) && maxK > 0 ? maxK : Infinity);
     const workLeft = roundSpan(sideCm * k, w * k);
     const figLeft = Math.round((sideCm + w + gapCm) * k);
 
     return {
         k,
         ready: true,
-        wall: { width: Math.round(width), height: Math.round(effectiveWallCm * k), heightCm: effectiveWallCm },
+        wall: { width: Math.round(width), height: Math.round(wallHeightCm * k), heightCm: wallHeightCm },
         work: { left: workLeft.start, bottom: Math.round(bottomCm * k), width: workLeft.length, height: Math.round(h * k) },
         figure: { ...figureAt(k), left: figLeft, bottom: 0 },
     };

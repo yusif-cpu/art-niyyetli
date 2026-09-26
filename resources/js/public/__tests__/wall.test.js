@@ -225,14 +225,42 @@ describe('wall: the home wall (horizontal and vertical)', () => {
         expect(wallLayout(LOCAL, { width: 768, height: 800 }).vertical).toBe(false);
     });
 
-    it('horizontal: k from the height, centres on one 150 cm line, the figure on the floor, gaps ≥ minGapPx', () => {
+    it('horizontal: k = (height − caption band) / 270 cm wall, centres on the 150 cm line, the figure on the floor, gaps ≥ minGapPx', () => {
         const wall = wallLayout(LOCAL, { width: 1440, height: 640 });
-        const bandCm = Math.max(170, ...LOCAL.map((w) => Math.max(0, 150 - w.height_cm / 2) + w.height_cm));
-        expect(wall.k).toBeCloseTo((640 - 64 - 96) / bandCm, 12);
-        wall.items.forEach((it) => expect(it.top + it.height / 2).toBeCloseTo(wall.floor - 150 * wall.k, 0));
+        expect(wall.wallCm).toBe(270); // the tallest local work (140 cm) tops out at 220 cm + 30 cm air: under 270
+        expect(wall.k).toBeCloseTo((640 - 64) / 270, 12);
+        expect(wall.floor).toBe(Math.round(270 * wall.k));
+        wall.items.forEach((it) => {
+            // top and height are rounded separately, so the centre may sit up to 1px off the exact line
+            expect(Math.abs(it.top + it.height / 2 - (wall.floor - 150 * wall.k))).toBeLessThanOrEqual(1);
+            expect(it.top).toBeGreaterThanOrEqual(0); // nothing leaves the top of the wall
+        });
         expect(wall.figure.top + wall.figure.height).toBe(wall.floor);
         wall.items.slice(1).forEach((it, i) => expect(it.left - (wall.items[i].left + wall.items[i].width)).toBeGreaterThanOrEqual(PRESETS.homeWall.minGapPx - 1));
-        expect(wall.height).toBeLessThanOrEqual(640);
+        expect(wall.height).toBe(640);
+    });
+
+    it('horizontal: uses the same wall heights as "divarda gör" and the same k for the same wall and height', () => {
+        // Works that fit under every wall (100 × 80 tops out at 190 cm + 30 cm air = 220 cm < 240 cm):
+        const ks = WALL_HEIGHTS_CM.map((wallCm) => wallLayout([work(100, 80), work(40, 30)], { width: 1440, height: 564, wallCm }).k);
+        expect(ks).toEqual(WALL_HEIGHTS_CM.map((c) => 500 / c));
+        // With the local works a 240 cm wall is raised to 250 cm (140 cm work: 80 → 220 cm, + 30 cm air).
+        expect(wallLayout(LOCAL, { width: 1440, height: 564, wallCm: 240 }).wallCm).toBe(250);
+        const home = wallLayout([work(100, 80)], { width: 1440, height: 500 + 64, wallCm: 270 });
+        const detail = detailWallLayout(work(100, 80), { width: 5000, height: 500, wallCm: 270, maxK: Infinity });
+        expect(home.k).toBeCloseTo(detail.k, 12);
+        expect(home.items[0].height).toBe(detail.work.height);
+    });
+
+    it('horizontal: a work taller than the wall raises the wall instead of leaving the canvas', () => {
+        const wall = wallLayout([work(120, 300), work(40, 30)], { width: 1440, height: 564 });
+        expect(wall.wallCm).toBe(300 + 30); // centre 150 → bottom 0, top 300, + 30 cm air
+        expect(wall.items[0].top).toBeGreaterThanOrEqual(0);
+        expect(wall.items[0].top + wall.items[0].height).toBe(wall.floor);
+    });
+
+    it('horizontal: keeps the 0.4 px/cm floor on a very short container', () => {
+        expect(wallLayout(LOCAL, { width: 1440, height: 120 }).k).toBe(0.4);
     });
 
     it('vertical (375px): k from the width, every work fits beside the figure, works never overlap', () => {

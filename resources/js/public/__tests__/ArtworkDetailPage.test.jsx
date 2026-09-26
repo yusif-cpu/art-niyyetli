@@ -22,8 +22,10 @@ const detail = {
 };
 
 let artwork;
+let enquiryResponse = () => jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' });
 function mockApi() {
     global.fetch = vi.fn((url) => {
+        if (url.startsWith('/api/v1/enquiries')) return Promise.resolve(enquiryResponse());
         if (url.startsWith('/api/v1/artworks/')) return Promise.resolve(typeof artwork === 'function' ? artwork() : jsonResponse(200, { data: artwork }));
         if (url.startsWith('/api/v1/artists')) return Promise.resolve(jsonResponse(200, { data: [{ id: 5, slug: 'aygun-memmedova', first_name: 'Aygün', last_name: 'Məmmədova' }] }));
         if (url.startsWith('/api/v1/navigation')) return Promise.resolve(jsonResponse(200, { data: { header: [], footer: [] } }));
@@ -243,6 +245,51 @@ describe('ArtworkDetailPage', () => {
 
         expect(await screen.findByRole('link', { name: /whatsapp/i })).toHaveAttribute('href', 'https://wa.me/994501234567?text=hi');
         expect(screen.getByTitle(detail.title)).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    });
+
+    it('fills the enquiry form with the artwork code, read-only and visible, and sends it', async () => {
+        renderPage();
+
+        const code = await screen.findByLabelText('Əsərin kodu');
+        expect(code).toHaveValue('AN-2026-014');
+        expect(code).toHaveAttribute('readonly');
+        const form = code.closest('form');
+        expect(form.innerHTML).not.toMatch(/signal/); // no Signal before the form is sent
+        expect(within(form).getByRole('button', { name: 'Göndər' })).toHaveClass('bg-wine', 'text-wine-ink');
+
+        await userEvent.type(within(form).getByLabelText('Ad'), 'Aysel');
+        await userEvent.click(within(form).getByRole('button', { name: 'Göndər' }));
+        const [, init] = global.fetch.mock.calls.find(([url]) => url.startsWith('/api/v1/enquiries'));
+        expect(JSON.parse(init.body)).toMatchObject({ subject: 'buy', artwork_code: 'AN-2026-014', name: 'Aysel' });
+    });
+
+    it('shows a server field error in signal-ink, tied to the field', async () => {
+        enquiryResponse = () => jsonResponse(422, { message: 'The given data was invalid.', errors: { email: ['The email field is required.'] } });
+        mockApi();
+        renderPage();
+
+        const form = (await screen.findByLabelText('Əsərin kodu')).closest('form');
+        await userEvent.click(within(form).getByRole('button', { name: 'Göndər' }));
+
+        const message = await within(form).findByText('The email field is required.');
+        expect(message).toHaveClass('text-caption', 'text-signal-ink');
+        const email = within(form).getByLabelText('E-poçt');
+        expect(email).toHaveClass('border-signal-ink');
+        expect(email).toHaveAttribute('aria-invalid', 'true');
+        expect(email.getAttribute('aria-describedby')).toBe(message.id);
+        enquiryResponse = () => jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' });
+    });
+
+    it('shows success in plain ink, with no Signal and no green', async () => {
+        renderPage();
+
+        const form = (await screen.findByLabelText('Əsərin kodu')).closest('form');
+        await userEvent.click(within(form).getByRole('button', { name: 'Göndər' }));
+
+        const success = await within(form).findByRole('status');
+        expect(success).toHaveTextContent('Sorğunuz qeydə alındı.');
+        expect(success).toHaveClass('text-ink');
+        expect(form.innerHTML).not.toMatch(/signal|green/);
     });
 
     it('does not crash when the locale changes after the page has loaded', async () => {

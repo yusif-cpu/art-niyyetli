@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 /**
  * The content-box width of an element, kept current with a ResizeObserver — never a timer. Returns 0 until the first
@@ -9,7 +9,8 @@ export function useElementWidth({ threshold = 1 } = {}) {
     const [node, setNode] = useState(null);
     const [width, setWidth] = useState(0);
 
-    useEffect(() => {
+    // A layout effect: the first measurement lands before the browser paints, so a wall/grid never flashes empty.
+    useLayoutEffect(() => {
         if (!node) return undefined;
 
         const update = (next) => setWidth((prev) => (Math.abs(next - prev) >= threshold ? next : prev));

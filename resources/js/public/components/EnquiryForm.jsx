@@ -40,18 +40,19 @@ export default function EnquiryForm({ subject, artworkCode }) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-3">
-            {banner && <p className={`text-sm ${status === 'success' ? 'text-green-700' : 'text-red-700'}`}>{banner}</p>}
+            {/* Error: signal-ink text (counts toward the Signal budget). Success: plain ink — there is no green. */}
+            {banner && <p role={status === 'success' ? 'status' : 'alert'} className={`text-sm ${status === 'success' ? 'text-ink' : 'text-signal-ink'}`}>{banner}</p>}
 
             <label className="block text-sm">
                 {t(locale, 'enquiryForm.name')}
-                <input value={fields.name} onChange={(e) => setFields({ ...fields, name: e.target.value })} className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2" />
-                {errors.name && <span className="text-xs text-red-700">{errors.name[0]}</span>}
+                <input value={fields.name} aria-invalid={errors.name ? 'true' : undefined} onChange={(e) => setFields({ ...fields, name: e.target.value })} className={`mt-1 block w-full rounded-md border px-3 py-2 ${errors.name ? 'border-signal-ink' : 'border-neutral-300'}`} />
+                {errors.name && <span className="text-xs text-signal-ink">{errors.name[0]}</span>}
             </label>
 
             <label className="block text-sm">
                 {t(locale, 'enquiryForm.email')}
-                <input type="email" value={fields.email} onChange={(e) => setFields({ ...fields, email: e.target.value })} className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2" />
-                {errors.email && <span className="text-xs text-red-700">{errors.email[0]}</span>}
+                <input type="email" value={fields.email} aria-invalid={errors.email ? 'true' : undefined} onChange={(e) => setFields({ ...fields, email: e.target.value })} className={`mt-1 block w-full rounded-md border px-3 py-2 ${errors.email ? 'border-signal-ink' : 'border-neutral-300'}`} />
+                {errors.email && <span className="text-xs text-signal-ink">{errors.email[0]}</span>}
             </label>
 
             <label className="block text-sm">
@@ -61,8 +62,8 @@ export default function EnquiryForm({ subject, artworkCode }) {
 
             <label className="block text-sm">
                 {t(locale, 'enquiryForm.message')}
-                <textarea value={fields.message} onChange={(e) => setFields({ ...fields, message: e.target.value })} className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2" />
-                {errors.message && <span className="text-xs text-red-700">{errors.message[0]}</span>}
+                <textarea value={fields.message} aria-invalid={errors.message ? 'true' : undefined} onChange={(e) => setFields({ ...fields, message: e.target.value })} className={`mt-1 block w-full rounded-md border px-3 py-2 ${errors.message ? 'border-signal-ink' : 'border-neutral-300'}`} />
+                {errors.message && <span className="text-xs text-signal-ink">{errors.message[0]}</span>}
             </label>
 
             {/* Honeypot: a real, tabbable field visually moved off-screen (never display:none/type=hidden, which bots skip). Left empty by real users. */}

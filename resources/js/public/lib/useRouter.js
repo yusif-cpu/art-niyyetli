@@ -50,7 +50,8 @@ export function useRouter() {
 
     const navigate = useCallback((path) => {
         window.history.pushState(null, '', path);
-        setLocation(matchPath(path));
+        // Match on the path alone: "/artworks?genre=x" is still the catalogue, not a static page named "artworks?genre=x".
+        setLocation(matchPath(window.location.pathname));
     }, []);
 
     useEffect(() => {

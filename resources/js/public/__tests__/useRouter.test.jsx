@@ -43,6 +43,14 @@ describe('useRouter', () => {
         }
     );
 
+    it('matches on the path alone when navigating to a URL with a query string', () => {
+        const { result } = renderHook(() => useRouter());
+        act(() => result.current.navigate('/artworks?genre=fiqurativ&page=2'));
+
+        expect(result.current.page).toBe('catalogue');
+        expect(window.location.search).toBe('?genre=fiqurativ&page=2');
+    });
+
     it('resolves not-found for an unmatched multi-segment path', () => {
         window.history.pushState(null, '', '/a/b/c');
         const { result } = renderHook(() => useRouter());

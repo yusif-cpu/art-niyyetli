@@ -31,11 +31,12 @@ function priceLine(artwork, locale) {
  * yet on the wall module) the card fills its column and the field keeps the work's cm proportions.
  * The whole card is one link. No shadow: the one-shadow exception belongs to works hung on a wall.
  */
-export default function ArtworkCard({ artwork, k, zoneHeight }) {
+export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }) {
     const { locale } = useLocale();
     const { w, h } = readDims(artwork);
     const validDims = isValidDims(w, h);
-    const size = k > 0 && validDims ? cardSize(w, h, k) : null;
+    // `size` comes from packRows (edge-rounded to the row); otherwise the card sizes itself from k.
+    const size = packedSize ?? (k > 0 && validDims ? cardSize(w, h, k) : null);
     const dims = validDims ? formatDimensions(w, h, locale) : null;
     const medium = lowerFirst(artwork.medium?.name, locale);
     const artistName = artwork.artist?.name || null;

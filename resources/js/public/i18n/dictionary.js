@@ -6,6 +6,7 @@ export const dictionary = {
             exhibitions: 'Sərgilər',
             articles: 'Jurnal',
             faqs: 'Suallar',
+            menu: 'menyu',
         },
         common: {
             loading: 'Yüklənir...',
@@ -85,6 +86,7 @@ export const dictionary = {
             exhibitions: 'Exhibitions',
             articles: 'Journal',
             faqs: 'FAQ',
+            menu: 'menu',
         },
         common: {
             loading: 'Loading...',

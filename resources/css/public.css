@@ -150,6 +150,7 @@
     --color-wine: #3e0b0a;
     --color-wine-ink: #f4f0e8;
     --color-wine-ink-muted: #b9a9a4;
+    --color-wine-line: #5f2d2b;       /* DECORATIVE separators on wine (the demo's --line-on-dark) */
 
     /* ---------------------------------------------------------------- font families
     | Components bind to these two tokens, never to a font name, so the next font change is made here once.

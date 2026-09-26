@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 
 const LOCALES = [
@@ -5,22 +6,29 @@ const LOCALES = [
     { value: 'en', label: 'EN' },
 ];
 
-export default function LocaleSwitcher() {
+// A text strip, "AZ / EN". The current language is told apart by ink and weight only — never by Signal.
+export default function LocaleSwitcher({ className = '' }) {
     const { locale, setLocale } = useLocale();
 
     return (
-        <div className="inline-flex rounded-md border border-neutral-300 p-0.5" role="group" aria-label="Language">
-            {LOCALES.map((option) => (
-                <button
-                    key={option.value}
-                    type="button"
-                    aria-current={locale === option.value ? 'true' : undefined}
-                    onClick={() => setLocale(option.value)}
-                    className={`rounded px-2 py-1 text-sm font-medium ${locale === option.value ? 'bg-neutral-900 text-white' : 'text-neutral-600'}`}
-                >
-                    {option.label}
-                </button>
-            ))}
+        <div className={`flex items-baseline gap-1.5 text-label text-ink-muted ${className}`} role="group" aria-label="Language">
+            {LOCALES.map((option, index) => {
+                const current = locale === option.value;
+
+                return (
+                    <Fragment key={option.value}>
+                        {index > 0 && <span aria-hidden="true">/</span>}
+                        <button
+                            type="button"
+                            aria-current={current ? 'true' : undefined}
+                            onClick={() => setLocale(option.value)}
+                            className={`cursor-pointer transition-colors duration-150 ease-standard ${current ? 'font-semibold text-ink' : 'text-ink-muted hover:text-ink'}`}
+                        >
+                            {option.label}
+                        </button>
+                    </Fragment>
+                );
+            })}
         </div>
     );
 }

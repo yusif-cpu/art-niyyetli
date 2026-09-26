@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
@@ -104,7 +104,7 @@ describe('SiteShell', () => {
         logos.forEach((logo) => expect(logo).toHaveAttribute('src', 'https://example.test/logo.webp'));
     });
 
-    it('renders each social link in the header and the footer according to its saved display mode', async () => {
+    it('renders social links as plain text in the header and by their saved display mode in the footer', async () => {
         const defaultFetch = global.fetch;
         global.fetch = vi.fn((url) => {
             if (url.includes('/social-links')) {
@@ -131,14 +131,25 @@ describe('SiteShell', () => {
             </LocaleProvider>
         );
 
-        // logo_only: image named by the platform, no visible text (x2: header + footer)
-        expect(await screen.findAllByRole('img', { name: 'Instagram' })).toHaveLength(2);
-        expect(screen.queryByText('Instagram')).not.toBeInTheDocument();
+        const header = screen.getByRole('banner');
+        const footer = screen.getByRole('contentinfo');
+
+        // Header: platform names only, whatever the display mode; no social icon is loaded there.
+        expect(await within(header).findByText('Instagram')).toBeInTheDocument();
+        expect(within(header).getByRole('link', { name: 'Instagram' })).toHaveAttribute('href', 'https://instagram.com/a');
+        expect(within(header).getByRole('link', { name: 'Facebook' })).toBeInTheDocument();
+        expect(within(header).getByRole('link', { name: 'WhatsApp' })).toBeInTheDocument();
+        expect(header.querySelector('img[src^="https://example.test/ig"], img[src^="https://example.test/fb"], img[src^="https://example.test/wa"]')).toBeNull();
+
+        // Footer: by the saved display mode.
+        // logo_only: image named by the platform, no visible text
+        expect(within(footer).getByRole('img', { name: 'Instagram' })).toHaveAttribute('src', 'https://example.test/ig.webp');
+        expect(within(footer).queryByText('Instagram')).not.toBeInTheDocument();
         // logo_text: the link is named by its text; the icon is decorative
-        expect(screen.getAllByRole('link', { name: 'Facebook' })).toHaveLength(2);
-        expect(screen.queryByRole('img', { name: 'Facebook' })).not.toBeInTheDocument();
+        expect(within(footer).getByRole('link', { name: 'Facebook' })).toBeInTheDocument();
+        expect(within(footer).queryByRole('img', { name: 'Facebook' })).not.toBeInTheDocument();
         // text_only: text link, its logo is never rendered
-        expect(screen.getAllByRole('link', { name: 'WhatsApp' })).toHaveLength(2);
+        expect(within(footer).getByRole('link', { name: 'WhatsApp' })).toBeInTheDocument();
         expect(document.querySelector('img[src="https://example.test/wa.webp"]')).toBeNull();
     });
 

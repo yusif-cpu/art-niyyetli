@@ -93,7 +93,8 @@ export default function CataloguePage() {
                         <h2 id="catalogue-filters-title" className="flex items-baseline gap-step-2 text-nav">
                             {t(locale, 'filters.title')}
                             {count > 0 && (
-                                <span className="figures text-signal-ink" data-testid="active-filter-count">
+                                // An error on screen takes the Signal: the count (information) falls back to ink-muted.
+                                <span className={`figures ${artworks.error ? 'text-ink-muted' : 'text-signal-ink'}`} data-testid="active-filter-count">
                                     {count}
                                     <span className="sr-only"> {t(locale, 'filters.activeCount')}</span>
                                 </span>

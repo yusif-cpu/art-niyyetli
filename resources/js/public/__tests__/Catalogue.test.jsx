@@ -159,6 +159,30 @@ describe('Catalogue', () => {
         expect(screen.queryByRole('button', { name: 'Filtrləri təmizlə' })).not.toBeInTheDocument();
     });
 
+    it('gives the Signal to an error: the active filter count drops to ink-muted while the error shows', async () => {
+        window.history.replaceState(null, '', '/artworks?genre=abstraksiya');
+        artworksResponse = () => errorResponse(500);
+        mockApi();
+        renderPage();
+
+        await screen.findByRole('alert');
+        const badge = screen.getByTestId('active-filter-count');
+        expect(badge).not.toHaveClass('text-signal-ink');
+        expect(badge).toHaveClass('text-ink-muted');
+    });
+
+    it('puts a one-metre ScaleRule above the grid, at the current k', async () => {
+        renderPage();
+        await screen.findByText('Uzun divar', {}, { timeout: 3000 });
+
+        const rule = screen.getByTestId('scale-rule');
+        const grid = rule.parentElement;
+        expect(grid.firstElementChild).toBe(rule);
+        const k = Number(grid.dataset.k);
+        expect(k).toBeCloseTo((1296 * 0.44) / 180, 9);
+        expect(screen.getByTestId('scale-rule-line')).toHaveStyle({ width: `${Math.round(100 * k)}px` });
+    });
+
     it('shows the empty state with a way to clear the filters', async () => {
         window.history.replaceState(null, '', '/artworks?genre=fiqurativ');
         artworksResponse = () => jsonResponse({ data: [], meta: { current_page: 1, last_page: 1, total: 0 } });

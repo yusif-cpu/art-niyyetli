@@ -3,6 +3,7 @@ import { t } from '../i18n/dictionary.js';
 import { useElementWidth } from '../lib/useElementWidth.js';
 import { MIN_CARD_PX, PRESETS, VERTICAL_BELOW_PX, computeScale, packRows } from '../lib/wall.js';
 import ArtworkCard from './ArtworkCard.jsx';
+import ScaleRule from './ScaleRule.jsx';
 
 // Horizontal gap between cards: the step-5 token (24px). packRows needs the same number the CSS uses.
 const CARD_GAP_PX = 24;
@@ -12,7 +13,7 @@ const CARD_GAP_PX = 24;
  * with a per-row zone and bottom-aligned fields (packRows). Renders nothing until the container has a width, so the
  * layout never jumps from a guessed size. Works with unusable sizes follow as unscaled cards.
  */
-export default function ScaledArtworkGrid({ artworks, preset = PRESETS.catalogue }) {
+export default function ScaledArtworkGrid({ artworks, preset = PRESETS.catalogue, showScale = true }) {
     const { locale } = useLocale();
     const [ref, width] = useElementWidth();
     const list = Array.isArray(artworks) ? artworks : [];
@@ -26,6 +27,7 @@ export default function ScaledArtworkGrid({ artworks, preset = PRESETS.catalogue
 
     return (
         <div ref={ref} className="flex flex-col gap-step-7" data-k={scale.k || undefined}>
+            {showScale && rows.length > 0 && <ScaleRule k={scale.k} className="-mb-step-3" />}
             {rows.map((row, index) => (
                 <div key={index} className="flex gap-x-step-5 [&>*]:shrink-0">
                     {row.items.map((cell) => (

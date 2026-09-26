@@ -798,7 +798,27 @@ Source: decoded template lines 450–533, the page CSS at lines 1048–1074, and
 
 ### 6.3 Fonts (CSP `font-src 'self'`)
 
-**Facts:**
+> **Updated after stage 1 (`6158261`, 2026-09-26). Archivo Narrow is out.** The public site uses two families:
+>
+> | Family | Package | Loaded | Role |
+> |---|---|---|---|
+> | **Montserrat** (variable, roman only) | `@fontsource-variable/montserrat` 5.3.0 | latin + latin-ext, weights used 400/500/600 | Interface — what the machine writes: nav, buttons, filters, status, price, medium · dimensions, inventory code, forms, footer, section headings, the artist's big name, the exhibition act title, wall scale labels |
+> | **Spectral** | `@fontsource/spectral` 5.3.0 | latin + latin-ext, **400 roman + 400 italic only** | What a person writes: the artwork title (always italic), biography, artistic approach, short description, exhibition and article text, the home intro sentence |
+>
+> Rule: a sentence written to be read is Spectral, everything else Montserrat; when in doubt, Montserrat. Components bind to `font-ui` / `font-editorial`, never to a font name.
+>
+> - **How they load:** hand-written `@font-face` rules in `resources/css/public.css` pointing at the fontsource woff2 files (Montserrat's package CSS would also pull cyrillic and vietnamese). Vite emits them to `/build/assets/`, `font-display: swap`, no `@fonts`, no CDN. 6 files, **189 KiB** in total; a page that uses no Spectral yet loads only the two Montserrat files (109 KB). Zero CSP violations, no 404, no off-origin font on the built site.
+> - **Azerbaijani letters** (ə Ə ö Ö ü Ü ğ Ğ ı I İ i ş Ş ç Ç) render from their own face in Montserrat 400/500/600 and Spectral 400 roman and italic — checked programmatically and visually.
+> - **Fallbacks are metric-matched** (`Montserrat Fallback` = Arial at 108.46%, `Spectral Fallback` = Georgia at 97.94% / Georgia Italic at 88.11%, with ascent/descent overrides), so the swap does not visibly jump.
+> - **Density — affects stages 2 and 3.** At the same size Montserrat is **31–39% wider** than the demo's Archivo Narrow. Stage 1 dropped the small levels one step (1px) and tightened tracking (e.g. meta 14→13px −0.01em, nav 15→14px, label 13→12px, badge 12→11px; display and hero slightly smaller and tighter). **Even after that, Montserrat text is still about 20% wider than in the demo** (measured 1.17–1.29× per level). The demo's layouts were drawn for the narrow face, so these will not fit at the demo's widths without layout changes:
+>   - **Header:** the nav items plus logo, social links and language switch (plan for wrapping/collapse earlier than the demo's breakpoint; R-9);
+>   - **Catalogue filter row:** five selects plus sort in one line;
+>   - **Footer columns:** narrower columns wrap sooner.
+>   Measure these at 1024/1280/1440 px in stages 2 and 3 instead of copying the demo's widths.
+>
+> The analysis below is the pre-stage-1 research and is kept for history; where it mentions Archivo Narrow, read Montserrat.
+
+**Facts (before stage 1):**
 - **No web font is loaded on the public site today.**
   - `public.css` has no `@font-face`.
   - `public.blade.php` has no `@fonts` and no `<link>`.
@@ -819,7 +839,7 @@ Source: decoded template lines 450–533, the page CSS at lines 1048–1074, and
   - Both families are open-source under the SIL Open Font License, which permits self-hosting and bundling.
   - Keep the licence files with the fonts.
 
-**Recommendation for stage 1:**
+**Recommendation for stage 1 (superseded — done with Montserrat instead of Archivo Narrow, see the box above):**
 - Add `@fontsource/spectral` and `@fontsource-variable/archivo-narrow` as dependencies.
 - Import only the needed weights and styles, and only the **latin + latin-ext** subsets, from `public.css` (or `main.jsx`). Use `font-display: swap`.
 - Vite bundles the woff2 files into `/build/assets/`, which is **same-origin and satisfies `font-src 'self'`**. The CSS stays external, which satisfies `style-src 'self'`.
@@ -939,7 +959,7 @@ connect-src 'self'; frame-src https://www.youtube-nocookie.com; base-uri 'self';
 | # | Stage | What is done | Files touched (main) | Est. | Depends on |
 |---|---|---|---|---|---|
 | **0** | Preconditions | • Install Node LTS on the host.<br>• `chown` `public/build`.<br>• ~~Enable Docker WSL integration and run the pending migration~~ (done, §0).<br>• ~~Decide on Laravel Boost~~ (closed: do not install).<br>• ~~Delete the `:Zone.Identifier` file~~ (done).<br>• Remaining backend questions: G-3, G-5, Q-C-1, Q-B-3, and S1–S6 (§9.3). G-2, D-1 and the wall limit are resolved.<br>• Get a browser check of CSP in enforce mode on the current build. | none (environment) | 0.5 | owner |
-| **1** | Tokens and fonts | • `@theme` + semantic vars + keyframes + reduced-motion in `public.css`.<br>• fontsource Spectral + Archivo Narrow (latin, latin-ext).<br>• Blade body classes.<br>• Vitest `exclude` for `.claude/**`.<br>• Verify that React `style` objects pass CSP. | `resources/css/public.css`, `package.json`/`package-lock.json`, `resources/views/public.blade.php` (body class only), `vite.config.js` (test exclude) | 1–1.5 | 0 |
+| **1** | Tokens and fonts | • `@theme` + semantic vars + keyframes + reduced-motion in `public.css`.<br>• fontsource Spectral + ~~Archivo Narrow~~ Montserrat (latin, latin-ext) — **done in `6158261`**, see §6.3.<br>• Blade body classes.<br>• Vitest `exclude` for `.claude/**`.<br>• Verify that React `style` objects pass CSP. | `resources/css/public.css`, `package.json`/`package-lock.json`, `resources/views/public.blade.php` (body class only), `vite.config.js` (test exclude) | 1–1.5 | 0 |
 | **2** | Layout | • Header (overlay/solid, active item, mobile menu, language strip).<br>• Footer.<br>• StickyContactBar.<br>• Router fix (query strings, scroll-to-top) + `encodeURIComponent`.<br>• `<html lang>` sync.<br>• Dictionary keys. | `layout/*`, `components/LocaleSwitcher.jsx`, `components/SocialLinks.jsx` (classes), `lib/useRouter.js`, `services/*`, `i18n/dictionary.js`, tests: SiteShell, SiteDataContext, App, LocaleSwitcher, useRouter, services | 3–4 | 1 |
 | **3** | Wall maths + card + catalogue | • `lib/wallScale.js` + `useElementSize` with full unit tests.<br>• `ScaledArtworkGrid`.<br>• ArtworkCard redesign.<br>• Price and dims formatting.<br>• Catalogue: all 5 demo filters (genre and medium options from `GET /genres` / `GET /mediums`), plus the size filter (`size_min`/`size_max`), price presets, chips, count, sort, URL sync, pagination, empty reset. | `lib/wallScale.js`, `lib/useElementSize.js`, `components/ArtworkCard.jsx`, `components/ScaledArtworkGrid.jsx`, `components/FilterBar.jsx`, `components/FilterChip.jsx`, `pages/CataloguePage.jsx`, `services/artworks.js` (+ new `services/lookups.js`), tests | 4–5 | 2; size-band and price-preset thresholds (Q-P-1, Q-P-2) |
 | **4** | Artwork detail | • Breadcrumb.<br>• `ArtworkViewer` (tabs, typed thumbnails, 2× zoom, video).<br>• `DetailWallView` + `HumanFigure`.<br>• ArtworkMeta, availability and sold logic, reveal-on-click EnquiryForm, WhatsApp, SpecTable, copy code.<br>• Similar works via `ScaledArtworkGrid`. | `pages/ArtworkDetailPage.jsx`, new `components/ArtworkViewer.jsx`, `DetailWallView.jsx`, `HumanFigure.jsx`, `SpecTable.jsx`, `Breadcrumb.jsx`, `EnquiryForm.jsx` (style), tests | 4–5 | 3; G-5 (artist slug) or interim lookup |
@@ -993,6 +1013,7 @@ connect-src 'self'; frame-src https://www.youtube-nocookie.com; base-uri 'self';
 | Q-D-5 | Artist accordion: portrait (from the API) instead of an artwork image (not available)? Artist tab row on the profile: keep it? |
 | Q-D-6 | Max content width: the demo is full-bleed (`--content-max` is unused). Keep that on 2560 px screens? |
 | Q-D-7 | Home act 3 changes the **body** background while visible, and the header changes on scroll. Keep these scroll-linked effects? They carry motion and accessibility cost. |
+| Q-D-8 | **Error and success colours are missing from the palette.** After stage 1 the components still use Tailwind's `text-red-700` (form field errors, error banners) and `text-green-700` (the enquiry success message). The stage-1 tokens have no error or success colour, and Signal is reserved (and counted toward the three-per-screen limit), so it should not double as the error colour by default. **Decision deferred to stage 4** (artwork detail, where the enquiry form is restyled): add error/success tokens with ≥ 4.5:1 on Bone, or express the states without a new hue. Until then leave the two classes as they are. |
 
 **Content and CMS**
 

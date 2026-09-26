@@ -34,5 +34,7 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: ['./resources/js/admin/testSetup.js'],
         globals: true,
+        // Under WSL eight workers starve each other and form tests hit the 5 s timeout; two are stable and faster.
+        maxWorkers: 2,
     },
 });

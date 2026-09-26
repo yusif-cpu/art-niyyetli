@@ -66,7 +66,8 @@ export const PRESETS = {
     // The artwork page's main field: fill the width / 70% of the viewport height, but never above 6 px/cm — so a small
     // work is not shown as large as a big one (at 1440: 180 cm → 810px, 40 cm → 240px). One cap for every width.
     detailMain: { mode: 'grid', share: 1, maxItemHeightRatio: 0.7, maxK: 6 },
-    homeWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, topCm: 30, minK: 0.4, gapCm: 43, minGapPx: 210, captionPx: 64 },
+    // gap = max(43 cm × k, 48px, caption overflow of the two neighbours + 24px); captions at most 180px wide.
+    homeWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, topCm: 30, minK: 0.4, gapCm: 43, minGapPx: 48, captionMaxPx: 180, captionGapPx: 24, captionPx: 64 },
     detailWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, sideCm: 30, gapCm: 60, maxK: 1.6 },
 };
 
@@ -297,8 +298,12 @@ export function figureAt(k) {
  *     k = (available height − caption band) / wall_cm        (wall_cm = 270 by default; 240 / 270 / 320)
  * The floor is the bottom edge of the wall; captions sit in a band below it. Works hang with their centre at
  * `centreCm` (150) above the floor, the 170 cm figure stands on the floor at the left, a work taller than the wall
- * raises the wall (effectiveWallCm), k never drops below minK (0.4). Gaps are `gapCm` but never below `minGapPx`
- * so captions (≈190px wide) never collide.
+ * raises the wall (effectiveWallCm), k never drops below minK (0.4).
+ * Spacing — the wall's rhythm is physical, the captions only stop it from getting too tight:
+ *     gap(i, i+1) = max(gapCm × k, minGapPx, overflow(i) + overflow(i+1) + captionGapPx)
+ *     overflow(i) = max(0, captionMaxPx − width_i) / 2       (a caption is centred under its work, ≤ 180px wide)
+ * so two neighbouring captions keep 24px between them, and at a tiny k works still keep 48px. The first work leaves
+ * the same room after the figure column. Each item carries its caption box (captionLeft, captionWidth).
  * Vertical (< VERTICAL_BELOW_PX): works stack top to bottom in one column right of the figure; k comes from the
  * WIDTH so the widest work fits next to the figure column.
  * The demo's hand-hung jitter/pairing offsets and its "cut" rule are cosmetic and deliberately not reproduced here.
@@ -312,6 +317,8 @@ export function wallLayout(items, {
     topCm = PRESETS.homeWall.topCm,
     gapCm = PRESETS.homeWall.gapCm,
     minGapPx = PRESETS.homeWall.minGapPx,
+    captionMaxPx = PRESETS.homeWall.captionMaxPx,
+    captionGapPx = PRESETS.homeWall.captionGapPx,
     captionPx = PRESETS.homeWall.captionPx,
     gutterCm = 18,
     minItemPx = 0,
@@ -351,14 +358,23 @@ export function wallLayout(items, {
 
     const k = scale.k;
     const floorPx = wallHeightCm * k;
-    let x = (figCm + figCm) * k; // figure column + the same again as air before the first work (demo: startPad)
-    const gapPx = Math.max(gapCm * k, minGapPx);
-    const placed = scale.valid.map((e) => {
+    const overflow = (e) => Math.max(0, captionMaxPx - e.w * k) / 2;
+    const gapBetween = (a, b) => Math.max(gapCm * k, minGapPx, (a ? overflow(a) : 0) + overflow(b) + captionGapPx);
+    const works = scale.valid;
+    // After the figure column: the demo's air (one figure width), or more if the first caption needs it.
+    let x = figCm * k + Math.max(figCm * k, gapBetween(null, works[0]));
+    const placed = works.map((e, i) => {
         const bottomCm = Math.max(0, centreCm - e.h / 2);
         const span = roundSpan(x, e.w * k);
-        x += e.w * k + gapPx;
+        const captionWidth = Math.round(captionMaxPx);
+        const gapAfter = i < works.length - 1 ? gapBetween(e, works[i + 1]) : 0;
+        x += e.w * k + gapAfter;
 
-        return { item: e.item, index: e.index, widthCm: e.w, heightCm: e.h, left: span.start, width: span.length, top: Math.round(floorPx - (bottomCm + e.h) * k), height: Math.round(e.h * k) };
+        return {
+            item: e.item, index: e.index, widthCm: e.w, heightCm: e.h,
+            left: span.start, width: span.length, top: Math.round(floorPx - (bottomCm + e.h) * k), height: Math.round(e.h * k),
+            captionLeft: Math.round(span.start + (span.length - captionWidth) / 2), captionWidth, gapAfter: Math.round(gapAfter),
+        };
     });
     const fig = figureAt(k);
 
@@ -371,7 +387,7 @@ export function wallLayout(items, {
         figure: { ...fig, left: 0, top: Math.round(floorPx) - fig.height },
         floor: Math.round(floorPx),
         wallCm: wallHeightCm,
-        width: Math.round(x - gapPx),
+        width: Math.round(x + (works.length ? overflow(works[works.length - 1]) : 0)), // the last caption may overhang its work
         height: Math.round(floorPx + captionPx),
     };
 }

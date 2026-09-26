@@ -240,6 +240,56 @@ describe('wall: the home wall (horizontal and vertical)', () => {
         expect(wall.height).toBe(640);
     });
 
+    describe('spacing: max(43 cm × k, 48px, caption overflow + 24px)', () => {
+        const gaps = (wall) => wall.items.slice(1).map((it, i) => it.left - (wall.items[i].left + wall.items[i].width));
+        const overflow = (w, k) => Math.max(0, 180 - w * k) / 2;
+
+        it('the physical 43 cm wins for large works at a large k', () => {
+            const wall = wallLayout([work(180, 140), work(150, 110), work(120, 90)], { width: 1440, height: 2000 });
+            expect(43 * wall.k).toBeGreaterThan(48);
+            gaps(wall).forEach((g) => expect(Math.abs(g - 43 * wall.k)).toBeLessThanOrEqual(1));
+        });
+
+        it('the 48px floor wins at a tiny k when captions do not overhang', () => {
+            const wall = wallLayout([work(500, 100), work(500, 100)], { width: 1440, height: 120 }); // k = 0.4 floor
+            expect(wall.k).toBe(0.4);
+            expect(500 * wall.k).toBeGreaterThan(180); // captions sit inside the works
+            gaps(wall).forEach((g) => expect(Math.abs(g - 48)).toBeLessThanOrEqual(1));
+        });
+
+        it('the caption overflow wins for small works: two neighbouring captions keep 24px', () => {
+            const wall = wallLayout([work(60, 45), work(40, 30)], { width: 1440, height: 564 }); // k = 500 / 270
+            const expected = overflow(60, wall.k) + overflow(40, wall.k) + 24;
+            expect(expected).toBeGreaterThan(Math.max(43 * wall.k, 48));
+            expect(Math.abs(gaps(wall)[0] - expected)).toBeLessThanOrEqual(1);
+            const [a, b] = wall.items;
+            expect(b.captionLeft - (a.captionLeft + a.captionWidth)).toBeGreaterThanOrEqual(23);
+        });
+
+        it('centres a caption (≤ 180px) under its work and keeps the first one clear of the figure column', () => {
+            const wall = wallLayout(LOCAL, { width: 1440, height: 564 });
+            wall.items.forEach((it) => {
+                expect(it.captionWidth).toBe(180);
+                expect(Math.abs(it.captionLeft + it.captionWidth / 2 - (it.left + it.width / 2))).toBeLessThanOrEqual(1);
+            });
+            expect(wall.items[0].captionLeft).toBeGreaterThanOrEqual(wall.figure.width);
+        });
+
+        it('measures the full width of the eight local works at 1440 (wall area 564px high)', () => {
+            const wall = wallLayout(LOCAL, { width: 1440, height: 564 });
+            const k = 500 / 270;
+            let x = 46 * k + Math.max(46 * k, overflow(180, k) + 24);
+            LOCAL.forEach((w, i) => {
+                x += w.width_cm * k;
+                if (i < LOCAL.length - 1) x += Math.max(43 * k, 48, overflow(w.width_cm, k) + overflow(LOCAL[i + 1].width_cm, k) + 24);
+            });
+            x += overflow(40, k);
+            expect(wall.k).toBeCloseTo(k, 12);
+            expect(wall.width).toBe(Math.round(x));
+            expect(wall.width).toBeLessThan(2950);
+        });
+    });
+
     it('horizontal: uses the same wall heights as "divarda gör" and the same k for the same wall and height', () => {
         // Works that fit under every wall (100 × 80 tops out at 190 cm + 30 cm air = 220 cm < 240 cm):
         const ks = WALL_HEIGHTS_CM.map((wallCm) => wallLayout([work(100, 80), work(40, 30)], { width: 1440, height: 564, wallCm }).k);

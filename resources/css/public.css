@@ -6,3 +6,298 @@
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+
+/*
+| Fonts — self-hosted from node_modules; Vite copies the files into public/build, so they satisfy CSP
+| `font-src 'self'` and `style-src 'self'`. Do not use Laravel's @fonts directive (it emits an inline <style>).
+| Only the latin + latin-ext subsets are loaded: latin-ext carries ə (U+0259), ş, ğ, İ.
+|   Montserrat (variable, roman only): the interface — what the machine writes.
+|   Spectral 400 roman + 400 italic: the artwork's identity and texts written to be read — what a person writes.
+| Rule: a sentence written to be read is Spectral; everything else is Montserrat. When in doubt, Montserrat.
+*/
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../../node_modules/@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url('../../node_modules/@fontsource-variable/montserrat/files/montserrat-latin-ext-wght-normal.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Spectral';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('../../node_modules/@fontsource/spectral/files/spectral-latin-400-normal.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Spectral';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('../../node_modules/@fontsource/spectral/files/spectral-latin-ext-400-normal.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Spectral';
+    font-style: italic;
+    font-display: swap;
+    font-weight: 400;
+    src: url('../../node_modules/@fontsource/spectral/files/spectral-latin-400-italic.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Spectral';
+    font-style: italic;
+    font-display: swap;
+    font-weight: 400;
+    src: url('../../node_modules/@fontsource/spectral/files/spectral-latin-ext-400-italic.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/*
+| Metric-matched fallbacks, so text does not jump when the web font arrives (font-display: swap).
+| Measured in the browser on the same Azerbaijani sentence at 16px:
+|   Arial is 7.8% narrower than Montserrat           → size-adjust 108.46%
+|   Georgia is 2.1% wider than Spectral roman        → size-adjust 97.94%
+|   Georgia Italic is 13.5% wider than Spectral italic → size-adjust 88.11%
+| ascent/descent-override = the real font's ascent/descent (per 100px) ÷ size-adjust.
+*/
+@font-face {
+    font-family: 'Montserrat Fallback';
+    src: local('Arial'), local('ArialMT');
+    size-adjust: 108.46%;
+    ascent-override: 89.43%;
+    descent-override: 23.05%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: 'Spectral Fallback';
+    font-style: normal;
+    src: local('Georgia');
+    size-adjust: 97.94%;
+    ascent-override: 108.23%;
+    descent-override: 46.97%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: 'Spectral Fallback';
+    font-style: italic;
+    src: local('Georgia Italic'), local('Georgia-Italic');
+    size-adjust: 88.11%;
+    ascent-override: 120.3%;
+    descent-override: 52.21%;
+    line-gap-override: 0%;
+}
+
+/*
+| Design tokens. Source: demo-frontend/ArtNiyyetli.html (decoded template + design-system bundle).
+| `static` keeps every token as a CSS variable even when no utility uses it yet, so components can also read
+| them as var(--color-…) (e.g. React style objects for the wall geometry).
+|
+| Naming: by function, not by look. Tailwind's default scales (text-sm, max-w-xl, p-4 …) are left untouched
+| because the current components use them; the new names never collide with a default key.
+*/
+@theme static {
+    /* ---------------------------------------------------------------- colour
+    | Contrast on Bone #F4F0E8 (WCAG): ink 15.81 · ink-muted 5.24 · signal 3.73 · signal-ink 4.56 · line 1.27 ·
+    | line-strong 3.01. On wine #3E0B0A: wine-ink 14.70 · wine-ink-muted 7.38 · signal 3.94.
+    */
+    --color-surface: #f4f0e8;         /* Bone — the page background */
+    --color-surface-raised: #faf8f3;  /* form inputs */
+    /* Artwork field tones (the field an artwork image sits on). Text NEVER sits on a field: it goes below it,
+       on Bone. If it is ever forced onto a field, use ink, not ink-muted (ink-muted on field-2 is only 4.08). */
+    --color-surface-field: #eae4d8;
+    --color-surface-field-2: #ddd5c5;
+    --color-surface-field-3: #faf8f3;
+
+    --color-ink: #1a1614;             /* body text */
+    /* Secondary text: medium · dimensions, labels, eyebrows, filter counters. The demo's lighter #9A9089
+       (2.75:1) is merged into this tone on purpose — there is no ink-faint. Hierarchy comes from size and
+       placement, not from a lighter grey. */
+    --color-ink-muted: #6b625c;
+
+    --color-line: #ddd6ca;            /* DECORATIVE separators only (1.27:1) */
+    /* Borders of form fields and other interactive outlines: the lightest tone of the warm-grey ramp
+       (line → ink) that reaches 3:1 on Bone (3.01). */
+    --color-line-strong: #908a82;
+
+    /* Signal. Two tokens, counted TOGETHER for the "at most three Signals on one screen" limit.
+       --color-signal:     non-text and large type — logo, focus ring, active underline, large headings.
+       --color-signal-ink: small red text — active nav text, the "Satılıb" badge, links, active filter.
+       Rule: red text smaller than 18px OR lighter than weight 600 is always signal-ink; everything else signal.
+       Never use either on a wine section (signal on wine is 3.94). */
+    --color-signal: #f51000;
+    --color-signal-ink: #da0f02;
+
+    /* Wine (bordo) sections: exhibition act, footer. Only wine-ink and wine-ink-muted are used on them. */
+    --color-wine: #3e0b0a;
+    --color-wine-ink: #f4f0e8;
+    --color-wine-ink-muted: #b9a9a4;
+
+    /* ---------------------------------------------------------------- font families
+    | Components bind to these two tokens, never to a font name, so the next font change is made here once.
+    */
+    --font-ui: 'Montserrat', 'Montserrat Fallback', ui-sans-serif, system-ui, sans-serif;
+    --font-editorial: 'Spectral', 'Spectral Fallback', Georgia, 'Times New Roman', serif;
+
+    /* ---------------------------------------------------------------- type scale (functional names)
+    | Montserrat levels are the demo's Archivo Narrow values made denser: Montserrat is 31–39% wider at the
+    | same size, so small text drops one step (1px) and tightens. Spectral levels keep the demo values.
+    | Width vs the demo in brackets (Montserrat ÷ Archivo Narrow, same text).
+    */
+    /* Montserrat — interface */
+    --text-hero: clamp(52px, 8.4vw, 138px);      /* exhibition act title; demo clamp(56px, 9vw, 148px) −0.035em [1.22] */
+    --text-hero--line-height: 0.92;
+    --text-hero--letter-spacing: -0.045em;
+    --text-hero--font-weight: 600;
+    --text-display: clamp(32px, 4.1vw, 64px);    /* section h2, the artist's big name; demo clamp(34px, 4.4vw, 68px) −0.025em [1.26] */
+    --text-display--line-height: 1.02;
+    --text-display--letter-spacing: -0.035em;
+    --text-display--font-weight: 600;
+    --text-heading: 28px;                        /* small section heading; demo 28px −0.02em [1.32] */
+    --text-heading--line-height: 1.14;
+    --text-heading--letter-spacing: -0.03em;
+    --text-heading--font-weight: 600;
+    --text-subheading: 20px;                     /* demo 21px −0.02em [1.29] */
+    --text-subheading--line-height: 1.14;
+    --text-subheading--letter-spacing: -0.03em;
+    --text-subheading--font-weight: 500;
+    --text-byline-lg: 16px;                      /* artist name on the artwork page; demo 17px −0.02em [1.27] */
+    --text-byline-lg--line-height: 1.3;
+    --text-byline-lg--letter-spacing: -0.03em;
+    --text-byline-lg--font-weight: 500;
+    --text-ui: 15px;                             /* interface body copy, buttons; demo 16px */
+    --text-ui--line-height: 1.5;
+    --text-nav: 14px;                            /* navigation; demo 15px +0.01em [1.21] */
+    --text-nav--line-height: 1.3;
+    --text-nav--letter-spacing: 0em;
+    --text-nav--font-weight: 500;
+    --text-meta: 13px;                           /* medium · dimensions line, filter/sort labels, price; demo 14px [1.19–1.25] */
+    --text-meta--line-height: 1.4;
+    --text-meta--letter-spacing: -0.01em;
+    --text-byline: 13px;                         /* artist name on a card; demo 14px −0.02em [1.24] */
+    --text-byline--line-height: 1.3;
+    --text-byline--letter-spacing: -0.03em;
+    --text-byline--font-weight: 500;
+    --text-label: 12px;                          /* spec-table terms, form labels, footer column titles; demo 13px +0.01em [1.17] */
+    --text-label--line-height: 1.35;
+    --text-label--letter-spacing: 0em;
+    --text-caption: 11px;                        /* status badge, eyebrow, wall scale; demo 12px / 11px +0.01em [1.20 / 1.28]. Floor: 11px */
+    --text-caption--line-height: 1.3;
+    --text-caption--letter-spacing: 0em;
+
+    /* Spectral — editorial (unchanged from the demo) */
+    --text-lead: 19px;                           /* home intro sentence */
+    --text-lead--line-height: 1.62;
+    --text-reading: 17px;                        /* biography, artistic approach, exhibition and article text */
+    --text-reading--line-height: 1.62;
+    --text-reading-sm: 15px;                     /* short artwork description, spec values */
+    --text-reading-sm--line-height: 1.6;
+    --text-title-lg: 26px;                       /* artwork title on its own page — always italic */
+    --text-title-lg--line-height: 1.25;
+    --text-title: 19px;                          /* artwork title on a card — always italic */
+    --text-title--line-height: 1.25;
+    --text-title-sm: 14px;                       /* artwork title in compact lists — always italic */
+    --text-title-sm--line-height: 1.25;
+
+    /* Free-standing tracking / leading for text that does not use a text-* level above */
+    --tracking-hero: -0.045em;
+    --tracking-display: -0.035em;
+    --tracking-heading: -0.03em;
+    --tracking-meta: -0.01em;
+    --leading-display: 1.02;
+    --leading-heading: 1.14;
+    --leading-reading: 1.62;
+    --leading-compact: 1.3;
+
+    /* ---------------------------------------------------------------- spacing
+    | The demo's scale, 4 → 144px, as `step-N` (p-step-4, gap-step-6 …). Numeric names are avoided on purpose:
+    | --spacing-4 would silently change Tailwind's p-4 used by the current components.
+    | Off-scale demo values were rounded to the nearest step (a tie rounds down): 6→8, 9→8, 10→8, 14→16,
+    | 40→32, 52→48, 56→48, 72→64, 90→96, 120→96. 1–3px optical nudges stay literal.
+    */
+    --spacing-step-1: 4px;
+    --spacing-step-2: 8px;
+    --spacing-step-3: 12px;
+    --spacing-step-4: 16px;
+    --spacing-step-5: 24px;
+    --spacing-step-6: 32px;
+    --spacing-step-7: 48px;
+    --spacing-step-8: 64px;
+    --spacing-step-9: 96px;
+    --spacing-step-10: 144px;
+    --spacing-page: clamp(32px, 5vw, 96px);      /* horizontal page padding; 32px ≤1024px, 20px ≤760px (below) */
+
+    /* ---------------------------------------------------------------- borders, radius, motion
+    | Borders are always 1px (hairline = line, interactive = line-strong); 2px only for strong rules.
+    | Radius is 0 everywhere except inputs and chips (2px). No shadows.
+    */
+    --radius-input: 2px;
+    --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --spacing-page: 32px;
+    }
+}
+
+@media (max-width: 760px) {
+    :root {
+        --spacing-page: 20px;
+    }
+}
+
+/* Tabular figures for prices and dimensions, so columns of numbers line up (Montserrat's default figures are
+   proportional). Tailwind's built-in `tabular-nums` does the same; this name documents the intent. */
+@utility figures {
+    font-variant-numeric: tabular-nums lining-nums;
+}
+
+@layer base {
+    html {
+        font-family: var(--font-ui);
+    }
+
+    /* Keyboard focus: a thin Signal ring. Replaces the browser's ring, only for :focus-visible (keyboard), so a
+       mouse click shows none. Only one element has focus at a time, so it does not count toward the Signal limit. */
+    :focus-visible {
+        outline: 2px solid var(--color-signal);
+        outline-offset: 3px;
+    }
+
+    /* Signal is never used on wine sections; the ring switches to wine-ink there. */
+    .bg-wine :focus-visible,
+    [data-surface='wine'] :focus-visible {
+        outline-color: var(--color-wine-ink);
+    }
+}
+
+/* Reduced motion: turn transitions and animations off globally; later stages inherit this. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

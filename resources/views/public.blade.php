@@ -37,7 +37,7 @@
 
     @vite(['resources/css/public.css', 'resources/js/public/main.jsx'])
 </head>
-<body class="bg-white text-neutral-900 antialiased">
+<body class="bg-surface text-ink font-ui antialiased">
     <div id="public-root"></div>
 </body>
 </html>

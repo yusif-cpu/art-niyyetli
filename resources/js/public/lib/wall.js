@@ -63,6 +63,7 @@ export const PRESETS = {
     catalogue: { mode: 'grid', share: 0.44, shareVertical: 0.86, maxItemHeightRatio: 0.7, minItemPx: 48 },
     similar: { mode: 'grid', share: 0.3, shareVertical: 0.8, maxItemHeightRatio: 0.7, minItemPx: 48 },
     artistWorks: { mode: 'grid', share: 0.4, shareVertical: 0.86, maxItemHeightRatio: 0.7, minItemPx: 48 },
+    detailMain: { mode: 'grid', share: 1, maxItemHeightRatio: 0.7 },
     homeWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, topCm: 30, minK: 0.4, gapCm: 43, minGapPx: 210, captionPx: 64 },
     detailWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, sideCm: 30, gapCm: 60, maxK: 1.6 },
 };

@@ -252,6 +252,9 @@
     */
     --radius-input: 2px;
     --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+    /* The brief's ONE shadow exception (2px, 6%): only under a work shown as hung — the main image of the artwork
+       page and works on a wall section. Never on catalogue cards or similar-work grids. */
+    --shadow-hang: 0 2px 0 rgb(26 22 20 / 0.06);
 }
 
 @media (max-width: 1024px) {

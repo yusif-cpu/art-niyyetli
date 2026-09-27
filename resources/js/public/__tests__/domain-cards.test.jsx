@@ -1,15 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { LocaleProvider } from '../i18n/LocaleContext.jsx';
 import ArtistCard from '../components/ArtistCard.jsx';
 import ExhibitionCard from '../components/ExhibitionCard.jsx';
 import ArticleCard from '../components/ArticleCard.jsx';
 
 describe('ArtistCard', () => {
+    // The card reads the locale (its works-count label), so it renders inside LocaleProvider.
     it('renders the name, direction, and a link to the profile', () => {
         render(
-            <ArtistCard
-                artist={{ slug: 'aygun-mammadova', first_name: 'Aygün', last_name: 'Məmmədova', direction: 'Müasir rəssamlıq', portrait_url: 'https://example.test/portrait.webp' }}
-            />
+            <LocaleProvider>
+                <ArtistCard
+                    artist={{ slug: 'aygun-mammadova', first_name: 'Aygün', last_name: 'Məmmədova', direction: 'Müasir rəssamlıq', portrait_url: 'https://example.test/portrait.webp' }}
+                />
+            </LocaleProvider>
         );
 
         expect(screen.getByText('Aygün Məmmədova')).toBeInTheDocument();
@@ -20,7 +24,7 @@ describe('ArtistCard', () => {
     });
 
     it('renders a placeholder, not a broken image, when portrait_url is null', () => {
-        render(<ArtistCard artist={{ slug: 'x', first_name: 'X', last_name: 'Y', direction: 'Z', portrait_url: null }} />);
+        render(<LocaleProvider><ArtistCard artist={{ slug: 'x', first_name: 'X', last_name: 'Y', direction: 'Z', portrait_url: null }} /></LocaleProvider>);
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 });

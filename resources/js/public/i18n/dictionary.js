@@ -55,6 +55,14 @@ export const dictionary = {
         artist: {
             exhibitionHistory: 'Sərgi tarixçəsi',
             awards: 'Mükafatlar',
+            biography: 'Tərcümeyi-hal',
+            approach: 'Yaradıcılıq yanaşması',
+            works: 'Əsərləri',
+            wallLabel: 'Rəssamın əsərləri divarda, həqiqi ölçüdə; sürüşdürmək üçün ox düymələri',
+            enquire: 'Rəssam haqqında soruş',
+            notFoundTitle: 'Rəssam tapılmadı',
+            notFoundBody: 'Bu ünvanda rəssam yoxdur və ya artıq göstərilmir.',
+            backToArtists: 'Rəssamlara qayıt',
         },
         enquiryForm: {
             name: 'Ad',
@@ -182,6 +190,14 @@ export const dictionary = {
         artist: {
             exhibitionHistory: 'Exhibition history',
             awards: 'Awards',
+            biography: 'Biography',
+            approach: 'Artistic approach',
+            works: 'Works',
+            wallLabel: 'The artist’s works on a wall at true size; use the arrow keys to scroll',
+            enquire: 'Ask about this artist',
+            notFoundTitle: 'Artist not found',
+            notFoundBody: 'There is no artist at this address, or they are no longer shown.',
+            backToArtists: 'Back to the artists',
         },
         enquiryForm: {
             name: 'Name',

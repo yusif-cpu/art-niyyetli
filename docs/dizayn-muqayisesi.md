@@ -310,6 +310,8 @@ Canlı saytda da eyni qayda var: `SiteShell` = `min-h-screen flex-col`, `main` =
   3. footer-də yalnız mətn qalır.
 
   Tövsiyəm birinci seçimdir.
+
+  **Qərar (tətbiq mərhələsi):** ikinci seçim götürüldü. Brend kitabçasından çıxarılmış iki SVG (`brand/artniyyetli-lockup.svg`, `brand/artniyyetli-mark.svg`, `fill="currentColor"`) `BrandLogo` komponentində inline çəkilir. API-nin `logo_url` sahəsi işlənmir, S11 siyahıdan çıxarıldı.
 - 300px-lik thumbnail 34px hündürlükdə 2x ekran üçün kifayətdir: 34 × 2 = 68px hündürlük lazımdır, 300px-lik faylda 120px var.
 
 ---
@@ -358,7 +360,6 @@ Canlı saytda da eyni qayda var: `SiteShell` = `min-h-screen flex-col`, `main` =
 |---|---|---|
 | S9 | rəssamın əsər sayı (artıq siyahıdadır) | kartlarda "2 əsər" |
 | S10 | E10-da iştirakçı rəssamların `portrait_url`-i | sərgi səhifəsində portretlər |
-| S11 | ikinci loqo sahəsi (tünd fon üçün) və ya SVG qərarı | footer-də wine-ink loqo |
 | S12 (təklif) | ana səhifənin "steps" bölməsi üçün elementli quruluş | A5-in 4 sütunlu addımları |
 
 ### Müştəriyə suallar

@@ -3,7 +3,7 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useSiteData } from './SiteDataContext.jsx';
 import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
-import BrandMark from '../components/BrandMark.jsx';
+import BrandLogo from '../components/BrandLogo.jsx';
 
 function itemLabel(locale, item) {
     return item.type === 'page' ? item.title : t(locale, `nav.${item.route_key}`);
@@ -20,7 +20,7 @@ function isActive(href, pathname) {
 
 export default function Header() {
     const { locale } = useLocale();
-    const { navigation, settings } = useSiteData();
+    const { navigation } = useSiteData();
     const [menuOpen, setMenuOpen] = useState(false);
     const headerItems = Array.isArray(navigation.data?.header) ? navigation.data.header : [];
     const hasMenu = headerItems.length > 0;
@@ -35,14 +35,10 @@ export default function Header() {
               < md  brand + language + a "menyu" text toggle; the navigation opens as a plain list below.
             */}
             <div className="flex flex-wrap items-center gap-x-step-6 gap-y-step-4 px-page py-step-5 lg:flex-nowrap">
-                <a href="/" className="shrink-0">
-                    <BrandMark
-                        logoUrl={settings.data?.logo_url}
-                        displayMode={settings.data?.logo_display_mode || 'logo_text'}
-                        brandText={settings.data?.brand_text || 'ArtNiyyətli'}
-                        imgClassName="h-8.5 w-auto"
-                        textClassName="text-subheading font-bold tracking-display text-signal"
-                    />
+                {/* The logo in wine (never Signal): the lockup, and below 375px the mark alone. */}
+                <a href="/" className="shrink-0 text-wine" data-testid="header-brand">
+                    <BrandLogo variant="lockup" className="hidden h-7 min-[375px]:block" />
+                    <BrandLogo variant="mark" className="h-7 min-[375px]:hidden" />
                 </a>
 
                 {/* Below md the navigation collapses behind a plain text toggle: no animation. */}

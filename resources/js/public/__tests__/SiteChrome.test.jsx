@@ -49,14 +49,35 @@ describe('Site chrome (header + footer)', () => {
         window.history.pushState(null, '', '/');
     });
 
-    it('shows the brand text in the header when there is no logo image', async () => {
+    // (was: brand text when there is no logo image) — the brand is now the inline SVG logo, whatever the settings say.
+    it('shows the inline SVG logo in wine in the header: the lockup, and the mark alone below 375px', async () => {
         mockShell();
         renderShell();
 
         const header = screen.getByRole('banner');
         await within(header).findByRole('link', { name: 'Əsərlər' });
-        expect(within(header).getByText('ArtNiyyətli')).toBeInTheDocument();
-        expect(within(header).queryByRole('img')).not.toBeInTheDocument();
+        const brand = within(header).getByTestId('header-brand');
+        expect(brand).toHaveAttribute('href', '/');
+        expect(brand).toHaveClass('text-wine');
+        const [lockup, mark] = within(brand).getAllByRole('img', { name: 'ArtNiyyətli' });
+        expect(lockup.tagName.toLowerCase()).toBe('svg');
+        expect(lockup).toHaveAttribute('data-logo', 'lockup');
+        expect(lockup).toHaveClass('hidden', 'min-[375px]:block', 'h-7');
+        expect(mark).toHaveAttribute('data-logo', 'mark');
+        expect(mark).toHaveClass('min-[375px]:hidden', 'h-7');
+        expect(header.querySelector('img')).toBeNull();
+    });
+
+    it('draws the logo with currentColor, so the parent colour sets it; no red brand text anywhere', async () => {
+        mockShell();
+        const { container } = renderShell();
+        await within(screen.getByRole('banner')).findByRole('link', { name: 'Əsərlər' });
+
+        container.querySelectorAll('svg[data-logo]').forEach((svg) => expect(svg).toHaveAttribute('fill', 'currentColor'));
+        expect(within(screen.getByRole('contentinfo')).getByTestId('footer-brand')).toHaveClass('text-wine-ink');
+        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' })).toHaveClass('h-6');
+        expect(screen.queryByText('ArtNiyyətli')).not.toBeInTheDocument();
+        [...container.querySelectorAll('.text-signal')].forEach((el) => expect(el.closest('[data-testid$="-brand"]')).toBeNull());
     });
 
     it('keeps the header intact when the navigation is empty', async () => {
@@ -64,7 +85,7 @@ describe('Site chrome (header + footer)', () => {
         renderShell();
 
         const header = screen.getByRole('banner');
-        expect(await within(header).findByText('ArtNiyyətli')).toBeInTheDocument();
+        expect((await within(header).findAllByRole('img', { name: 'ArtNiyyətli' })).length).toBeGreaterThan(0);
         expect(within(header).queryByRole('navigation')).not.toBeInTheDocument();
         expect(within(header).getByRole('group', { name: 'Language' })).toBeInTheDocument();
         // Nothing to open, so no menu toggle either.

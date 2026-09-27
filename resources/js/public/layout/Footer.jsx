@@ -1,7 +1,7 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useSiteData } from './SiteDataContext.jsx';
-import BrandMark from '../components/BrandMark.jsx';
+import BrandLogo from '../components/BrandLogo.jsx';
 import SocialLinks from '../components/SocialLinks.jsx';
 
 // The footer menu is one flat, admin-managed list: split it into up to three columns of about four links each, so the
@@ -35,13 +35,9 @@ export default function Footer() {
         <footer data-surface="wine" className="bg-wine px-page pt-step-8 pb-step-6 font-ui text-wine-ink">
             <div className={`grid gap-step-7 ${columns.length > 0 ? 'md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]' : ''}`}>
                 <div className="flex flex-col items-start gap-step-4">
-                    <BrandMark
-                        logoUrl={site.logo_url}
-                        displayMode={site.logo_display_mode || 'logo_text'}
-                        brandText={site.brand_text || 'ArtNiyyətli'}
-                        imgClassName="h-7.5 w-auto"
-                        textClassName="text-subheading font-bold tracking-display"
-                    />
+                    <a href="/" className="text-wine-ink" data-testid="footer-brand">
+                        <BrandLogo variant="lockup" className="h-6" />
+                    </a>
                     {(site.address || site.opening_hours) && (
                         <div className="max-w-sm text-meta leading-relaxed text-wine-ink-muted">
                             {site.address && <p>{site.address}</p>}

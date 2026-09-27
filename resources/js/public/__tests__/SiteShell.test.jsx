@@ -89,7 +89,9 @@ describe('SiteShell', () => {
         expect(screen.getByRole('link', { name: 'İstifadə şərtləri' })).toHaveAttribute('href', '/terms');
     });
 
-    it('renders the branding logo from site settings in both the header and the footer', async () => {
+    // (was: the raster logo_url in both places) — the logo is the brand's inline SVG; a raster logo cannot turn
+    // wine-ink on the wine footer, so logo_url is deliberately not used.
+    it('renders the inline SVG logo in both the header and the footer, not the raster logo_url', async () => {
         render(
             <LocaleProvider>
                 <SiteDataProvider>
@@ -100,9 +102,10 @@ describe('SiteShell', () => {
             </LocaleProvider>
         );
 
-        const logos = await screen.findAllByRole('img', { name: 'ArtNiyyətli' });
-        expect(logos).toHaveLength(2);
-        logos.forEach((logo) => expect(logo).toHaveAttribute('src', 'https://example.test/logo.webp'));
+        await screen.findByText('ArtNiyyətli qalereyası'); // settings have arrived
+        expect(within(screen.getByRole('banner')).getAllByRole('img', { name: 'ArtNiyyətli' }).length).toBeGreaterThan(0);
+        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' }).tagName.toLowerCase()).toBe('svg');
+        expect(document.querySelector('img[src="https://example.test/logo.webp"]')).toBeNull();
     });
 
     it('renders social links only in the footer, by their saved display mode', async () => {

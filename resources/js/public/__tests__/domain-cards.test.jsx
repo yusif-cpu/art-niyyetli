@@ -52,11 +52,14 @@ describe('ExhibitionCard', () => {
 });
 
 describe('ArticleCard', () => {
+    // The card reads the locale (date and type labels), so it renders inside LocaleProvider.
     it('renders the title, short text, and a link to the detail page', () => {
         render(
-            <ArticleCard
-                article={{ slug: 'artist-interview-2026', title: 'An Interview With...', short_text: 'A short teaser.', published_at: '2026-01-05T10:00:00+00:00', media: [{ type: 'photo', url: 'https://example.test/article.webp' }] }}
-            />
+            <LocaleProvider>
+                <ArticleCard
+                    article={{ slug: 'artist-interview-2026', title: 'An Interview With...', short_text: 'A short teaser.', published_at: '2026-01-05T10:00:00+00:00', media: [{ type: 'photo', url: 'https://example.test/article.webp' }] }}
+                />
+            </LocaleProvider>
         );
 
         expect(screen.getByText('An Interview With...')).toBeInTheDocument();
@@ -67,7 +70,7 @@ describe('ArticleCard', () => {
     });
 
     it('renders a placeholder when there is no media', () => {
-        render(<ArticleCard article={{ slug: 'x', title: 'X', short_text: 'Y', published_at: '2025-01-01T00:00:00+00:00', media: [] }} />);
+        render(<LocaleProvider><ArticleCard article={{ slug: 'x', title: 'X', short_text: 'Y', published_at: '2025-01-01T00:00:00+00:00', media: [] }} /></LocaleProvider>);
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 });

@@ -137,6 +137,21 @@ export const dictionary = {
             notFoundBody: 'Bu ünvanda sərgi yoxdur və ya artıq göstərilmir.',
             backToList: 'Sərgilərə qayıt',
         },
+        articles: {
+            empty: 'Hələ məqalə yoxdur.',
+            more: 'Digər məqalələr',
+            notFoundTitle: 'Məqalə tapılmadı',
+            notFoundBody: 'Bu ünvanda məqalə yoxdur və ya artıq göstərilmir.',
+            backToList: 'Jurnala qayıt',
+            types: {
+                interview: 'Müsahibə',
+                video_project: 'Video layihə',
+                art_article: 'Sənət məqaləsi',
+                exhibition_review: 'Sərgi icmalı',
+                news: 'Xəbər',
+                announcement: 'Elan',
+            },
+        },
         contact: {
             title: 'Əlaqə',
             subjectLabel: 'Mövzu',
@@ -279,6 +294,21 @@ export const dictionary = {
             notFoundTitle: 'Exhibition not found',
             notFoundBody: 'There is no exhibition at this address, or it is no longer shown.',
             backToList: 'Back to the exhibitions',
+        },
+        articles: {
+            empty: 'No articles yet.',
+            more: 'More articles',
+            notFoundTitle: 'Article not found',
+            notFoundBody: 'There is no article at this address, or it is no longer shown.',
+            backToList: 'Back to the journal',
+            types: {
+                interview: 'Interview',
+                video_project: 'Video project',
+                art_article: 'Art article',
+                exhibition_review: 'Exhibition review',
+                news: 'News',
+                announcement: 'Announcement',
+            },
         },
         contact: {
             title: 'Contact',

@@ -6,28 +6,49 @@ import { usePageMeta } from '../lib/usePageMeta.js';
 import { listArticles } from '../services/articles.js';
 import ArticleCard from '../components/ArticleCard.jsx';
 import Pagination from '../components/Pagination.jsx';
-import LoadingState from '../components/LoadingState.jsx';
-import EmptyState from '../components/EmptyState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 
+/**
+ * The journal: newest first (E11), one article per row between hairlines — date and type, title, short text, cover.
+ * Pages. No type filter: E11 takes only locale, page and per_page.
+ */
 export default function ArticlesPage() {
     const { locale } = useLocale();
     const [page, setPage] = useState(1);
-    const { data, meta, loading, error } = useApiData(() => listArticles(locale, { page }), [locale, page]);
+    const [retryToken, setRetryToken] = useState(0);
+    const { data, meta, loading, error } = useApiData(() => listArticles(locale, page > 1 ? { page } : undefined), [locale, page, retryToken]);
 
     usePageMeta({ title: `${t(locale, 'nav.articles')} — ArtNiyyətli` });
 
-    if (loading) return <LoadingState />;
-    if (error) return <ErrorState error={error} />;
-    if (data.length === 0) return <EmptyState />;
-
     return (
-        <div className="px-6 py-8">
-            <h1 className="mb-6 text-2xl font-semibold">{t(locale, 'nav.articles')}</h1>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {data.map((article) => <ArticleCard key={article.slug} article={article} />)}
-            </div>
-            <Pagination meta={meta} onPageChange={setPage} />
+        <div className="px-page pt-step-8 pb-step-9 font-ui">
+            <h1 className="border-b border-line pb-step-5 text-display">{t(locale, 'nav.articles')}</h1>
+
+            {loading && !data && (
+                <div aria-busy="true" data-testid="articles-skeleton">
+                    {Array.from({ length: 3 }, (_, i) => (
+                        <div key={i} aria-hidden="true" className="flex flex-col gap-step-2 border-b border-line py-step-5">
+                            <div className="h-3 w-1/5 bg-surface-field" />
+                            <div className="h-6 w-1/2 bg-surface-field" />
+                            <div className="h-4 w-2/3 bg-surface-field" />
+                        </div>
+                    ))}
+                </div>
+            )}
+            {error && <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />}
+            {!error && data?.length === 0 && <p className="mt-step-7 text-ui text-ink-muted">{t(locale, 'articles.empty')}</p>}
+            {!error && data?.length > 0 && (
+                <>
+                    <ul>
+                        {data.map((article) => (
+                            <li key={article.slug} className="border-b border-line">
+                                <ArticleCard article={article} />
+                            </li>
+                        ))}
+                    </ul>
+                    <Pagination meta={meta} onPageChange={setPage} />
+                </>
+            )}
         </div>
     );
 }

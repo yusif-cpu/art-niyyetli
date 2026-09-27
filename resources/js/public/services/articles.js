@@ -5,5 +5,5 @@ export function listArticles(locale, { page, per_page } = {}) {
 }
 
 export function getArticle(locale, slug) {
-    return publicApiFetch(`/articles/${slug}`, { locale });
+    return publicApiFetch(`/articles/${encodeURIComponent(slug)}`, { locale });
 }

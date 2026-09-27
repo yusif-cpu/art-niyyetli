@@ -4,54 +4,81 @@ import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
 import { listExhibitions } from '../services/exhibitions.js';
-import ExhibitionCard from '../components/ExhibitionCard.jsx';
+import ExhibitionRow from '../components/ExhibitionRow.jsx';
 import Pagination from '../components/Pagination.jsx';
-import LoadingState from '../components/LoadingState.jsx';
-import EmptyState from '../components/EmptyState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 
-const TAB_KEYS = [
-    { value: undefined, key: 'exhibitions.all' },
-    { value: 'current', key: 'exhibitions.current' },
-    { value: 'upcoming', key: 'exhibitions.upcoming' },
-    { value: 'archive', key: 'exhibitions.archive' },
-];
+// Current and upcoming shows are few: one request each, the API's largest page. The archive grows and pages.
+const OPEN_PER_PAGE = 60;
 
+function Group({ id, title, items, children }) {
+    if (items.length === 0) return null;
+
+    return (
+        <section aria-labelledby={id}>
+            <h2 id={id} className="mb-step-4 text-heading">{title}</h2>
+            <ul className="border-t border-line">
+                {items.map((exhibition) => <ExhibitionRow key={exhibition.slug} exhibition={exhibition} />)}
+            </ul>
+            {children}
+        </section>
+    );
+}
+
+function Skeleton() {
+    return (
+        <div aria-busy="true" data-testid="exhibitions-skeleton">
+            <div aria-hidden="true" className="border-t border-line">
+                {Array.from({ length: 3 }, (_, i) => (
+                    <div key={i} className="flex gap-step-5 border-b border-line py-step-4">
+                        <div className="h-5 w-1/3 bg-surface-field" />
+                        <div className="h-4 w-1/4 bg-surface-field" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * All exhibitions in three groups — current, upcoming, archive (the admin's stored status, E9 `filter`) — each a
+ * list of rows (title, dates, venue, status), an empty group left out. The archive pages. No Signal on the page.
+ */
 export default function ExhibitionsPage() {
     const { locale } = useLocale();
-    const [filter, setFilter] = useState(undefined);
-    const [page, setPage] = useState(1);
-    const { data, meta, loading, error } = useApiData(() => listExhibitions(locale, { filter, page }), [locale, filter, page]);
+    const [archivePage, setArchivePage] = useState(1);
+    const [retryToken, setRetryToken] = useState(0);
+    const current = useApiData(() => listExhibitions(locale, { filter: 'current', per_page: OPEN_PER_PAGE }), [locale, retryToken]);
+    const upcoming = useApiData(() => listExhibitions(locale, { filter: 'upcoming', per_page: OPEN_PER_PAGE }), [locale, retryToken]);
+    const archive = useApiData(() => listExhibitions(locale, { filter: 'archive', page: archivePage > 1 ? archivePage : undefined }), [locale, archivePage, retryToken]);
 
     usePageMeta({ title: `${t(locale, 'nav.exhibitions')} — ArtNiyyətli` });
 
-    return (
-        <div className="px-6 py-8">
-            <h1 className="mb-6 text-2xl font-semibold">{t(locale, 'nav.exhibitions')}</h1>
-            <div className="mb-6 flex gap-2">
-                {TAB_KEYS.map((tab) => (
-                    <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => { setFilter(tab.value); setPage(1); }}
-                        className={`rounded-md px-3 py-1.5 text-sm ${filter === tab.value ? 'bg-neutral-900 text-white' : 'border border-neutral-300'}`}
-                    >
-                        {t(locale, tab.key)}
-                    </button>
-                ))}
-            </div>
+    const requests = [current, upcoming, archive];
+    const error = requests.find((r) => r.error)?.error;
+    const loading = requests.some((r) => r.loading && !r.data);
+    const list = (r) => (Array.isArray(r.data) ? r.data : []);
+    // Page 1 of the archive decides whether the group exists; a later page may come back empty and still shows the pager.
+    const empty = !loading && !error && list(current).length === 0 && list(upcoming).length === 0 && list(archive).length === 0 && archivePage === 1;
 
-            {loading && <LoadingState />}
-            {error && <ErrorState error={error} />}
-            {!loading && !error && data?.length === 0 && <EmptyState />}
-            {!loading && !error && data?.length > 0 && (
-                <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {data.map((exhibition) => <ExhibitionCard key={exhibition.slug} exhibition={exhibition} />)}
+    return (
+        <div className="px-page pt-step-8 pb-step-9 font-ui">
+            <h1 className="border-b border-line pb-step-5 text-display">{t(locale, 'nav.exhibitions')}</h1>
+
+            <div className="mt-step-7">
+                {error && <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />}
+                {!error && loading && <Skeleton />}
+                {empty && <p className="text-ui text-ink-muted">{t(locale, 'exhibitions.empty')}</p>}
+                {!error && !loading && !empty && (
+                    <div className="flex flex-col gap-step-8">
+                        <Group id="exhibitions-current" title={t(locale, 'home.currentExhibitions')} items={list(current)} />
+                        <Group id="exhibitions-upcoming" title={t(locale, 'home.upcomingExhibitions')} items={list(upcoming)} />
+                        <Group id="exhibitions-archive" title={t(locale, 'exhibitions.archive')} items={list(archive)}>
+                            <Pagination meta={archive.meta} onPageChange={setArchivePage} />
+                        </Group>
                     </div>
-                    <Pagination meta={meta} onPageChange={setPage} />
-                </>
-            )}
+                )}
+            </div>
         </div>
     );
 }

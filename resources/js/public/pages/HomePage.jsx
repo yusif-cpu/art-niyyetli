@@ -3,12 +3,13 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
-import { formatDate, formatDateRange } from '../lib/format.js';
+import { formatDate } from '../lib/format.js';
 import { getHomepage } from '../services/homepage.js';
 import { listArticles } from '../services/articles.js';
 import HomeWall from '../components/HomeWall.jsx';
 import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import ExhibitionRow from '../components/ExhibitionRow.jsx';
 
 const LATEST_ARTICLES = 3;
 
@@ -144,17 +145,7 @@ export default function HomePage() {
                             <div key={key}>
                                 {heading && <h3 className="mb-step-3 text-subheading">{heading}</h3>}
                                 <ul className="border-t border-line">
-                                    {items.map((exhibition) => (
-                                        <li key={exhibition.slug} className="border-b border-line">
-                                            <a href={`/exhibitions/${encodeURIComponent(exhibition.slug)}`} className="group grid gap-step-1 py-step-4 text-ink md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_auto] md:items-baseline md:gap-step-5">
-                                                <span className="text-byline-lg decoration-1 underline-offset-2 group-hover:underline">{exhibition.title}</span>
-                                                <span className="figures text-meta text-ink-muted">{formatDateRange(exhibition.start_date, exhibition.end_date, locale)}</span>
-                                                <span className="text-meta text-ink-muted">{exhibition.venue}</span>
-                                                {/* Status in ink with a hairline border — never Signal, "current" included. */}
-                                                <span className="w-fit border border-line-strong px-step-2 py-0.5 text-caption text-ink">{t(locale, `exhibitions.${exhibition.status === 'past' ? 'archive' : exhibition.status}`)}</span>
-                                            </a>
-                                        </li>
-                                    ))}
+                                    {items.map((exhibition) => <ExhibitionRow key={exhibition.slug} exhibition={exhibition} />)}
                                 </ul>
                             </div>
                         ))}

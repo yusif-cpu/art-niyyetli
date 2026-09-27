@@ -10,6 +10,7 @@ import HomeWall from '../components/HomeWall.jsx';
 import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import ExhibitionRow from '../components/ExhibitionRow.jsx';
+import SectionHeading from '../components/SectionHeading.jsx';
 
 const LATEST_ARTICLES = 3;
 
@@ -28,10 +29,12 @@ function SectionCopy({ section, headingClassName, as: Heading }) {
     );
 }
 
-function Block({ id, title, children }) {
+function Block({ id, label, title, children }) {
     return (
         <section aria-labelledby={id} className="border-t border-line pt-step-6">
-            <h2 id={id} className="mb-step-6 text-heading">{title}</h2>
+            <div className="mb-step-6">
+                <SectionHeading id={id} label={label}>{title}</SectionHeading>
+            </div>
             {children}
         </section>
     );
@@ -106,14 +109,15 @@ export default function HomePage() {
 
             {wall.length > 0 && (
                 <section aria-labelledby="home-wall-title" className="-mt-step-5">
-                    <h2 id="home-wall-title" className="sr-only">{t(locale, 'home.wall')}</h2>
+                    {/* The wall needs no big title: its label is its heading. */}
+                    <h2 id="home-wall-title" className="mb-step-2 text-label text-ink-muted" data-testid="section-label">{t(locale, 'labels.wall')}</h2>
                     <HomeWall artworks={wall} />
                 </section>
             )}
 
             {/* The admin's "featured" flag must show somewhere: a true-size grid, at its own k (its scale rule says so). */}
             {featured.length > 0 && (
-                <Block id="home-featured" title={t(locale, 'home.featured')}>
+                <Block id="home-featured" label={t(locale, 'labels.collection')} title={t(locale, 'home.featured')}>
                     <ScaledArtworkGrid artworks={featured} />
                 </Block>
             )}
@@ -121,7 +125,7 @@ export default function HomePage() {
             {steps && <SectionCopy section={steps} as="h2" headingClassName="text-heading" />}
 
             {artists.length > 0 && (
-                <Block id="home-artists" title={t(locale, 'home.artists')}>
+                <Block id="home-artists" label={t(locale, 'labels.representation')} title={t(locale, 'home.artists')}>
                     <ul className="grid grid-cols-1 gap-x-step-6 gap-y-step-5 sm:grid-cols-2 lg:grid-cols-4">
                         {artists.map((artist) => (
                             <li key={artist.slug}>
@@ -139,7 +143,7 @@ export default function HomePage() {
             )}
 
             {exhibitionGroups.length > 0 && (
-                <Block id="home-exhibitions" title={t(locale, 'nav.exhibitions')}>
+                <Block id="home-exhibitions" label={t(locale, 'labels.calendar')} title={t(locale, 'nav.exhibitions')}>
                     <div className="flex flex-col gap-step-7">
                         {exhibitionGroups.map(({ key, heading, items }) => (
                             <div key={key}>
@@ -154,7 +158,7 @@ export default function HomePage() {
             )}
 
             {latest.length > 0 && (
-                <Block id="home-articles" title={t(locale, 'home.articles')}>
+                <Block id="home-articles" label={t(locale, 'labels.journal')} title={t(locale, 'home.articles')}>
                     <ul className="grid grid-cols-1 gap-step-6 md:grid-cols-3">
                         {latest.map((article) => (
                             <li key={article.slug}>
@@ -183,7 +187,7 @@ export default function HomePage() {
             )}
 
             <section aria-labelledby="home-contact" className="border-t border-line pt-step-6">
-                <h2 id="home-contact" className="text-heading">{cta?.heading || t(locale, 'home.contact')}</h2>
+                <SectionHeading id="home-contact" label={t(locale, 'labels.contact')}>{cta?.heading || t(locale, 'home.contact')}</SectionHeading>
                 {cta?.body && <p className="mt-step-3 max-w-prose font-editorial text-reading text-ink-muted">{cta.body}</p>}
                 <a href="/contact" className="mt-step-5 inline-block bg-wine px-step-5 py-step-3 text-ui text-wine-ink">
                     {t(locale, 'home.contact')}

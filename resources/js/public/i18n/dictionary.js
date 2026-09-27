@@ -89,8 +89,16 @@ export const dictionary = {
             faqs: 'Suallar',
             wallLabel: 'Divar: əsərlər həqiqi ölçüdə, sürüşdürmək üçün ox düymələri',
             position: 'mövqe',
-            articles: 'Jurnal',
+            articles: 'Son məqalələr', // under the "Jurnal" label: not the same word twice
             contact: 'Əlaqə saxla',
+        },
+        labels: {
+            wall: 'Divar',
+            collection: 'Kolleksiya',
+            representation: 'Təmsilçilik',
+            calendar: 'Təqvim',
+            journal: 'Jurnal',
+            contact: 'Əlaqə',
         },
         filters: {
             artist: 'Rəssam',
@@ -254,8 +262,16 @@ export const dictionary = {
             faqs: 'FAQ',
             wallLabel: 'Wall: works at true size, use the arrow keys to scroll',
             position: 'position',
-            articles: 'Journal',
+            articles: 'Latest articles',
             contact: 'Get in touch',
+        },
+        labels: {
+            wall: 'Wall',
+            collection: 'Collection',
+            representation: 'Representation',
+            calendar: 'Calendar',
+            journal: 'Journal',
+            contact: 'Contact',
         },
         filters: {
             artist: 'Artist',

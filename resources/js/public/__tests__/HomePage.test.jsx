@@ -319,6 +319,25 @@ describe('HomePage', () => {
         expect(surface.style.height).toBe(`${Math.round(270 * K)}px`); // the 270 cm wall, floor at its bottom edge
     });
 
+    it('puts each section label (interface text, sentence case) right above its heading', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const pairs = { Kolleksiya: 'Seçilmiş əsərlər', Təmsilçilik: 'Rəssamlar', Təqvim: 'Sərgilər', Jurnal: 'Son məqalələr', Əlaqə: 'Əlaqə saxla' };
+        for (const [label, heading] of Object.entries(pairs)) {
+            const h2 = screen.getByRole('heading', { level: 2, name: heading });
+            const labelEl = h2.previousElementSibling;
+            expect(labelEl).toHaveTextContent(label);
+            expect(labelEl).toHaveClass('text-label', 'text-ink-muted', 'mb-step-2');
+            expect(labelEl.className).not.toMatch(/uppercase/);
+            expect(h2).toHaveClass('text-heading');
+        }
+        // The wall's label is its heading, right above the wall.
+        const wallLabel = screen.getByRole('heading', { level: 2, name: 'Divar' });
+        expect(wallLabel).toHaveClass('text-label', 'text-ink-muted');
+        expect(Boolean(wallLabel.compareDocumentPosition(screen.getByTestId('home-wall')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    });
+
     it('gives the vertical (phone) wall a surface and edge too, and a short floor line under the figure', async () => {
         const innerWidth = window.innerWidth;
         window.innerWidth = 375;
@@ -385,7 +404,7 @@ describe('HomePage', () => {
         renderHome();
         await screen.findByText('Wall Piece');
 
-        for (const name of ['Rəssamlar', 'Sərgilər', 'Jurnal', 'Suallar']) {
+        for (const name of ['Rəssamlar', 'Sərgilər', 'Son məqalələr', 'Suallar']) {
             expect(screen.queryByRole('heading', { level: 2, name })).not.toBeInTheDocument();
         }
     });

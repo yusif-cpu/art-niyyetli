@@ -164,17 +164,19 @@
     | Width vs the demo in brackets (Montserrat ÷ Archivo Narrow, same text).
     */
     /* Montserrat — interface */
-    --text-hero: clamp(52px, 8.4vw, 138px);      /* exhibition act title; demo clamp(56px, 9vw, 148px) −0.035em [1.22] */
-    --text-hero--line-height: 0.92;
-    --text-hero--letter-spacing: -0.045em;
+    /* Design pass: the demo's 130px hero and 63px section titles are not copied (Montserrat is ~20% wider; long
+       Azerbaijani titles would take 2–3 lines). Tracking tightens with size: −0.03em at 72px, −0.02em at 48px. */
+    --text-hero: clamp(40px, 6vw, 72px);         /* home hero h1; demo clamp(56px, 9vw, 148px) −0.035em */
+    --text-hero--line-height: 1;
+    --text-hero--letter-spacing: -0.03em;
     --text-hero--font-weight: 600;
     --text-display: clamp(32px, 4.1vw, 64px);    /* section h2, the artist's big name; demo clamp(34px, 4.4vw, 68px) −0.025em [1.26] */
     --text-display--line-height: 1.02;
     --text-display--letter-spacing: -0.035em;
     --text-display--font-weight: 600;
-    --text-heading: 28px;                        /* small section heading; demo 28px −0.02em [1.32] */
-    --text-heading--line-height: 1.14;
-    --text-heading--letter-spacing: -0.03em;
+    --text-heading: clamp(30px, 3.4vw, 48px);    /* section h2, detail-page titles; demo 63px (4.4vw) −0.025em */
+    --text-heading--line-height: 1.1;
+    --text-heading--letter-spacing: -0.02em;
     --text-heading--font-weight: 600;
     --text-subheading: 20px;                     /* demo 21px −0.02em [1.29] */
     --text-subheading--line-height: 1.14;

@@ -13,6 +13,7 @@ const WALL_VIEWPORT_RATIO = 0.58;
 const WALL_MIN_PX = 320;
 const WALL_MAX_PX = 640;
 const CAPTION_OFFSET_PX = 10;
+const CAPTION_BLOCK_PX = 56; // room for title, artist and size under a work
 
 function wallHeight() {
     const vh = typeof window !== 'undefined' && window.innerHeight > 0 ? window.innerHeight : 900;
@@ -36,33 +37,33 @@ export function firstVisibleIndex(items, scrollLeft) {
  * (≤ 180px, the box wallLayout spaces for); vertical captions run from the work to the right edge, so a small work
  * does not squeeze its text.
  */
-export default function HomeWall({ artworks }) {
+export default function HomeWall({ artworks, label }) {
     const { locale } = useLocale();
     const [ref, width] = useElementWidth();
     const [scrollLeft, setScrollLeft] = useState(0);
     const vertical = typeof window !== 'undefined' && window.innerWidth < VERTICAL_BELOW_PX;
     const L = wallLayout(artworks, { width, height: wallHeight(), vertical });
     const count = L.items.length;
+    // Horizontal: the canvas ends at the floor unless a caption hangs below it (a work reaching the floor).
+    const canvasHeight = vertical ? L.height : Math.max(L.floor, ...L.items.map((it) => it.top + it.height + CAPTION_OFFSET_PX + CAPTION_BLOCK_PX));
 
     return (
         <div ref={ref} className="w-full">
             {L.ready && (
                 <>
-                    <ScaleRule k={L.k} maxWidth={width} className="mb-step-4" />
                     <div
                         tabIndex={0}
                         role="region"
-                        aria-label={t(locale, 'home.wallLabel')}
+                        aria-label={label || t(locale, 'home.wallLabel')}
                         data-testid="home-wall"
                         className={vertical ? '' : 'overflow-x-auto overflow-y-hidden'}
                         onScroll={(event) => setScrollLeft(event.currentTarget.scrollLeft)}
                     >
-                        <div className="relative" style={{ width: vertical ? '100%' : L.width, height: L.height }} data-k={L.k}>
-                            {!vertical && <div aria-hidden="true" className="absolute right-0 left-0 border-b border-line" style={{ top: L.floor }} />}
+                        <div className="relative" style={{ width: vertical ? '100%' : Math.max(L.width, width), height: canvasHeight }} data-k={L.k}>
+                            {/* The wall itself: a surface from the floor line up to its 270 cm top edge, so the air above
+                                the works reads as wall. Below the floor stays page (room for a caption that reaches it). */}
+                            {!vertical && <div aria-hidden="true" data-testid="wall-surface" className="absolute top-0 right-0 left-0 border-t border-b border-line bg-surface-field-3" style={{ height: L.floor }} />}
                             <HumanFigure width={L.figure.width} height={L.figure.height} className="absolute" style={{ left: L.figure.left, top: L.figure.top }} />
-                            <span className="absolute text-caption whitespace-nowrap text-ink-muted" style={{ left: L.figure.left, top: L.figure.top + L.figure.height + 4 }}>
-                                {t(locale, 'artwork.figure')}
-                            </span>
                             {L.items.map((it) => {
                                 const artwork = it.item;
                                 const dims = formatDimensions(it.widthCm, it.heightCm, locale);
@@ -97,12 +98,20 @@ export default function HomeWall({ artworks }) {
                             })}
                         </div>
                     </div>
-                    {!vertical && count > 1 && (
-                        <p className="figures mt-step-3 text-caption text-ink-muted" data-testid="wall-position" aria-live="polite">
-                            <span className="sr-only">{t(locale, 'home.position')} </span>
-                            {firstVisibleIndex(L.items, scrollLeft) + 1} / {count}
-                        </p>
-                    )}
+                    {/* One line under the floor: the two scales on the left (the figure's 170 cm and one metre), the
+                        position on the right. */}
+                    <div className="mt-step-3 flex items-end justify-between gap-step-5" data-testid="wall-footer">
+                        <div className="flex items-end gap-step-5">
+                            <span className="text-caption whitespace-nowrap text-ink-muted">{t(locale, 'artwork.figure')}</span>
+                            <ScaleRule k={L.k} maxWidth={width} />
+                        </div>
+                        {!vertical && count > 1 && (
+                            <p className="figures text-caption text-ink-muted" data-testid="wall-position" aria-live="polite">
+                                <span className="sr-only">{t(locale, 'home.position')} </span>
+                                {firstVisibleIndex(L.items, scrollLeft) + 1} / {count}
+                            </p>
+                        )}
+                    </div>
                 </>
             )}
         </div>

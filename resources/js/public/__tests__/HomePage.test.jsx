@@ -77,8 +77,7 @@ describe('HomePage', () => {
         expect(screen.getByText('A B')).toBeInTheDocument();
         expect(screen.getByText('Winter Show')).toBeInTheDocument();
         expect(screen.getByText('Necə sifariş verə bilərəm?')).toBeInTheDocument();
-        // (was: the featured grid) — the wall is the home page's selection of works; `featured` is not rendered
-        expect(screen.queryByText('Featured Piece')).not.toBeInTheDocument();
+        expect(screen.getByText('Featured Piece')).toBeInTheDocument();
     });
 
     it('renders both current and upcoming exhibitions from the single homepage response', async () => {
@@ -228,7 +227,7 @@ describe('HomePage', () => {
         expect(small.style.width).toBe(`${Math.round(40 * K)}px`);
         expect(parseFloat(big.style.width) / parseFloat(small.style.width)).toBeCloseTo(4.5, 1);
         expect(big).toHaveClass('shadow-hang');
-        expect(screen.getByTestId('scale-rule-line').style.width).toBe(`${Math.round(100 * K)}px`);
+        expect(within(screen.getByTestId('wall-footer')).getByTestId('scale-rule-line').style.width).toBe(`${Math.round(100 * K)}px`);
     });
 
     it('spaces neighbours by max(43 × k, 48px, caption overflow + 24px)', async () => {
@@ -287,7 +286,7 @@ describe('HomePage', () => {
 
         expect(wallFields()).toHaveLength(1);
         expect(screen.getByTestId('human-figure')).toBeInTheDocument();
-        expect(screen.getByTestId('scale-rule')).toBeInTheDocument();
+        expect(within(screen.getByTestId('wall-footer')).getByTestId('scale-rule')).toBeInTheDocument();
         expect(screen.queryByTestId('wall-position')).not.toBeInTheDocument(); // "1 / 1" says nothing
     });
 
@@ -309,6 +308,48 @@ describe('HomePage', () => {
         wall.focus();
         expect(document.activeElement).toBe(wall);
         expect(within(wall).getByRole('link', { name: /^Wall Piece, Kamran Səfərli/ })).toHaveAttribute('href', '/artworks/AN-1');
+    });
+
+    it('gives the wall a surface with a top edge and a floor line', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const surface = screen.getByTestId('wall-surface');
+        expect(surface).toHaveClass('bg-surface-field-3', 'border-t', 'border-b', 'border-line');
+        expect(surface.style.height).toBe(`${Math.round(270 * K)}px`); // the 270 cm wall, floor at its bottom edge
+    });
+
+    it('puts the scale rule and the figure label under the floor on the left, the counter on the right', async () => {
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        const footer = screen.getByTestId('wall-footer');
+        const wall = screen.getByTestId('home-wall');
+        expect(Boolean(wall.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+        const [left, right] = footer.children;
+        expect(within(left).getByText('170 sm')).toBeInTheDocument();
+        expect(within(left).getByTestId('scale-rule')).toBeInTheDocument();
+        expect(right).toBe(screen.getByTestId('wall-position'));
+    });
+
+    it('shows "Seçilmiş əsərlər" after the wall when featured works exist, on its own scaled grid', async () => {
+        renderHome();
+        const heading = await screen.findByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' });
+        const section = heading.closest('section');
+
+        expect(within(section).getByText('Featured Piece')).toBeInTheDocument();
+        expect(within(section).getByTestId('scale-rule')).toBeInTheDocument();
+        expect(Boolean(screen.getByTestId('home-wall').compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+        expect(Boolean(section.compareDocumentPosition(screen.getByRole('heading', { level: 2, name: 'Rəssamlar' })) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    });
+
+    it('leaves the featured section out when there are no featured works', async () => {
+        homepage = { ...homepageData, featured: [] };
+        mockApi();
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        expect(screen.queryByRole('heading', { name: 'Seçilmiş əsərlər' })).not.toBeInTheDocument();
     });
 
     it('leaves out empty blocks: artists, exhibitions, journal, FAQ', async () => {

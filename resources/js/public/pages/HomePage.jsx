@@ -7,6 +7,7 @@ import { formatDate, formatDateRange } from '../lib/format.js';
 import { getHomepage } from '../services/homepage.js';
 import { listArticles } from '../services/articles.js';
 import HomeWall from '../components/HomeWall.jsx';
+import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 
 const LATEST_ARTICLES = 3;
@@ -88,6 +89,7 @@ export default function HomePage() {
     if (error) return <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />;
 
     const wall = Array.isArray(data.wall) ? data.wall : [];
+    const featured = Array.isArray(data.featured) ? data.featured : [];
     const artists = Array.isArray(data.artists) ? data.artists : [];
     const faqs = Array.isArray(data.faqs) ? data.faqs : [];
     const latest = Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
@@ -106,6 +108,13 @@ export default function HomePage() {
                     <h2 id="home-wall-title" className="sr-only">{t(locale, 'home.wall')}</h2>
                     <HomeWall artworks={wall} />
                 </section>
+            )}
+
+            {/* The admin's "featured" flag must show somewhere: a true-size grid, at its own k (its scale rule says so). */}
+            {featured.length > 0 && (
+                <Block id="home-featured" title={t(locale, 'home.featured')}>
+                    <ScaledArtworkGrid artworks={featured} />
+                </Block>
             )}
 
             {steps && <SectionCopy section={steps} as="h2" headingClassName="text-heading" />}

@@ -319,6 +319,32 @@ describe('HomePage', () => {
         expect(surface.style.height).toBe(`${Math.round(270 * K)}px`); // the 270 cm wall, floor at its bottom edge
     });
 
+    it('gives the vertical (phone) wall a surface and edge too, and a short floor line under the figure', async () => {
+        const innerWidth = window.innerWidth;
+        window.innerWidth = 375;
+        global.ResizeObserver = class {
+            constructor(cb) { this.cb = cb; }
+            observe() { this.cb([{ contentRect: { width: 343 } }]); }
+            disconnect() {}
+        };
+        try {
+            renderHome();
+            await screen.findByText('Wall Piece');
+
+            const wall = screen.getByTestId('home-wall');
+            expect(wall).toHaveClass('bg-surface-field-3', 'border', 'border-line');
+            expect(screen.queryByTestId('wall-surface')).not.toBeInTheDocument();
+            const figure = screen.getByTestId('human-figure');
+            const floor = screen.getByTestId('figure-floor');
+            expect(floor).toHaveClass('h-px');
+            expect(parseFloat(floor.style.top)).toBe(parseFloat(figure.style.top) + Number(figure.getAttribute('height')));
+            // The works are laid out inside the surface's padding: none reaches past 343 − 2 × 17.
+            wallFields().forEach((f) => expect(parseFloat(f.style.left) + parseFloat(f.style.width)).toBeLessThanOrEqual(343 - 34));
+        } finally {
+            window.innerWidth = innerWidth;
+        }
+    });
+
     it('puts the scale rule and the figure label under the floor on the left, the counter on the right', async () => {
         renderHome();
         await screen.findByText('Wall Piece');

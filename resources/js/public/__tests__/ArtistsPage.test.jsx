@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
 import ArtistsPage from '../pages/ArtistsPage.jsx';
-import { fieldToneFor } from '../components/ArtworkCard.jsx';
+import { portraitToneFor } from '../components/ArtistPortrait.jsx';
 
 function jsonResponse(body) {
     return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body };
@@ -36,8 +36,24 @@ describe('ArtistsPage', () => {
 
         renderPage();
         expect(await screen.findByTestId('artist-portrait')).toHaveClass(tone);
-        expect(tone).toBe(fieldToneFor('aygun-mammadova'));
+        expect(tone).toBe(portraitToneFor('aygun-mammadova'));
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    });
+
+    it('never gives a portrait the palest field tone (it reads as a blank sheet)', () => {
+        const slugs = Array.from({ length: 40 }, (_, i) => `artist-${i}`);
+        const tones = new Set(slugs.map(portraitToneFor));
+
+        expect(tones).toEqual(new Set(['bg-surface-field', 'bg-surface-field-2']));
+    });
+
+    it('lays the list out in 1 / 3 / 4 columns (375 / 768–1024 / 1280+)', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [AYGUN] }));
+        renderPage();
+
+        const list = (await screen.findByText('Aygün Məmmədova')).closest('ul');
+        expect(list).toHaveClass('grid-cols-1', 'md:grid-cols-3', 'xl:grid-cols-4');
+        expect(list.className).not.toMatch(/md:grid-cols-2|lg:grid-cols/);
     });
 
     it('draws portraits as upright rectangles: no rounded class anywhere', async () => {

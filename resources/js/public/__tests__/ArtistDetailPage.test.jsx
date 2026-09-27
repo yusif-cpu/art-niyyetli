@@ -48,19 +48,35 @@ describe('ArtistDetailPage', () => {
         renderPage();
 
         expect(await screen.findByText('Bio text.')).toHaveClass('font-editorial', 'text-reading');
-        expect(screen.getAllByText('Approach text.').length).toBeGreaterThan(0);
+        expect(screen.getByText('Approach text.')).toHaveClass('font-editorial', 'text-reading');
         expect(screen.getByText('Some Show')).toBeInTheDocument();
         expect(screen.getByText('Some Venue')).toBeInTheDocument();
         expect(screen.getByText('Some Award')).toBeInTheDocument();
         expect(screen.getByText('A Piece')).toBeInTheDocument();
     });
 
-    it('shows the header block: a 4:5 portrait up to 280px, the name, direction and birth year and place', async () => {
+    it('orders the page: compact header, works wall, texts, history, enquiry', async () => {
+        renderPage();
+        await screen.findByText('A Piece');
+
+        const order = ['artist-portrait', 'home-wall'].map((id) => screen.getByTestId(id));
+        const texts = [screen.getByText('Bio text.'), screen.getByText('Some Show'), screen.getByRole('link', { name: 'Rəssam haqqında soruş' })];
+        const nodes = [...order, ...texts];
+        nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
+    });
+
+    it('shows the approach text once only (no excerpt of it in the header)', async () => {
+        renderPage();
+
+        expect(await screen.findAllByText('Approach text.')).toHaveLength(1);
+    });
+
+    it('shows the header block: a 4:5 portrait up to 160px, the name, direction and birth year and place', async () => {
         renderPage();
 
         expect(await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' })).toHaveClass('text-heading');
         const portrait = screen.getByTestId('artist-portrait');
-        expect(portrait).toHaveClass('aspect-[4/5]', 'max-w-70', 'border', 'border-line');
+        expect(portrait).toHaveClass('aspect-[4/5]', 'max-w-40', 'border', 'border-line');
         expect(within(portrait).getByRole('img', { name: 'Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/portrait.webp');
         expect(screen.getByText('Müasir rəssamlıq')).toBeInTheDocument();
         expect(screen.getByText('1985, Bakı')).toBeInTheDocument();

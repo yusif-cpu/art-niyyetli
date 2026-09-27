@@ -12,6 +12,16 @@ describe('ScaleRule', () => {
         expect(container.innerHTML).not.toMatch(/signal/);
     });
 
+    it('writes the length at the right end of the line, on the same row', () => {
+        render(<ScaleRule k={2.5} />);
+
+        const rule = screen.getByTestId('scale-rule');
+        expect(rule).toHaveClass('flex', 'items-center');
+        expect(rule).not.toHaveClass('flex-col');
+        expect(rule.firstElementChild).toBe(screen.getByTestId('scale-rule-line'));
+        expect(rule.lastElementChild).toHaveTextContent('1 m');
+    });
+
     it('steps down from 1 m when a metre would be wider than the space (a small work shown large)', () => {
         render(<ScaleRule k={21} maxWidth={840} />); // 1 m = 2100px, 50 cm = 1050px, 20 cm = 420px
 

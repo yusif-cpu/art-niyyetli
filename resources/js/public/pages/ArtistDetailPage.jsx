@@ -13,8 +13,8 @@ import ErrorState from '../components/ErrorState.jsx';
 function Skeleton() {
     return (
         <div className="px-page pt-step-8 pb-step-9" aria-busy="true" data-testid="artist-skeleton">
-            <div aria-hidden="true" className="grid gap-step-7 md:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)]">
-                <div className="aspect-[4/5] w-full max-w-70 border border-line bg-surface-field" />
+            <div aria-hidden="true" className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-end gap-step-5 md:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] md:gap-step-6">
+                <div className="aspect-[4/5] w-full max-w-40 border border-line bg-surface-field" />
                 <div className="flex flex-col gap-step-3">
                     <div className="h-8 w-1/2 bg-surface-field" />
                     <div className="h-4 w-1/3 bg-surface-field" />
@@ -59,9 +59,10 @@ function History({ id, title, rows }) {
 }
 
 /**
- * An artist: portrait and name block, biography and artistic approach (reading text), the works hung on a wall at
- * true size next to the 170 cm figure (the same wall as the home page — comparing one artist's large and small works
- * is where true size matters most), the exhibition history and awards, and an enquiry link. No Signal on the page.
+ * An artist: a compact portrait and name block, then the works hung on a wall at true size next to the 170 cm figure
+ * (the same wall as the home page — comparing one artist's large and small works is where true size matters most,
+ * and a visitor comes for the works first), then the biography and artistic approach (reading text), the exhibition
+ * history and awards, and an enquiry link. Without works the text follows the header directly. No Signal on the page.
  */
 export default function ArtistDetailPage({ params }) {
     const { locale } = useLocale();
@@ -80,19 +81,24 @@ export default function ArtistDetailPage({ params }) {
     const artworks = Array.isArray(data.artworks) ? data.artworks : [];
     const exhibitions = Array.isArray(data.exhibitions) ? data.exhibitions : [];
     const awards = Array.isArray(data.awards) ? data.awards : [];
-    const summary = excerpt(data.artistic_approach, 140);
 
     return (
         <article className="flex flex-col gap-step-9 px-page pt-step-8 pb-step-9 font-ui" key={data.slug}>
-            <header className="grid gap-step-7 md:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)] md:items-end">
-                <ArtistPortrait artist={data} className="w-full max-w-70" priority />
+            <header className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-end gap-step-5 md:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] md:gap-step-6">
+                <ArtistPortrait artist={data} className="w-full max-w-40" priority />
                 <div>
                     <h1 className="text-heading">{name}</h1>
                     {data.direction && <p className="mt-step-2 text-ui">{data.direction}</p>}
                     {born && <p className="figures mt-step-1 text-meta text-ink-muted">{born}</p>}
-                    {summary && <p className="mt-step-4 max-w-prose font-editorial text-reading-sm text-ink-muted">{summary}</p>}
                 </div>
             </header>
+
+            {artworks.length > 0 && (
+                <section aria-labelledby="artist-works">
+                    <h2 id="artist-works" className="mb-step-5 text-subheading">{t(locale, 'artist.works')}</h2>
+                    <HomeWall artworks={artworks} label={t(locale, 'artist.wallLabel')} />
+                </section>
+            )}
 
             {(data.biography || data.artistic_approach) && (
                 <section aria-label={t(locale, 'artist.biography')} className="flex max-w-prose flex-col gap-step-6">
@@ -108,13 +114,6 @@ export default function ArtistDetailPage({ params }) {
                             <p className="font-editorial text-reading whitespace-pre-line">{data.artistic_approach}</p>
                         </div>
                     )}
-                </section>
-            )}
-
-            {artworks.length > 0 && (
-                <section aria-labelledby="artist-works">
-                    <h2 id="artist-works" className="mb-step-5 text-subheading">{t(locale, 'artist.works')}</h2>
-                    <HomeWall artworks={artworks} label={t(locale, 'artist.wallLabel')} />
                 </section>
             )}
 

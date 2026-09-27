@@ -8,7 +8,7 @@ import ArtistCard from '../components/ArtistCard.jsx';
 import Pagination from '../components/Pagination.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 
-const GRID = 'grid grid-cols-1 gap-x-step-6 gap-y-step-7 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+const GRID = 'grid grid-cols-1 gap-x-step-6 gap-y-step-7 md:grid-cols-3 xl:grid-cols-4';
 
 /**
  * All artists, in the API's own order (curator sort order). E5 is not paginated today; if a response ever carries

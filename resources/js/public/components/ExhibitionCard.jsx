@@ -6,9 +6,9 @@ export default function ExhibitionCard({ exhibition }) {
     return (
         <a href={`/exhibitions/${exhibition.slug}`} className="block">
             <ImageWithFallback src={mediaUrl} alt={exhibition.title} className="aspect-video w-full object-cover" />
-            <p className="mt-2 text-sm font-medium">{exhibition.title}</p>
-            <p className="text-sm text-neutral-500">{exhibition.start_date} – {exhibition.end_date}</p>
-            <p className="text-sm text-neutral-500">{exhibition.venue}</p>
+            <p className="mt-step-2 text-byline-lg">{exhibition.title}</p>
+            <p className="figures text-meta text-ink-muted">{exhibition.start_date} – {exhibition.end_date}</p>
+            <p className="text-meta text-ink-muted">{exhibition.venue}</p>
         </a>
     );
 }

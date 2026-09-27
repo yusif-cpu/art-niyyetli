@@ -77,6 +77,8 @@ export const dictionary = {
         notFound: {
             title: 'Səhifə tapılmadı',
             body: 'Axtardığınız səhifə mövcud deyil.',
+            home: 'Ana səhifəyə qayıt',
+            catalogue: 'Kataloqa bax',
         },
         home: {
             wall: 'Divar',
@@ -155,6 +157,11 @@ export const dictionary = {
         contact: {
             title: 'Əlaqə',
             subjectLabel: 'Mövzu',
+            address: 'Ünvan',
+            openMap: 'Xəritədə aç',
+            phone: 'Telefon',
+            email: 'E-poçt',
+            hours: 'İş saatları',
         },
     },
     en: {
@@ -235,6 +242,8 @@ export const dictionary = {
         notFound: {
             title: 'Page not found',
             body: 'The page you are looking for does not exist.',
+            home: 'Back to the home page',
+            catalogue: 'See the catalogue',
         },
         home: {
             wall: 'Wall',
@@ -313,6 +322,11 @@ export const dictionary = {
         contact: {
             title: 'Contact',
             subjectLabel: 'Subject',
+            address: 'Address',
+            openMap: 'Open in a map',
+            phone: 'Phone',
+            email: 'Email',
+            hours: 'Opening hours',
         },
     },
 };

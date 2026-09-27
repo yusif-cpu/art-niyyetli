@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
+import { SiteDataProvider } from '../layout/SiteDataContext.jsx';
 import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
-import ContactPage from '../pages/ContactPage.jsx';
+import ContactPage, { mapHref } from '../pages/ContactPage.jsx';
 
 function jsonResponse(status, body) {
     return { ok: status >= 200 && status < 300, status, headers: { get: () => 'application/json' }, json: async () => body };
@@ -27,8 +28,70 @@ const SUBJECTS_EN = [
     { key: 'collaboration', label: 'Collaboration' },
 ];
 
+const SETTINGS = { contact_email: 'info@example.com', phone: '+994 12 000 00 00', address: 'Nizami küç. 1, Bakı', opening_hours: 'Bazar ertəsi–Şənbə 11:00–19:00', footer_text: '', whatsapp_number: '994501234567', brand_text: 'ArtNiyyətli', logo_media_id: '', logo_display_mode: 'text_only', logo_url: null };
+
+function renderWithSite(settings = SETTINGS) {
+    global.fetch = vi.fn((url) => {
+        if (url.startsWith('/api/v1/enquiry-subjects')) return Promise.resolve(jsonResponse(200, { data: SUBJECTS }));
+        if (url.startsWith('/api/v1/site-settings')) return Promise.resolve(jsonResponse(200, { data: settings }));
+        return Promise.resolve(jsonResponse(200, { data: [] }));
+    });
+
+    return render(<LocaleProvider><SiteDataProvider><ContactPage /></SiteDataProvider></LocaleProvider>);
+}
+
 describe('ContactPage', () => {
-    it('renders all six subjects and submits the selected one without an artwork_code', async () => {
+    it('lists address, phone, e-mail and hours from the site settings, as plain links', async () => {
+        renderWithSite();
+
+        const details = await screen.findByTestId('contact-details');
+        expect(within(details).getByText('Nizami küç. 1, Bakı')).toBeInTheDocument();
+        expect(within(details).getByRole('link', { name: '+994 12 000 00 00' })).toHaveAttribute('href', 'tel:+994120000000');
+        expect(within(details).getByRole('link', { name: 'info@example.com' })).toHaveAttribute('href', 'mailto:info@example.com');
+        expect(within(details).getByText('Bazar ertəsi–Şənbə 11:00–19:00')).toBeInTheDocument();
+        expect(within(details).getByText('İş saatları')).toHaveClass('text-label', 'text-ink-muted');
+    });
+
+    it('opens the address in a map in a new window, and embeds no map frame', async () => {
+        const { container } = renderWithSite();
+
+        const link = await screen.findByRole('link', { name: 'Xəritədə aç' });
+        expect(link).toHaveAttribute('href', mapHref('Nizami küç. 1, Bakı'));
+        expect(link.getAttribute('href')).toContain(encodeURIComponent('Nizami küç. 1, Bakı'));
+        expect(link).toHaveAttribute('target', '_blank');
+        expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+        expect(container.querySelector('iframe')).toBeNull();
+    });
+
+    it('leaves out a contact detail that is not set, without an empty row', async () => {
+        renderWithSite({ ...SETTINGS, phone: '', opening_hours: null });
+
+        const details = await screen.findByTestId('contact-details');
+        expect(within(details).queryByText('Telefon')).not.toBeInTheDocument();
+        expect(within(details).queryByText('İş saatları')).not.toBeInTheDocument();
+        expect(details.children).toHaveLength(2);
+    });
+
+    it('repeats no social links (they are in the footer), and uses no Signal, rounded or neutral classes', async () => {
+        const { container } = renderWithSite();
+        await screen.findByTestId('contact-details');
+
+        expect(container.innerHTML).not.toMatch(/signal|rounded|neutral-/);
+        expect(screen.queryByRole('link', { name: /instagram|facebook/i })).not.toBeInTheDocument();
+    });
+
+    it('shows an error with a retry when the subjects cannot be loaded', async () => {
+        let calls = 0;
+        global.fetch = vi.fn(() => Promise.resolve(++calls === 1 ? jsonResponse(500, {}) : jsonResponse(200, { data: SUBJECTS })));
+        render(<LocaleProvider><ContactPage /></LocaleProvider>);
+
+        expect(screen.getByTestId('contact-skeleton')).toHaveAttribute('aria-busy', 'true');
+        await userEvent.click(await screen.findByRole('button', { name: 'Yenidən cəhd et' }));
+        expect(await screen.findByLabelText('Mövzu')).toBeInTheDocument();
+    });
+
+    // "buy" needs an artwork code (E17 → 422 without one), so the contact page does not offer it (API guide §22.1).
+    it('offers every subject except "buy" and submits the selected one without an artwork_code', async () => {
         global.fetch = vi.fn((url) => {
             if (url.startsWith('/api/v1/enquiry-subjects')) {
                 return Promise.resolve(jsonResponse(200, { data: SUBJECTS }));
@@ -38,10 +101,11 @@ describe('ContactPage', () => {
 
         render(<LocaleProvider><ContactPage /></LocaleProvider>);
 
-        await screen.findByText('Əlaqə');
-        SUBJECTS.forEach((item) => {
+        await screen.findByLabelText('Mövzu');
+        SUBJECTS.filter((item) => item.key !== 'buy').forEach((item) => {
             expect(screen.getByRole('option', { name: item.label })).toBeInTheDocument();
         });
+        expect(screen.queryByRole('option', { name: 'Əsər almaq' })).not.toBeInTheDocument();
 
         await userEvent.selectOptions(screen.getByLabelText('Mövzu'), 'media');
         await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
@@ -70,15 +134,13 @@ describe('ContactPage', () => {
 
         render(<LocaleProvider><ContactPage /></LocaleProvider>);
 
-        await screen.findByText('Əlaqə');
-
-        const select = screen.getByLabelText('Mövzu');
+        const select = await screen.findByLabelText('Mövzu');
         const options = Array.from(select.querySelectorAll('option'));
 
-        expect(options).toHaveLength(5);
+        expect(options).toHaveLength(4); // six, minus the unlabelled one, minus "buy"
         expect(options.every((option) => option.textContent.trim() !== '')).toBe(true);
-        expect(options[0]).toHaveTextContent('Əsər almaq');
-        expect(select).toHaveValue('buy');
+        expect(options[0]).toHaveTextContent('Rəssam müraciəti');
+        expect(select).toHaveValue('artist_submission');
     });
 
     it('switches the entire contact form to English, including subjects, when the locale changes', async () => {
@@ -106,7 +168,8 @@ describe('ContactPage', () => {
 
         await screen.findByText('Contact');
         expect(screen.getByText('Subject')).toBeInTheDocument();
-        SUBJECTS_EN.forEach((item) => {
+        await screen.findByRole('option', { name: 'General contact' });
+        SUBJECTS_EN.filter((item) => item.key !== 'buy').forEach((item) => {
             expect(screen.getByRole('option', { name: item.label })).toBeInTheDocument();
         });
         expect(screen.getByLabelText('Name')).toBeInTheDocument();

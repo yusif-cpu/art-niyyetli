@@ -40,6 +40,11 @@ export function useSiteData() {
     return ctx;
 }
 
+/** The site settings (E14) from the shared shell data, or null outside a provider or while they load. */
+export function useSiteSettings() {
+    return useContext(SiteDataContext)?.settings?.data ?? null;
+}
+
 /**
  * The profile link of an artwork's artist.
  * TEMPORARY WORKAROUND for S3 — the artwork payload's `artist` is { id, name } with no slug (ArtworkCardResource).

@@ -1,15 +1,16 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
-import { usePageMeta } from '../lib/usePageMeta.js';
+import NotFoundState from '../components/NotFoundState.jsx';
 
+/** An unknown address: a short text and the two ways on — the home page and the catalogue. `noindex`. */
 export default function NotFoundPage() {
     const { locale } = useLocale();
-    usePageMeta({ title: `${t(locale, 'notFound.title')} — ArtNiyyətli`, noIndex: true });
 
     return (
-        <div className="p-8 text-center">
-            <h1 className="text-xl font-semibold">{t(locale, 'notFound.title')}</h1>
-            <p className="mt-2 text-sm text-neutral-500">{t(locale, 'notFound.body')}</p>
-        </div>
+        <NotFoundState
+            title={t(locale, 'notFound.title')}
+            body={t(locale, 'notFound.body')}
+            links={[{ href: '/', label: t(locale, 'notFound.home') }, { href: '/artworks', label: t(locale, 'notFound.catalogue') }]}
+        />
     );
 }

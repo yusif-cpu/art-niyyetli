@@ -5,7 +5,7 @@
  */
 export default function ImageWithFallback({ src, alt, className = '', priority = false }) {
     if (!src) {
-        return <div className={`flex items-center justify-center bg-neutral-100 text-neutral-400 ${className}`} aria-hidden="true" />;
+        return <div className={`bg-surface-field ${className}`} aria-hidden="true" />;
     }
 
     return (

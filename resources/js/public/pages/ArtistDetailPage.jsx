@@ -31,7 +31,7 @@ function NotFound({ locale }) {
         <div className="px-page pt-step-8 pb-step-9 font-ui">
             <h1 className="text-display">{t(locale, 'artist.notFoundTitle')}</h1>
             <p className="mt-step-4 text-ui text-ink-muted">{t(locale, 'artist.notFoundBody')}</p>
-            <a href="/artists" className="mt-step-5 inline-block text-ui text-ink underline decoration-1 underline-offset-2">
+            <a href="/artists" className="mt-step-4 inline-flex min-h-11 items-center text-ui text-ink underline decoration-1 underline-offset-2">
                 {t(locale, 'artist.backToArtists')}
             </a>
         </div>

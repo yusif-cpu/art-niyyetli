@@ -20,6 +20,7 @@ describe('NotFoundPage', () => {
         expect(screen.getByText('Axtardığınız səhifə mövcud deyil.')).toHaveClass('text-ink-muted');
         expect(screen.getByRole('link', { name: 'Ana səhifəyə qayıt' })).toHaveAttribute('href', '/');
         expect(screen.getByRole('link', { name: 'Kataloqa bax' })).toHaveAttribute('href', '/artworks');
+        screen.getAllByRole('link').forEach((link) => expect(link).toHaveClass('min-h-11')); // 44px touch targets
     });
 
     it('uses no Signal and none of the old classes', () => {

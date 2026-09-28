@@ -163,8 +163,9 @@ export default function HomePage() {
 
             {artists.length > 0 && (
                 <Block id="home-artists" label={t(locale, 'labels.representation')} title={t(locale, 'home.artists')}>
-                    {/* The artists list's own card: 4:5 portrait, name, direction. 4 / 3 / 3 / 1 columns. */}
-                    <ul className="grid grid-cols-1 gap-x-step-6 gap-y-step-7 md:grid-cols-3 xl:grid-cols-4" data-testid="home-artists">
+                    {/* The artists list's own card: 4:5 portrait, name, direction. 4 / 3 / 3 columns, and two below
+                        640px: here the portraits are a summary (on the artists page, one column: they are the content). */}
+                    <ul className="grid grid-cols-2 gap-x-step-4 gap-y-step-6 sm:gap-x-step-6 sm:gap-y-step-7 md:grid-cols-3 xl:grid-cols-4" data-testid="home-artists">
                         {artists.map((artist) => (
                             <li key={artist.slug}>
                                 <ArtistCard artist={artist} />

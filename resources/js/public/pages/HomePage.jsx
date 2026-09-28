@@ -3,7 +3,7 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
-import { formatDate } from '../lib/format.js';
+import { formatDate, formatDateRange } from '../lib/format.js';
 import { getHomepage } from '../services/homepage.js';
 import { listArticles } from '../services/articles.js';
 import HomeWall from '../components/HomeWall.jsx';
@@ -29,13 +29,37 @@ function SectionCopy({ section, headingClassName, as: Heading }) {
     );
 }
 
+// Sections are set apart by the step-9 rhythm and their labels, not by rules between them.
 function Block({ id, label, title, children }) {
     return (
-        <section aria-labelledby={id} className="border-t border-line pt-step-6">
+        <section aria-labelledby={id}>
             <div className="mb-step-6">
                 <SectionHeading id={id} label={label}>{title}</SectionHeading>
             </div>
             {children}
+        </section>
+    );
+}
+
+/**
+ * The current exhibition as a wine band across the full width (out of the page gutter), filled from inside with
+ * step-8; the page's step-9 gaps above and below are cancelled, so the band meets the sections around it. Wine is a
+ * brand surface, not Signal: only wine-ink and wine-ink-muted on it, and no red.
+ */
+function CurrentShowBlock({ exhibition, locale }) {
+    const dates = formatDateRange(exhibition.start_date, exhibition.end_date, locale);
+
+    return (
+        <section aria-labelledby="home-current-show" data-surface="wine" data-testid="home-current-show" className="-mx-page -my-step-9 bg-wine px-page py-step-8 text-wine-ink">
+            <p className="mb-step-2 text-label text-wine-ink-muted">{t(locale, 'home.currentExhibition')}</p>
+            <h2 id="home-current-show" className="text-heading">{exhibition.title}</h2>
+            {(dates || exhibition.venue) && (
+                <p className="figures mt-step-3 text-meta text-wine-ink-muted">{[dates, exhibition.venue].filter(Boolean).join(' · ')}</p>
+            )}
+            {exhibition.short_text && <p className="mt-step-5 max-w-prose font-editorial text-reading">{exhibition.short_text}</p>}
+            <a href={`/exhibitions/${encodeURIComponent(exhibition.slug)}`} className="mt-step-6 inline-block text-ui text-wine-ink underline decoration-1 underline-offset-4">
+                {t(locale, 'home.aboutExhibition')}
+            </a>
         </section>
     );
 }
@@ -57,10 +81,11 @@ function Skeleton() {
 }
 
 /**
- * The home page, in the order of the brief: a short introduction (the "hero" section), the wall of works at true
- * size (on the first screen), the artists, current and upcoming exhibitions, the latest journal articles, and the
- * contact block. Blocks without data are left out entirely. All copy comes from the API. Signal on this screen: the
- * brand and the active "Ana səhifə" only — none in the blocks, so a third stays free for an error.
+ * The home page: the hero (text only, text-hero), the wall of works at true size (on the first screen), the featured
+ * works, the current exhibition as a wine band, the artists, the other exhibitions, the latest journal articles, the
+ * "how it works" copy and the FAQs, and the contact block. Sections are step-9 apart, each with a small label over its
+ * heading. Blocks without data are left out entirely. All copy comes from the API. Signal on this screen: the active
+ * "Ana səhifə" only (the logo is wine) — none in the blocks, so room stays for an error.
  */
 export default function HomePage() {
     const { locale } = useLocale();
@@ -76,18 +101,28 @@ export default function HomePage() {
         description: data ? hero?.body : undefined,
     });
 
+    // The current exhibition gets the wine block; the first current one, or the single legacy `exhibition` when it is
+    // current. It is then left out of the list below, so it is not shown twice.
+    const currentShow = data
+        ? (data.exhibitions?.current?.[0] ?? (!data.exhibitions && data.exhibition?.status === 'current' ? data.exhibition : null))
+        : null;
+    const notFeaturedShow = (exhibition) => exhibition.slug !== currentShow?.slug;
+
     // `exhibitions` ({current, upcoming}) is the homepage list; the single `exhibition` is only the fallback for a
     // response that predates it (e.g. one still cached from before the API change).
-    const exhibitionGroups = data
+    const exhibitionGroups = (data
         ? data.exhibitions
             ? [
                   { key: 'current', heading: t(locale, 'home.currentExhibitions'), items: data.exhibitions.current ?? [] },
                   { key: 'upcoming', heading: t(locale, 'home.upcomingExhibitions'), items: data.exhibitions.upcoming ?? [] },
-              ].filter((group) => group.items.length > 0)
+              ]
             : data.exhibition
               ? [{ key: 'single', heading: null, items: [data.exhibition] }]
               : []
-        : [];
+        : []
+    )
+        .map((group) => ({ ...group, items: group.items.filter(notFeaturedShow) }))
+        .filter((group) => group.items.length > 0);
 
     if (loading && !data) return <Skeleton />;
     if (error) return <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />;
@@ -99,10 +134,11 @@ export default function HomePage() {
     const latest = Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
 
     return (
-        <div className="flex flex-col gap-step-9 px-page pt-step-7 pb-step-9 font-ui">
+        <div className="flex flex-col gap-step-9 px-page pt-step-8 pb-step-9 font-ui">
+            {/* Text only, on the plain surface: no photo, so the wall stays on the first screen. */}
             {hero && (
-                <section aria-label={hero.heading || undefined}>
-                    {hero.heading && <h1 className="text-display">{hero.heading}</h1>}
+                <section aria-label={hero.heading || undefined} data-testid="home-hero">
+                    {hero.heading && <h1 className="text-hero">{hero.heading}</h1>}
                     {hero.body && <p className="mt-step-4 max-w-prose font-editorial text-lead text-ink-muted">{hero.body}</p>}
                 </section>
             )}
@@ -122,7 +158,7 @@ export default function HomePage() {
                 </Block>
             )}
 
-            {steps && <SectionCopy section={steps} as="h2" headingClassName="text-heading" />}
+            {currentShow && <CurrentShowBlock exhibition={currentShow} locale={locale} />}
 
             {artists.length > 0 && (
                 <Block id="home-artists" label={t(locale, 'labels.representation')} title={t(locale, 'home.artists')}>
@@ -173,6 +209,9 @@ export default function HomePage() {
                 </Block>
             )}
 
+            {/* The admin's "how it works" copy, next to the questions it answers. */}
+            {steps && <SectionCopy section={steps} as="h2" headingClassName="text-heading" />}
+
             {faqs.length > 0 && (
                 <Block id="home-faqs" title={t(locale, 'home.faqs')}>
                     <dl className="flex max-w-prose flex-col gap-step-5">
@@ -186,7 +225,7 @@ export default function HomePage() {
                 </Block>
             )}
 
-            <section aria-labelledby="home-contact" className="border-t border-line pt-step-6">
+            <section aria-labelledby="home-contact">
                 <SectionHeading id="home-contact" label={t(locale, 'labels.contact')}>{cta?.heading || t(locale, 'home.contact')}</SectionHeading>
                 {cta?.body && <p className="mt-step-3 max-w-prose font-editorial text-reading text-ink-muted">{cta.body}</p>}
                 <a href="/contact" className="mt-step-5 inline-block bg-wine px-step-5 py-step-3 text-ui text-wine-ink">

@@ -85,12 +85,15 @@ describe('HomePage', () => {
         homepage = {
             ...homepageData,
             exhibition: ex('now', 'Now Show', 'current'),
-            exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming'), ex('later', 'Later Show', 'upcoming')] },
+            // (was: one current show) — the first current show now gets the wine block, so a second one keeps the list's
+            // "Cari sərgilər" group.
+            exhibitions: { current: [ex('now', 'Now Show', 'current'), ex('also', 'Also Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming'), ex('later', 'Later Show', 'upcoming')] },
         };
         mockApi();
         renderHome();
 
         expect(await screen.findByText('Now Show')).toBeInTheDocument();
+        expect(screen.getByText('Also Show')).toBeInTheDocument();
         expect(screen.getByText('Soon Show')).toBeInTheDocument();
         expect(screen.getByText('Later Show')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Cari sərgilər' })).toBeInTheDocument();
@@ -319,7 +322,54 @@ describe('HomePage', () => {
         expect(surface.style.height).toBe(`${Math.round(270 * K)}px`); // the 270 cm wall, floor at its bottom edge
     });
 
+    it('shows the current exhibition as a full-width wine block after the featured works, and not again in the list', async () => {
+        const ex = (slug, title, status) => ({ ...homepageData.exhibition, slug, title, status, venue: 'Main Gallery', short_text: 'Dörd rəssam.' });
+        homepage = { ...homepageData, exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming')] } };
+        mockApi();
+        const { container } = renderHome();
+
+        const block = await screen.findByTestId('home-current-show');
+        expect(block).toHaveClass('bg-wine', 'text-wine-ink', '-mx-page', '-my-step-9', 'py-step-8');
+        expect(within(block).getByRole('heading', { level: 2, name: 'Now Show' })).toHaveClass('text-heading');
+        expect(within(block).getByText('10 yanvar 2026 – 10 fevral 2026 · Main Gallery')).toHaveClass('text-wine-ink-muted');
+        expect(within(block).getByRole('link', { name: 'Sərgi haqqında' })).toHaveAttribute('href', '/exhibitions/now');
+        expect(block.innerHTML).not.toMatch(/signal/);
+        // Not repeated in the list below; the list keeps the other shows.
+        const list = screen.getByRole('heading', { level: 2, name: 'Sərgilər' }).closest('section');
+        expect(within(list).queryByText('Now Show')).not.toBeInTheDocument();
+        expect(within(list).getByText('Soon Show')).toBeInTheDocument();
+        expect(within(list).queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
+        // Order: featured, then the wine block, then the artists.
+        const featured = screen.getByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' });
+        const artists = screen.getByRole('heading', { level: 2, name: 'Rəssamlar' });
+        expect(Boolean(featured.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+        expect(Boolean(block.compareDocumentPosition(artists) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+        expect(container.querySelectorAll('[data-testid="home-current-show"]')).toHaveLength(1);
+    });
+
+    it('shows no wine block without a current exhibition', async () => {
+        homepage = { ...homepageData, exhibition: null, exhibitions: { current: [], upcoming: [{ ...homepageData.exhibition, slug: 'soon', title: 'Soon Show', status: 'upcoming' }] } };
+        mockApi();
+        renderHome();
+
+        expect(await screen.findByText('Soon Show')).toBeInTheDocument();
+        expect(screen.queryByTestId('home-current-show')).not.toBeInTheDocument();
+    });
+
+    it('opens with a text-only hero: text-hero heading, Spectral lead, no image', async () => {
+        renderHome();
+
+        const hero = await screen.findByTestId('home-hero');
+        expect(within(hero).getByRole('heading', { level: 1, name: 'ArtNiyyətli' })).toHaveClass('text-hero');
+        expect(within(hero).getByText('Müasir Azərbaycan sənətini kəşf edin.')).toHaveClass('font-editorial', 'text-lead', 'text-ink-muted');
+        expect(hero.querySelector('img')).toBeNull();
+        expect(hero.closest('.pt-step-8')).not.toBeNull();
+    });
+
     it('puts each section label (interface text, sentence case) right above its heading', async () => {
+        const ex = (slug, title, status) => ({ ...homepageData.exhibition, slug, title, status });
+        homepage = { ...homepageData, exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming')] } };
+        mockApi();
         renderHome();
         await screen.findByText('Wall Piece');
 

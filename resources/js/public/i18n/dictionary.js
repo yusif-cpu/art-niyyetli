@@ -83,6 +83,8 @@ export const dictionary = {
         home: {
             wall: 'Divar',
             currentExhibitions: 'Cari sərgilər',
+            currentExhibition: 'Cari sərgi',
+            aboutExhibition: 'Sərgi haqqında',
             upcomingExhibitions: 'Gələcək sərgilər',
             featured: 'Seçilmiş əsərlər',
             artists: 'Rəssamlar',
@@ -256,6 +258,8 @@ export const dictionary = {
         home: {
             wall: 'Wall',
             currentExhibitions: 'Current exhibitions',
+            currentExhibition: 'Current exhibition',
+            aboutExhibition: 'About the exhibition',
             upcomingExhibitions: 'Upcoming exhibitions',
             featured: 'Featured works',
             artists: 'Artists',

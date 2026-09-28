@@ -263,7 +263,7 @@ Canlı saytda başlıq (h1 və tarix sətri) ilə mətn arasında `gap-step-9` =
 
 Demoda kök elementə `min-height: 100vh` verilib (və sabit zolaq üçün `padding-bottom: 52px`). Footer həmişə ekranın altındadır.
 
-Canlı saytda da eyni qayda var: `SiteShell` = `min-h-screen flex-col`, `main` = `flex-1`. Yoxlanıldı: məxfilik səhifəsində 1440×900 ekranda footer 684-900 arasındadır, yəni ekranın **altına bərkidilib**.
+Canlı saytda da eyni qayda var: `SiteShell` ekran hündürlüyündə sütundur (9-cu mərhələdən `min-h-dvh`), `main` = `flex-1`. Yoxlanıldı: məxfilik səhifəsində 1440×900 ekranda footer 684-900 arasındadır, yəni ekranın **altına bərkidilib**.
 
 8-ci mərhələnin hesabatında yazdığım "footer yuxarı qalxır" **dəqiq deyildi**. Footer qalxmır. Görünən, qısa məzmunla footer arasındakı təxminən 390px boşluqdur. Demo da eyni boşluğu verərdi. Düzəliş lazım deyil. Hüquqi səhifələrə əsl mətn gələndə boşluq özü itəcək.
 

@@ -79,6 +79,9 @@ describe('ArtworkDetailPage', () => {
         expect(within(row('provenance')).getByText('Directly from the artist.')).toBeInTheDocument();
         for (const key of ['frame', 'delivery', 'certificate']) expect(screen.queryByTestId(`row-${key}`)).not.toBeInTheDocument();
         expect(screen.getByTestId('artwork-price').textContent).toBe(`3${NBSP}200${NBSP}AZN`);
+        // Stage 9: term above value in a narrow table (200% zoom), side by side from 17rem (a container query).
+        expect(row('year').closest('dl')).toHaveClass('@container');
+        expect(row('year')).toHaveClass('grid-cols-1', '@[17rem]:grid-cols-[minmax(0,8rem)_minmax(0,1fr)]');
         expect(screen.getByText('A description.')).toHaveClass('font-editorial', 'text-reading');
     });
 

@@ -68,7 +68,7 @@ export default function Header() {
             */}
             <div className="flex flex-wrap items-center gap-x-step-6 gap-y-step-4 px-page py-step-5 lg:flex-nowrap">
                 {/* The logo in wine (never Signal): the lockup, and below 375px the mark alone. */}
-                <a href="/" className="-my-2 inline-flex min-h-11 shrink-0 items-center text-wine" data-testid="header-brand">
+                <a href="/" className="-my-2 inline-flex min-h-11 min-w-11 shrink-0 items-center text-wine" data-testid="header-brand">
                     <BrandLogo variant="lockup" className="hidden h-7 min-[375px]:block" />
                     <BrandLogo variant="mark" className="h-7 min-[375px]:hidden" />
                 </a>

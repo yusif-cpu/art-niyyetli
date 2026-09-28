@@ -58,7 +58,7 @@ function CurrentShowBlock({ exhibition, locale }) {
                 <p className="figures mt-step-3 text-meta text-wine-ink-muted">{[dates, exhibition.venue].filter(Boolean).join(' · ')}</p>
             )}
             {exhibition.short_text && <p className="mt-step-5 max-w-prose font-editorial text-reading">{exhibition.short_text}</p>}
-            <a href={`/exhibitions/${encodeURIComponent(exhibition.slug)}`} className="mt-step-6 inline-block text-ui text-wine-ink underline decoration-1 underline-offset-4">
+            <a href={`/exhibitions/${encodeURIComponent(exhibition.slug)}`} className="mt-step-5 inline-flex min-h-11 items-center text-ui text-wine-ink underline decoration-1 underline-offset-4">
                 {t(locale, 'home.aboutExhibition')}
             </a>
         </section>

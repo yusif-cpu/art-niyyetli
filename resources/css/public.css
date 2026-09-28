@@ -3,6 +3,8 @@
 @source not '../../resources/js/admin/**/*';
 @source not '../../resources/css/admin.css';
 @source not '../../resources/views/admin.blade.php';
+/* Laravel's default welcome page is not part of the public site (its classes, e.g. a 100vh min-height, would ship). */
+@source not '../../resources/views/welcome.blade.php';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -269,6 +271,17 @@
 @media (max-width: 760px) {
     :root {
         --spacing-page: 20px;
+    }
+}
+
+/* Phones: no text that is read is under 14px. The small interface levels (11–13px on a desktop) rise to 14px below
+   md; headings and reading text are already larger. The wall's caption band (64px) still fits three 14px lines. */
+@media (max-width: 767px) {
+    :root {
+        --text-caption: 14px;
+        --text-label: 14px;
+        --text-meta: 14px;
+        --text-byline: 14px;
     }
 }
 

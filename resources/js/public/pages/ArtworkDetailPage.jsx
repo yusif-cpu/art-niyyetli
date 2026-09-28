@@ -101,7 +101,7 @@ export default function ArtworkDetailPage({ params }) {
                     <h1 className="font-editorial text-heading italic">{data.title}</h1>
                     {artistName &&
                         (artistHref ? (
-                            <a href={artistHref} className="mt-step-2 inline-block text-byline-lg text-ink decoration-1 underline-offset-2 hover:underline">
+                            <a href={artistHref} className="mt-step-1 inline-flex min-h-11 items-center text-byline-lg text-ink decoration-1 underline-offset-2 hover:underline">
                                 {artistName}
                             </a>
                         ) : (
@@ -112,11 +112,13 @@ export default function ArtworkDetailPage({ params }) {
                         {price.text}
                     </p>
 
-                    <dl className="mt-step-5 border-t border-line">
+                    <dl className="@container mt-step-5 border-t border-line">
                         {detailRows(data, locale).map(([key, value]) => (
-                            <div key={key} className="grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)] gap-step-4 border-b border-line py-step-2" data-testid={`row-${key}`}>
+                            // Term beside value while the table is at least 17rem wide; narrower (200% zoom on a phone,
+                            // a ~188px viewport) the term sits above its value, so nothing is cut or broken mid-word.
+                            <div key={key} className="grid grid-cols-1 gap-step-1 border-b border-line py-step-2 @[17rem]:grid-cols-[minmax(0,8rem)_minmax(0,1fr)] @[17rem]:gap-step-4" data-testid={`row-${key}`}>
                                 <dt className="text-label text-ink-muted">{t(locale, `artwork.${key}`)}</dt>
-                                <dd className={`text-ui ${key === 'code' || key === 'year' || key === 'dimensions' ? 'figures' : ''}`}>{value}</dd>
+                                <dd className={`text-ui break-words ${key === 'code' || key === 'year' || key === 'dimensions' ? 'figures' : ''}`}>{value}</dd>
                             </div>
                         ))}
                     </dl>

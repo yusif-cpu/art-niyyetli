@@ -10,6 +10,9 @@ import HumanFigure from './HumanFigure.jsx';
 // The wall may use at most this share of the viewport height (and never more than this many px).
 const WALL_VIEWPORT_RATIO = 0.55;
 const WALL_MAX_PX = 520;
+// The "170 sm" label: 6px from the figure, and the room it needs (14px text on phones, about 52px wide).
+const FIGURE_LABEL_GAP_PX = 6;
+const FIGURE_LABEL_ROOM_PX = 60;
 
 function metres(cm, locale) {
     const text = (cm / 100).toFixed(2).replace(/0$/, '');
@@ -66,7 +69,15 @@ export default function DetailWallView({ artwork }) {
                                 {artwork.image_url && <img src={artwork.image_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
                             </div>
                             <HumanFigure width={L.figure.width} height={L.figure.height} className="absolute bottom-0" style={{ left: L.figure.left }} />
-                            <span className="absolute text-caption whitespace-nowrap text-ink-muted" style={{ left: L.figure.left + L.figure.width + 6, bottom: L.figure.height - 12 }}>
+                            {/* "170 sm" beside the figure's head: on its right, or on its left when the right edge is too
+                                close (a phone: the scene fills the width and the figure stands near the edge). */}
+                            <span
+                                className="absolute text-caption whitespace-nowrap text-ink-muted"
+                                data-testid="wall-figure-label"
+                                style={L.figure.left + L.figure.width + FIGURE_LABEL_GAP_PX + FIGURE_LABEL_ROOM_PX <= width
+                                    ? { left: L.figure.left + L.figure.width + FIGURE_LABEL_GAP_PX, bottom: L.figure.height - 12 }
+                                    : { right: width - L.figure.left + FIGURE_LABEL_GAP_PX, bottom: L.figure.height - 12 }}
+                            >
                                 {t(locale, 'artwork.figure')}
                             </span>
                         </div>

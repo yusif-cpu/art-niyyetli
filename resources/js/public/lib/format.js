@@ -41,6 +41,15 @@ export function formatDate(value, locale = 'az') {
     return name ? `${Number(day)} ${name} ${year}` : null;
 }
 
+/** "2027-04-10" → "aprel 2027" (az) / "April 2027" (en). */
+export function formatMonthYear(value, locale = 'az') {
+    const match = /^(\d{4})-(\d{2})/.exec(String(value ?? ''));
+    if (!match) return null;
+    const name = (MONTHS[locale] ?? MONTHS.az)[Number(match[2]) - 1];
+
+    return name ? `${name} ${match[1]}` : null;
+}
+
 /** "1 aprel 2026 – 30 aprel 2026", or one date when both ends are the same. */
 export function formatDateRange(start, end, locale = 'az') {
     const a = formatDate(start, locale);

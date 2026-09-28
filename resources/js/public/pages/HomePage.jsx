@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
-import { formatDate, formatDateRange } from '../lib/format.js';
+import { formatDate, formatDateRange, formatMonthYear } from '../lib/format.js';
 import { getHomepage } from '../services/homepage.js';
 import { listArticles } from '../services/articles.js';
 import HomeWall from '../components/HomeWall.jsx';
@@ -28,6 +28,27 @@ function SectionCopy({ section, headingClassName, as: Heading }) {
             {section.body && <p className="mt-step-3 max-w-prose font-editorial text-reading text-ink-muted">{section.body}</p>}
         </div>
     );
+}
+
+/**
+ * The parts of the hero's stats line from `homepage.stats` ("8 əsər kataloqda", "4 rəssam təmsil olunur",
+ * "aprel 2027 sərgi"), shown middle-dot separated. The exhibition part is the month of the first current (else
+ * upcoming) exhibition and drops when there is none. Without stats (missing, or no positive count): null, no line.
+ */
+export function heroStats(data, locale) {
+    const stats = data?.stats;
+    const count = (n) => (typeof n === 'number' && n > 0 ? n : null);
+    const parts = [
+        count(stats?.artworks) && t(locale, 'home.statsArtworks').replace('{n}', stats.artworks),
+        count(stats?.artists) && t(locale, 'home.statsArtists').replace('{n}', stats.artists),
+    ].filter(Boolean);
+    if (parts.length === 0) return null;
+
+    const show = data.exhibitions?.current?.[0] ?? data.exhibitions?.upcoming?.[0] ?? (data.exhibitions ? null : data.exhibition);
+    const month = show ? formatMonthYear(show.start_date, locale) : null;
+    if (month) parts.push(t(locale, 'home.statsExhibition').replace('{date}', month));
+
+    return parts;
 }
 
 // Sections are set apart by the step-9 rhythm and their labels, not by rules between them.
@@ -133,14 +154,40 @@ export default function HomePage() {
     const artists = Array.isArray(data.artists) ? data.artists : [];
     const faqs = Array.isArray(data.faqs) ? data.faqs : [];
     const latest = Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
+    const statsParts = heroStats(data, locale);
 
     return (
         <div className="flex flex-col gap-step-9 px-page pt-step-8 pb-step-9 font-ui">
-            {/* Text only, on the plain surface: no photo, so the wall stays on the first screen. */}
+            {/* Text on the plain surface; with the section's image, a second column from 1024px. The image's height
+                follows the viewport (17%, about the text block's own height), so the wall stays on the first screen. Below 1024px
+                there is no second column and a full-width 4:3 image would push the wall off the first screen, so the
+                image is not shown there. */}
             {hero && (
-                <section aria-label={hero.heading || undefined} data-testid="home-hero">
-                    {hero.heading && <h1 className="text-hero">{hero.heading}</h1>}
-                    {hero.body && <p className="mt-step-4 max-w-prose font-editorial text-lead text-ink-muted">{hero.body}</p>}
+                <section
+                    aria-label={hero.heading || undefined}
+                    data-testid="home-hero"
+                    className={hero.image_url ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-step-8' : ''}
+                >
+                    <div>
+                        {hero.heading && <h1 className="text-hero">{hero.heading}</h1>}
+                        {hero.body && <p className="mt-step-4 max-w-prose font-editorial text-lead text-ink-muted">{hero.body}</p>}
+                        {/* Each part keeps together; a narrow screen breaks the line only at the middle dots. */}
+                        {statsParts && (
+                            <p className="figures mt-step-3 text-meta text-ink-muted" data-testid="home-stats">
+                                {statsParts.map((part, index) => (
+                                    <Fragment key={part}>
+                                        {index > 0 && ' · '}
+                                        <span className="whitespace-nowrap">{part}</span>
+                                    </Fragment>
+                                ))}
+                            </p>
+                        )}
+                    </div>
+                    {hero.image_url && (
+                        <div className="hidden aspect-[4/3] h-[clamp(140px,17vh,200px)] w-auto overflow-hidden border border-line bg-surface-field lg:block" data-testid="home-hero-image">
+                            <img src={hero.image_url} alt={hero.heading || ''} loading="eager" fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
+                        </div>
+                    )}
                 </section>
             )}
 

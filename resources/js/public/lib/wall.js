@@ -46,8 +46,21 @@
  */
 
 export const HUMAN_HEIGHT_CM = 170;
-/** Silhouette geometry from the demo (figureStyles), in cm: 46 wide; body 32 × 148 at 7; head Ø18 at 14, bottom 150. */
-export const FIGURE_CM = { width: 46, bodyLeft: 7, bodyWidth: 32, bodyHeight: 148, headLeft: 14, headSize: 18, headBottom: 150 };
+/**
+ * Silhouette geometry, in cm (x from the left of the 46 cm box, heights from the floor). It reads as a person, not a
+ * skittle: the body is 34 cm wide at the floor and narrows to 28 cm at flat shoulders (146 cm, corner radius 6), a
+ * short 8 cm wide neck joins a Ø16 head whose top is the 170 cm line. Everything is centred on the box.
+ */
+export const FIGURE_CM = {
+    width: 46,
+    bodyBottomWidth: 34,
+    shoulderWidth: 28,
+    shoulderHeight: 146,
+    shoulderRadius: 6,
+    neckWidth: 8,
+    headSize: 16,
+    headBottom: 154,
+};
 export const MAX_DIMENSION_CM = 2000;
 /** Same breakpoint as the header's `md` (Tailwind's 768px): below it the wall turns vertical. */
 export const VERTICAL_BELOW_PX = 768;
@@ -286,8 +299,8 @@ export function figureAt(k) {
     return {
         width: Math.round(f.width * k),
         height: Math.round(HUMAN_HEIGHT_CM * k),
-        body: { left: Math.round(f.bodyLeft * k), width: Math.round(f.bodyWidth * k), height: Math.round(f.bodyHeight * k) },
-        head: { left: Math.round(f.headLeft * k), size: Math.round(f.headSize * k), bottom: Math.round(f.headBottom * k) },
+        shoulders: { width: Math.round(f.shoulderWidth * k), height: Math.round(f.shoulderHeight * k) },
+        head: { size: Math.round(f.headSize * k), bottom: Math.round(f.headBottom * k) },
     };
 }
 

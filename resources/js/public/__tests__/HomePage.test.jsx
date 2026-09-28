@@ -357,6 +357,70 @@ describe('HomePage', () => {
         expect(screen.queryByTestId('home-current-show')).not.toBeInTheDocument();
     });
 
+    describe('the hero stats line', () => {
+        it('shows works, artists and the exhibition month, middle-dot separated, in text-meta / ink-muted', async () => {
+            const ex = (slug, status, start) => ({ ...homepageData.exhibition, slug, status, start_date: start });
+            homepage = { ...homepageData, stats: { artists: 4, artworks: 8, exhibitions: 2 }, exhibitions: { current: [], upcoming: [ex('soon', 'upcoming', '2027-04-10')] } };
+            mockApi();
+            renderHome();
+
+            const line = await screen.findByTestId('home-stats');
+            expect(line).toHaveTextContent('8 əsər kataloqda · 4 rəssam təmsil olunur · aprel 2027 sərgi');
+            expect(line).toHaveClass('text-meta', 'text-ink-muted');
+            // Each part keeps together, so a narrow screen breaks the line only at the dots.
+            [...line.querySelectorAll('span')].forEach((part) => expect(part).toHaveClass('whitespace-nowrap'));
+            expect(line.querySelectorAll('span')).toHaveLength(3);
+            expect(within(screen.getByTestId('home-hero')).getByTestId('home-stats')).toBe(line);
+        });
+
+        it('drops the exhibition part when there is no current or upcoming exhibition', async () => {
+            homepage = { ...homepageData, stats: { artists: 4, artworks: 8, exhibitions: 0 }, exhibition: null, exhibitions: { current: [], upcoming: [] } };
+            mockApi();
+            renderHome();
+
+            expect(await screen.findByTestId('home-stats')).toHaveTextContent(/^8 əsər kataloqda · 4 rəssam təmsil olunur$/);
+        });
+
+        it('shows no line at all without stats', async () => {
+            for (const stats of [null, { artists: 0, artworks: 0, exhibitions: 0 }]) {
+                homepage = { ...homepageData, stats };
+                mockApi();
+                const { unmount } = renderHome();
+                await screen.findByRole('heading', { level: 1 });
+                expect(screen.queryByTestId('home-stats')).not.toBeInTheDocument();
+                unmount();
+            }
+        });
+    });
+
+    describe('the hero image', () => {
+        const withHero = (image_url) => ({ ...homepageData, page: { ...homepageData.page, sections: [{ ...homepageData.page.sections[0], image_url }] } });
+
+        it('with image_url: a second column from 1024px, a 4:3 cover image with a 1px line, no shadow, sized from the viewport', async () => {
+            homepage = withHero('https://example.test/hero.webp');
+            mockApi();
+            renderHome();
+
+            const hero = await screen.findByTestId('home-hero');
+            expect(hero).toHaveClass('lg:grid', 'lg:grid-cols-[minmax(0,1fr)_auto]');
+            const frame = within(hero).getByTestId('home-hero-image');
+            expect(frame).toHaveClass('aspect-[4/3]', 'border', 'border-line', 'hidden', 'lg:block', 'h-[clamp(140px,17vh,200px)]');
+            expect(frame.className).not.toMatch(/shadow/);
+            expect(within(frame).getByRole('img')).toHaveAttribute('src', 'https://example.test/hero.webp');
+            expect(within(frame).getByRole('img')).toHaveClass('object-cover');
+        });
+
+        it('without image_url: the single-column text hero stays', async () => {
+            homepage = withHero(null);
+            mockApi();
+            renderHome();
+
+            const hero = await screen.findByTestId('home-hero');
+            expect(hero.className).not.toMatch(/grid/);
+            expect(within(hero).queryByTestId('home-hero-image')).not.toBeInTheDocument();
+        });
+    });
+
     it('opens with a text-only hero: text-hero heading, Spectral lead, no image', async () => {
         renderHome();
 

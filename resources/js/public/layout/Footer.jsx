@@ -51,8 +51,9 @@ export default function Footer() {
                     {site.footer_text && <p className="max-w-xs text-meta text-wine-ink-muted">{site.footer_text}</p>}
                 </div>
 
-                <LinkColumn label="Main" items={headerItems} locale={locale} testId="footer-nav" />
-                <LinkColumn label="Footer" items={footerItems} locale={locale} testId="footer-legal" />
+                {/* Named apart from the header's "Main" menu: two landmarks must not share a name. */}
+                <LinkColumn label={t(locale, 'nav.footerSite')} items={headerItems} locale={locale} testId="footer-nav" />
+                <LinkColumn label={t(locale, 'nav.footerLegal')} items={footerItems} locale={locale} testId="footer-legal" />
 
                 <div className="flex flex-col items-start gap-step-4 text-meta" data-testid="footer-contact">
                     {(site.address || site.opening_hours) && (

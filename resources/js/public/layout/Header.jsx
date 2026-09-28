@@ -77,7 +77,7 @@ export default function Header() {
                 {hasMenu && (
                     <nav
                         id="site-menu"
-                        aria-label="Main"
+                        aria-label={t(locale, 'nav.mainLabel')}
                         className={`${menuOpen ? 'flex' : 'hidden'} order-last w-full flex-col items-stretch max-md:max-h-[calc(100dvh-6rem)] max-md:overflow-y-auto md:flex md:flex-row md:flex-wrap md:items-baseline md:gap-x-step-6 md:gap-y-step-2 lg:order-none lg:w-auto lg:min-w-0 lg:flex-1 lg:justify-end`}
                         onClick={(event) => {
                             if (event.target.closest('a')) setMenuOpen(false);

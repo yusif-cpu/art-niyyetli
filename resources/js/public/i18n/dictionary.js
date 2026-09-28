@@ -7,6 +7,9 @@ export const dictionary = {
             articles: 'Jurnal',
             faqs: 'Suallar',
             menu: 'menyu',
+            mainLabel: 'Əsas menyu',
+            footerSite: 'Saytın bölmələri',
+            footerLegal: 'Hüquqi səhifələr',
         },
         common: {
             loading: 'Yüklənir...',
@@ -187,6 +190,9 @@ export const dictionary = {
             articles: 'Journal',
             faqs: 'FAQ',
             menu: 'menu',
+            mainLabel: 'Main menu',
+            footerSite: 'Site sections',
+            footerLegal: 'Legal pages',
         },
         common: {
             loading: 'Loading...',

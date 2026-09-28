@@ -7,6 +7,7 @@ import { listExhibitions } from '../services/exhibitions.js';
 import ExhibitionRow from '../components/ExhibitionRow.jsx';
 import Pagination from '../components/Pagination.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import PageHeader from '../components/PageHeader.jsx';
 
 // Current and upcoming shows are few: one request each, the API's largest page. The archive grows and pages.
 const OPEN_PER_PAGE = 60;
@@ -62,8 +63,8 @@ export default function ExhibitionsPage() {
     const empty = !loading && !error && list(current).length === 0 && list(upcoming).length === 0 && list(archive).length === 0 && archivePage === 1;
 
     return (
-        <div className="px-page pt-step-8 pb-step-9 font-ui">
-            <h1 className="border-b border-line pb-step-5 text-display">{t(locale, 'nav.exhibitions')}</h1>
+        <div className="px-page pb-step-9 font-ui">
+            <PageHeader label={t(locale, 'labels.calendar')} title={t(locale, 'nav.exhibitions')} description={t(locale, 'exhibitions.description')} />
 
             <div className="mt-step-7">
                 {error && <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />}

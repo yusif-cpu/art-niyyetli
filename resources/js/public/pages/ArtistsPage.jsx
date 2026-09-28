@@ -7,6 +7,7 @@ import { listArtists } from '../services/artists.js';
 import ArtistCard from '../components/ArtistCard.jsx';
 import Pagination from '../components/Pagination.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import PageHeader from '../components/PageHeader.jsx';
 
 const GRID = 'grid grid-cols-1 gap-x-step-6 gap-y-step-7 md:grid-cols-3 xl:grid-cols-4';
 
@@ -23,8 +24,8 @@ export default function ArtistsPage() {
     usePageMeta({ title: `${t(locale, 'nav.artists')} — ArtNiyyətli` });
 
     return (
-        <div className="px-page pt-step-8 pb-step-9 font-ui">
-            <h1 className="border-b border-line pb-step-5 text-display">{t(locale, 'nav.artists')}</h1>
+        <div className="px-page pb-step-9 font-ui">
+            <PageHeader label={t(locale, 'labels.representation')} title={t(locale, 'nav.artists')} description={t(locale, 'artist.listDescription')} />
 
             <div className="mt-step-7">
                 {loading && !data && (

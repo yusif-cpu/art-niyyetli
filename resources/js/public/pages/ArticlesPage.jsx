@@ -7,6 +7,7 @@ import { listArticles } from '../services/articles.js';
 import ArticleCard from '../components/ArticleCard.jsx';
 import Pagination from '../components/Pagination.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import PageHeader from '../components/PageHeader.jsx';
 
 /**
  * The journal: newest first (E11), one article per row between hairlines — date and type, title, short text, cover.
@@ -21,8 +22,9 @@ export default function ArticlesPage() {
     usePageMeta({ title: `${t(locale, 'nav.articles')} — ArtNiyyətli` });
 
     return (
-        <div className="px-page pt-step-8 pb-step-9 font-ui">
-            <h1 className="border-b border-line pb-step-5 text-display">{t(locale, 'nav.articles')}</h1>
+        <div className="px-page pb-step-9 font-ui">
+            {/* Label "Məqalələr" over the "Jurnal" title: not the same word twice. */}
+            <PageHeader label={t(locale, 'labels.articles')} title={t(locale, 'nav.articles')} description={t(locale, 'articles.description')} />
 
             {loading && !data && (
                 <div aria-busy="true" data-testid="articles-skeleton">

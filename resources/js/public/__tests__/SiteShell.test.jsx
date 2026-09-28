@@ -69,11 +69,14 @@ describe('SiteShell', () => {
             </LocaleProvider>
         );
 
-        expect(await screen.findByRole('link', { name: 'Ana səhifə' })).toHaveAttribute('href', '/');
-        expect(screen.getByRole('link', { name: 'Haqqımızda' })).toHaveAttribute('href', '/about');
-        expect(screen.getByRole('link', { name: 'Əlaqə' })).toHaveAttribute('href', '/contact');
-        expect(screen.getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
-        expect(screen.getByRole('link', { name: 'Rəssamlar' })).toHaveAttribute('href', '/artists');
+        // The footer repeats the header menu in its navigation column: header links are checked inside the header.
+        const header = within(screen.getByRole('banner'));
+        expect(await header.findByRole('link', { name: 'Ana səhifə' })).toHaveAttribute('href', '/');
+        expect(header.getByRole('link', { name: 'Haqqımızda' })).toHaveAttribute('href', '/about');
+        expect(header.getByRole('link', { name: 'Əlaqə' })).toHaveAttribute('href', '/contact');
+        expect(header.getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
+        expect(header.getByRole('link', { name: 'Rəssamlar' })).toHaveAttribute('href', '/artists');
+        expect(within(screen.getByTestId('footer-nav')).getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
         expect(screen.getByText('Page content')).toBeInTheDocument();
 
         expect(await screen.findByText('hello@artniyyetli.az')).toBeInTheDocument();
@@ -170,9 +173,10 @@ describe('SiteShell', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'EN' }));
 
-        await waitFor(() => expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/'));
-        expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
-        expect(screen.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
+        const header = within(screen.getByRole('banner'));
+        await waitFor(() => expect(header.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/'));
+        expect(header.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
+        expect(header.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
         expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy-policy');
         expect(screen.getByRole('link', { name: 'Terms & Conditions' })).toHaveAttribute('href', '/terms');
         expect(screen.queryByText('Məxfilik siyasəti')).not.toBeInTheDocument();

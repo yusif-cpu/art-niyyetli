@@ -87,7 +87,7 @@ export default function ArtistDetailPage({ params }) {
             <header className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-end gap-step-5 md:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] md:gap-step-6">
                 <ArtistPortrait artist={data} className="w-full max-w-40" priority />
                 <div>
-                    <h1 className="text-heading">{name}</h1>
+                    <h1 className="text-display">{name}</h1>
                     {data.direction && <p className="mt-step-2 text-ui">{data.direction}</p>}
                     {born && <p className="figures mt-step-1 text-meta text-ink-muted">{born}</p>}
                 </div>
@@ -101,15 +101,16 @@ export default function ArtistDetailPage({ params }) {
             )}
 
             {(data.biography || data.artistic_approach) && (
-                <section aria-label={t(locale, 'artist.biography')} className="flex max-w-prose flex-col gap-step-6">
+                // Two columns from 1024px (biography | approach), each a reading measure; stacked below.
+                <section aria-label={t(locale, 'artist.biography')} className="grid gap-step-6 lg:grid-cols-2 lg:gap-step-8" data-testid="artist-texts">
                     {data.biography && (
-                        <div>
+                        <div className="max-w-prose">
                             <h2 className="mb-step-3 text-subheading">{t(locale, 'artist.biography')}</h2>
                             <p className="font-editorial text-reading whitespace-pre-line">{data.biography}</p>
                         </div>
                     )}
                     {data.artistic_approach && (
-                        <div>
+                        <div className="max-w-prose">
                             <h2 className="mb-step-3 text-subheading">{t(locale, 'artist.approach')}</h2>
                             <p className="font-editorial text-reading whitespace-pre-line">{data.artistic_approach}</p>
                         </div>

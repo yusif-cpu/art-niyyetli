@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
@@ -182,7 +182,8 @@ describe('SiteDataProvider', () => {
 
         renderShell();
 
-        expect(await screen.findByRole('link', { name: 'Ana səhifə' })).toBeInTheDocument();
+        // Header menu (the footer repeats it, so the header is searched).
+        expect(await within(screen.getByRole('banner')).findByRole('link', { name: 'Ana səhifə' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toBeInTheDocument();
         expect(screen.getAllByRole('link', { name: 'instagram' })).toHaveLength(1);
         expect(screen.getAllByRole('img', { name: 'ArtNiyyətli' }).length).toBeGreaterThanOrEqual(2);

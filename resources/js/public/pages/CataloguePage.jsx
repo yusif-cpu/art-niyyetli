@@ -11,6 +11,7 @@ import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import FilterBar from '../components/FilterBar.jsx';
 import Pagination from '../components/Pagination.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import PageHeader from '../components/PageHeader.jsx';
 
 // A fixed loading pattern (field sizes in px): static, no shimmer, never random.
 const SKELETON = [[240, 180], [180, 140], [150, 190], [210, 150], [130, 100], [170, 130]];
@@ -77,15 +78,17 @@ export default function CataloguePage() {
     );
 
     return (
-        <div className="px-page pt-step-8 pb-step-9 font-ui">
-            <div className="flex flex-wrap items-baseline justify-between gap-step-4 border-b border-line pb-step-5">
-                <h1 className="text-display">{t(locale, 'nav.artworks')}</h1>
-                {typeof total === 'number' && (
+        <div className="px-page pb-step-9 font-ui">
+            <PageHeader
+                label={t(locale, 'labels.collection')}
+                title={t(locale, 'nav.artworks')}
+                description={t(locale, 'catalogue.description')}
+                aside={typeof total === 'number' && (
                     <p className="figures text-meta text-ink-muted">
                         {total} {t(locale, 'catalogue.count')}
                     </p>
                 )}
-            </div>
+            />
 
             <div className="mt-step-6 lg:grid lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-step-8">
                 <aside aria-labelledby="catalogue-filters-title">

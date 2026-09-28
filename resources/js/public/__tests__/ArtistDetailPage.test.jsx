@@ -65,6 +65,16 @@ describe('ArtistDetailPage', () => {
         nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
     });
 
+    it('sets biography and approach side by side from 1024px, each a reading measure', async () => {
+        renderPage();
+        await screen.findByText('Bio text.');
+
+        const texts = screen.getByTestId('artist-texts');
+        expect(texts).toHaveClass('grid', 'lg:grid-cols-2');
+        expect(texts.children).toHaveLength(2);
+        [...texts.children].forEach((column) => expect(column).toHaveClass('max-w-prose'));
+    });
+
     it('shows the approach text once only (no excerpt of it in the header)', async () => {
         renderPage();
 
@@ -74,7 +84,8 @@ describe('ArtistDetailPage', () => {
     it('shows the header block: a 4:5 portrait up to 160px, the name, direction and birth year and place', async () => {
         renderPage();
 
-        expect(await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' })).toHaveClass('text-heading');
+        // (was: text-heading) — the design pass raises the artist's name to text-display.
+        expect(await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' })).toHaveClass('text-display');
         const portrait = screen.getByTestId('artist-portrait');
         expect(portrait).toHaveClass('aspect-[4/5]', 'max-w-40', 'border', 'border-line');
         expect(within(portrait).getByRole('img', { name: 'Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/portrait.webp');

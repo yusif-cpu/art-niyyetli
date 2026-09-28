@@ -130,17 +130,42 @@ describe('Site chrome (header + footer)', () => {
         expect(within(footer).queryByRole('group', { name: 'Language' })).not.toBeInTheDocument();
     });
 
+    it('lays the footer out in four columns without titles: brand, navigation, legal pages, contact and social', async () => {
+        mockShell({
+            settings: { ...EMPTY_SETTINGS, contact_email: 'salam@artniyyetli.az', address: 'Bakı, Xaqani küçəsi 14', footer_text: '© ArtNiyyətli' },
+            navigation: { header: [{ type: 'route', route_key: 'artworks', href: '/artworks' }], footer: [{ type: 'page', title: 'Məxfilik siyasəti', href: '/privacy-policy' }] },
+        });
+        renderShell();
+
+        const footer = screen.getByRole('contentinfo');
+        await within(footer).findByText('salam@artniyyetli.az');
+        const columns = within(footer).getByTestId('footer-columns');
+        expect(columns).toHaveClass('grid', 'md:grid-cols-4');
+        expect(columns.className).not.toMatch(/(^|\s)grid-cols-/); // one column below 768px
+        expect(columns.children).toHaveLength(4);
+        const [brand, nav, legal, contact] = columns.children;
+        expect(within(brand).getByText('© ArtNiyyətli')).toBeInTheDocument();
+        expect(within(nav).getByRole('link', { name: 'Əsərlər' })).toHaveAttribute('href', '/artworks');
+        expect(within(legal).getByRole('link', { name: 'Məxfilik siyasəti' })).toHaveAttribute('href', '/privacy-policy');
+        expect(within(contact).getByText('Bakı, Xaqani küçəsi 14')).toBeInTheDocument();
+        expect(within(footer).queryAllByRole('heading')).toHaveLength(0);
+        expect(footer.innerHTML).not.toMatch(/signal/);
+    });
+
     it('marks the active navigation item with signal-ink, including on its detail pages', async () => {
         window.history.pushState(null, '', '/artworks/AN-2024-031');
         mockShell();
         renderShell();
 
-        const active = await screen.findByRole('link', { name: 'Əsərlər' });
+        // The header menu (the footer repeats it in wine-ink, never marked active).
+        const header = within(screen.getByRole('banner'));
+        const active = await header.findByRole('link', { name: 'Əsərlər' });
         expect(active).toHaveAttribute('aria-current', 'page');
         expect(active).toHaveClass('text-signal-ink', 'border-signal');
+        expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Əsərlər' })).not.toHaveClass('text-signal-ink');
 
         for (const name of ['Ana səhifə', 'Rəssamlar']) {
-            const link = screen.getByRole('link', { name });
+            const link = header.getByRole('link', { name });
             expect(link).not.toHaveAttribute('aria-current');
             expect(link).not.toHaveClass('text-signal-ink');
         }

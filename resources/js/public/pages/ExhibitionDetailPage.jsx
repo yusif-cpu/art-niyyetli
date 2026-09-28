@@ -53,16 +53,19 @@ export default function ExhibitionDetailPage({ params }) {
 
     return (
         <article className="flex flex-col gap-step-9 px-page pt-step-8 pb-step-9 font-ui" key={data.slug}>
-            <header>
-                <h1 className="text-heading">{data.title}</h1>
-                <div className="mt-step-3 flex flex-wrap items-baseline gap-x-step-5 gap-y-step-2">
-                    {dates && <span className="figures text-meta text-ink-muted">{dates}</span>}
-                    {data.venue && <span className="text-meta text-ink-muted">{data.venue}</span>}
-                    <ExhibitionStatus status={data.status} />
-                </div>
-            </header>
+            {/* Title, dates, venue, status and the text read as one block: step-4 inside, step-9 only between sections. */}
+            <div className="flex flex-col gap-step-4" data-testid="exhibition-intro">
+                <header>
+                    <h1 className="text-heading">{data.title}</h1>
+                    <div className="mt-step-3 flex flex-wrap items-baseline gap-x-step-5 gap-y-step-2">
+                        {dates && <span className="figures text-meta text-ink-muted">{dates}</span>}
+                        {data.venue && <span className="text-meta text-ink-muted">{data.venue}</span>}
+                        <ExhibitionStatus status={data.status} />
+                    </div>
+                </header>
 
-            {text && <p className="max-w-prose font-editorial text-reading whitespace-pre-line">{text}</p>}
+                {text && <p className="max-w-prose font-editorial text-reading whitespace-pre-line">{text}</p>}
+            </div>
 
             {artworks.length > 0 && (
                 <section aria-labelledby="exhibition-works">

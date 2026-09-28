@@ -55,6 +55,16 @@ describe('ExhibitionDetailPage', () => {
         expect(screen.getByText('Full concept text.')).toHaveClass('font-editorial', 'text-reading', 'max-w-prose');
     });
 
+    it('reads title, dates, venue, status and text as one block, step-4 apart (not step-9)', async () => {
+        renderPage();
+
+        const intro = await screen.findByTestId('exhibition-intro');
+        expect(intro).toHaveClass('gap-step-4');
+        expect(within(intro).getByRole('heading', { level: 1 })).toBeInTheDocument();
+        expect(within(intro).getByText('Full concept text.')).toBeInTheDocument();
+        expect(within(intro).getByText('Cari')).toBeInTheDocument();
+    });
+
     it('hangs the works on a wall at one k, with the 170 cm figure at 170 × k', async () => {
         renderPage();
         await screen.findByText('A Piece');

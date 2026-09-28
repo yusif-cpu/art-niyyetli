@@ -1,6 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from '../App.jsx';
+
+// The footer repeats the header menu (its navigation column), so header links are looked up inside the header.
+const header = () => within(screen.getByRole('banner'));
 
 function jsonResponse(body) {
     return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body };
@@ -26,7 +29,7 @@ describe('App routing', () => {
 
     it('renders the site shell nav and a placeholder page for the home route', async () => {
         render(<App />);
-        expect(await screen.findByRole('link', { name: 'Əsərlər' })).toBeInTheDocument();
+        expect(await header().findByRole('link', { name: 'Əsərlər' })).toBeInTheDocument();
     });
 
     it('issues exactly three shell requests plus one page request on a hard load of a static page', async () => {
@@ -41,7 +44,7 @@ describe('App routing', () => {
 
         render(<App />);
         await screen.findByRole('heading', { name: 'Haqqımızda' });
-        await screen.findByRole('link', { name: 'Əsərlər' });
+        await header().findByRole('link', { name: 'Əsərlər' });
 
         expect(global.fetch.mock.calls.map(([url]) => url).sort()).toEqual([
             '/api/v1/navigation?locale=az',
@@ -53,7 +56,7 @@ describe('App routing', () => {
 
     it('issues exactly three shell requests plus the homepage request on a hard load of the home page', async () => {
         render(<App />);
-        await screen.findByRole('link', { name: 'Əsərlər' });
+        await header().findByRole('link', { name: 'Əsərlər' });
         await waitFor(() => expect(global.fetch.mock.calls.map(([url]) => url).some((url) => url.includes('/homepage'))).toBe(true));
 
         const urls = global.fetch.mock.calls.map(([url]) => url);

@@ -53,6 +53,7 @@ export const dictionary = {
             backToCatalogue: 'Kataloqa qayıt',
         },
         artist: {
+            listDescription: 'Qalereyanın təmsil etdiyi rəssamlar.',
             exhibitionHistory: 'Sərgi tarixçəsi',
             awards: 'Mükafatlar',
             biography: 'Tərcümeyi-hal',
@@ -101,6 +102,7 @@ export const dictionary = {
             calendar: 'Təqvim',
             journal: 'Jurnal',
             contact: 'Əlaqə',
+            articles: 'Məqalələr',
         },
         filters: {
             artist: 'Rəssam',
@@ -128,6 +130,7 @@ export const dictionary = {
         },
         catalogue: {
             count: 'əsər',
+            description: 'Hər əsər həqiqi ölçü nisbətində göstərilir: böyük əsər böyük, kiçik əsər kiçik görünür.',
             empty: 'Bu şərtlərə uyğun əsər yoxdur.',
             error: 'Əsərləri yükləmək alınmadı.',
             reload: 'Yenidən yüklə',
@@ -140,6 +143,7 @@ export const dictionary = {
             upcoming: 'Qarşıdan gələn',
             archive: 'Arxiv',
             participatingArtists: 'İştirakçı rəssamlar',
+            description: 'Cari, gələcək və keçmiş sərgilər.',
             empty: 'Hələ sərgi yoxdur.',
             works: 'Sərgidəki əsərlər',
             wallLabel: 'Sərgidəki əsərlər divarda, həqiqi ölçüdə; sürüşdürmək üçün ox düymələri',
@@ -150,6 +154,7 @@ export const dictionary = {
             backToList: 'Sərgilərə qayıt',
         },
         articles: {
+            description: 'Müsahibələr, sərgi icmalları və qalereyanın xəbərləri.',
             empty: 'Hələ məqalə yoxdur.',
             more: 'Digər məqalələr',
             notFoundTitle: 'Məqalə tapılmadı',
@@ -228,6 +233,7 @@ export const dictionary = {
             backToCatalogue: 'Back to the catalogue',
         },
         artist: {
+            listDescription: 'The artists the gallery represents.',
             exhibitionHistory: 'Exhibition history',
             awards: 'Awards',
             biography: 'Biography',
@@ -276,6 +282,7 @@ export const dictionary = {
             calendar: 'Calendar',
             journal: 'Journal',
             contact: 'Contact',
+            articles: 'Articles',
         },
         filters: {
             artist: 'Artist',
@@ -303,6 +310,7 @@ export const dictionary = {
         },
         catalogue: {
             count: 'works',
+            description: 'Every work is shown at its true relative size: a large work looks large, a small one small.',
             empty: 'No works match these filters.',
             error: 'The works could not be loaded.',
             reload: 'Reload',
@@ -315,6 +323,7 @@ export const dictionary = {
             upcoming: 'Upcoming',
             archive: 'Archive',
             participatingArtists: 'Participating artists',
+            description: 'Current, upcoming and past exhibitions.',
             empty: 'No exhibitions yet.',
             works: 'Works in the exhibition',
             wallLabel: 'The works in the exhibition on a wall at true size; use the arrow keys to scroll',
@@ -325,6 +334,7 @@ export const dictionary = {
             backToList: 'Back to the exhibitions',
         },
         articles: {
+            description: 'Interviews, exhibition reviews and gallery news.',
             empty: 'No articles yet.',
             more: 'More articles',
             notFoundTitle: 'Article not found',

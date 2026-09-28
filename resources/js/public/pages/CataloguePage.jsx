@@ -45,7 +45,7 @@ export default function CataloguePage() {
     const search = toSearch(query);
     const artworks = useApiData(() => listArtworks(locale, query), [locale, search, retryToken]);
 
-    usePageMeta({ title: `${t(locale, 'nav.artworks')} — ArtNiyyətli` });
+    usePageMeta({ title: `${t(locale, 'nav.artworks')} | ArtNiyyətli` });
 
     function writeUrl(next, mode) {
         const nextSearch = toSearch(next);

@@ -92,6 +92,6 @@ describe('ArticlesPage', () => {
     it('sets a static articles document title', async () => {
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe('Jurnal — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Jurnal | ArtNiyyətli'));
     });
 });

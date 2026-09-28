@@ -4,7 +4,10 @@ namespace Tests\Feature\Api;
 
 use App\Models\Artist;
 use App\Models\Artwork;
+use App\Models\ArtworkImage;
 use App\Models\Genre;
+use App\Models\Media;
+use App\Models\MediaVariant;
 use App\Models\Medium;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -118,6 +121,35 @@ class ArtworkCatalogueApiTest extends TestCase
         $zero = $this->getJson('/api/v1/artworks?per_page=0');
         $zero->assertOk();
         $this->assertSame(24, $zero->json('meta.per_page'));
+    }
+
+    public function test_list_item_exposes_thumbnail_url_alongside_image_url(): void
+    {
+        $artwork = $this->makeArtwork();
+
+        $media = Media::factory()->create();
+        foreach (['thumbnail', 'catalogue'] as $size) {
+            MediaVariant::create([
+                'media_id' => $media->id,
+                'variant' => "{$size}-webp",
+                'disk' => 'public',
+                'path' => "variants/{$size}.webp",
+                'mime_type' => 'image/webp',
+                'size_bytes' => 100,
+                'width' => 100,
+                'height' => 100,
+            ]);
+        }
+
+        ArtworkImage::create([
+            'artwork_id' => $artwork->id, 'media_id' => $media->id, 'type' => 'main', 'sort_order' => 0, 'is_main' => true,
+        ]);
+
+        $response = $this->getJson('/api/v1/artworks');
+
+        $response->assertOk();
+        $this->assertStringContainsString('thumbnail.webp', $response->json('data.0.thumbnail_url'));
+        $this->assertStringContainsString('catalogue.webp', $response->json('data.0.image_url'));
     }
 
     public function test_response_envelope_has_data_meta_links(): void

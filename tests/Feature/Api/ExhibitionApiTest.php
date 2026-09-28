@@ -6,6 +6,8 @@ use App\Models\Artist;
 use App\Models\Artwork;
 use App\Models\Exhibition;
 use App\Models\Genre;
+use App\Models\Media;
+use App\Models\MediaVariant;
 use App\Models\Medium;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -130,5 +132,36 @@ class ExhibitionApiTest extends TestCase
         $artworks = $response->json('data.artworks');
         $this->assertCount(1, $artworks);
         $this->assertSame($activeArtwork->inventory_code, $artworks[0]['inventory_code']);
+    }
+
+    public function test_artists_expose_portrait_url_alongside_id_slug_and_name(): void
+    {
+        $exhibition = $this->makeExhibition();
+
+        $withPortrait = Artist::factory()->create(['is_active' => true]);
+        $withPortrait->translations()->create(['locale' => 'az', 'slug' => 'artist-'.$withPortrait->id, 'first_name' => 'Ad', 'last_name' => 'Soyad']);
+        $media = Media::factory()->create();
+        MediaVariant::create([
+            'media_id' => $media->id, 'variant' => 'detail-webp', 'disk' => 'public',
+            'path' => 'variants/detail.webp', 'mime_type' => 'image/webp', 'size_bytes' => 100, 'width' => 100, 'height' => 100,
+        ]);
+        $withPortrait->update(['representation_image_id' => $media->id]);
+        $exhibition->artists()->attach($withPortrait->id, ['sort_order' => 0]);
+
+        $withoutPortrait = Artist::factory()->create(['is_active' => true]);
+        $withoutPortrait->translations()->create(['locale' => 'az', 'slug' => 'artist-'.$withoutPortrait->id, 'first_name' => 'Ad2', 'last_name' => 'Soyad2']);
+        $exhibition->artists()->attach($withoutPortrait->id, ['sort_order' => 1]);
+
+        $response = $this->getJson("/api/v1/exhibitions/exhibition-{$exhibition->id}");
+
+        $response->assertOk();
+        $artists = collect($response->json('data.artists'))->keyBy('id');
+
+        $this->assertSame($withPortrait->id, $artists[$withPortrait->id]['id']);
+        $this->assertSame('artist-'.$withPortrait->id, $artists[$withPortrait->id]['slug']);
+        $this->assertSame('Ad Soyad', $artists[$withPortrait->id]['name']);
+        $this->assertStringContainsString('detail.webp', $artists[$withPortrait->id]['portrait_url']);
+
+        $this->assertNull($artists[$withoutPortrait->id]['portrait_url']);
     }
 }

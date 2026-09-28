@@ -116,6 +116,40 @@ class ArtworkDetailApiTest extends TestCase
         $this->assertNotSame($detailUrl, $cardUrl);
     }
 
+    public function test_thumbnail_url_present_alongside_full_size_url_and_distinct_from_it(): void
+    {
+        $artwork = $this->makeArtwork();
+
+        $media = Media::factory()->create();
+        foreach (['thumbnail', 'catalogue', 'full'] as $size) {
+            MediaVariant::create([
+                'media_id' => $media->id,
+                'variant' => "{$size}-webp",
+                'disk' => 'public',
+                'path' => "variants/{$size}.webp",
+                'mime_type' => 'image/webp',
+                'size_bytes' => 100,
+                'width' => 100,
+                'height' => 100,
+            ]);
+        }
+
+        ArtworkImage::create([
+            'artwork_id' => $artwork->id, 'media_id' => $media->id, 'type' => 'main', 'sort_order' => 0, 'is_main' => true,
+        ]);
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}");
+
+        $response->assertOk();
+        $fullUrl = $response->json('data.images.0.url');
+        $detailThumbUrl = $response->json('data.images.0.thumbnail_url');
+        $cardThumbUrl = $response->json('data.thumbnail_url');
+
+        $this->assertStringContainsString('thumbnail.webp', $detailThumbUrl);
+        $this->assertStringContainsString('thumbnail.webp', $cardThumbUrl);
+        $this->assertNotSame($fullUrl, $detailThumbUrl);
+    }
+
     public function test_similar_returns_same_genre_excluding_self_capped_at_4(): void
     {
         $genre = Genre::factory()->create(['slug' => 'shared-genre']);

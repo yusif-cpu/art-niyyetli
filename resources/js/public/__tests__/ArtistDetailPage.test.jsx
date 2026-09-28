@@ -137,13 +137,13 @@ describe('ArtistDetailPage', () => {
         expect(screen.getByRole('link', { name: 'Rəssamlara qayıt' })).toHaveAttribute('href', '/artists');
     });
 
-    it('sets the title "<name> — ArtNiyyətli", a 155-character description and the portrait as og:image', async () => {
+    it('sets the title "<name> | ArtNiyyətli", a 155-character description and the portrait as og:image', async () => {
         const long = `${'Rəssam Bakıda doğulub və uzun illərdir rəngkarlıqla məşğuldur. '.repeat(4)}Son.`;
         artist = { ...detail, biography: long };
         mockApi();
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe('Aygün Məmmədova — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Aygün Məmmədova | ArtNiyyətli'));
         const description = document.head.querySelector('meta[name="description"]').getAttribute('content');
         expect(description.length).toBeLessThanOrEqual(155);
         expect(description.endsWith('…')).toBe(true);
@@ -155,7 +155,7 @@ describe('ArtistDetailPage', () => {
         mockApi();
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe('Override — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Override | ArtNiyyətli'));
         expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/og.jpg');
     });
 

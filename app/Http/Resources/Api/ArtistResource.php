@@ -31,6 +31,7 @@ class ArtistResource extends JsonResource
             'direction' => $fields['direction'],
             'biography' => $fields['biography'],
             'artistic_approach' => $fields['artistic_approach'],
+            'artworks_count' => $this->whenCounted('artworks'),
             'portrait_url' => $this->when(
                 $this->relationLoaded('representationImage'),
                 fn () => $this->representationImage ? $this->mediaVariantUrl($this->representationImage, 'detail') : null

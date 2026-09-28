@@ -22,31 +22,31 @@ const PAGES = {
         params: { code: 'AN-1' },
         data: { ...artworkCard, title: 'Sunset', year_created: 2023, short_description: 'Artwork fallback.', provenance: 'P', certificate: false, frame_condition: null, delivery_note: null, images: [], similar: [], whatsapp_link: null, video: null },
         // Stage 5: the artwork page's fallback title is "title, artist" (the suffix still comes from seoMeta).
-        fallback: { title: 'Sunset, A B — ArtNiyyətli', description: 'Artwork fallback.' },
+        fallback: { title: 'Sunset, A B | ArtNiyyətli', description: 'Artwork fallback.' },
     },
     artist: {
         Page: ArtistDetailPage,
         params: { slug: 'aygun' },
         data: { id: 5, slug: 'aygun', first_name: 'Aygün', last_name: 'Məmmədova', birth_year: 1985, birth_place: 'Bakı', direction: 'D', biography: 'Artist fallback.', artistic_approach: 'A', portrait_url: null, exhibitions: [], awards: [], artworks: [] },
-        fallback: { title: 'Aygün Məmmədova — ArtNiyyətli', description: 'Artist fallback.' },
+        fallback: { title: 'Aygün Məmmədova | ArtNiyyətli', description: 'Artist fallback.' },
     },
     exhibition: {
         Page: ExhibitionDetailPage,
         params: { slug: 'show' },
         data: { slug: 'show', title: 'Show', type: 'exhibition', status: 'current', start_date: '2026-01-10', end_date: '2026-02-10', venue: 'V', short_text: 'Exhibition fallback.', full_text: 'F', artists: [], artworks: [], media: [], video: null },
-        fallback: { title: 'Show — ArtNiyyətli', description: 'Exhibition fallback.' },
+        fallback: { title: 'Show | ArtNiyyətli', description: 'Exhibition fallback.' },
     },
     article: {
         Page: ArticleDetailPage,
         params: { slug: 'story' },
         data: { slug: 'story', title: 'Story', type: 'news', short_text: 'Article fallback.', content: 'C', published_at: '2026-01-05T10:00:00+00:00', media: [], video: null },
-        fallback: { title: 'Story — ArtNiyyətli', description: 'Article fallback.' },
+        fallback: { title: 'Story | ArtNiyyətli', description: 'Article fallback.' },
     },
     page: {
         Page: StaticPage,
         params: { slug: 'about' },
         data: { slug: 'about', type: 'about', title: 'About', content: 'Page fallback.', sections: [] },
-        fallback: { title: 'About — ArtNiyyətli', description: 'Page fallback.' },
+        fallback: { title: 'About | ArtNiyyətli', description: 'Page fallback.' },
     },
 };
 
@@ -69,7 +69,7 @@ describe.each(Object.entries(PAGES))('%s detail page SEO', (name, { Page, params
     it('uses the SEO override title and description, keeping the site-name suffix', async () => {
         renderWith({ title: 'Admin SEO title', description: 'Admin SEO description', image_url: 'https://example.test/og.webp' });
 
-        await waitFor(() => expect(document.title).toBe('Admin SEO title — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Admin SEO title | ArtNiyyətli'));
         expect(description()).toBe('Admin SEO description');
     });
 
@@ -90,6 +90,6 @@ describe.each(Object.entries(PAGES))('%s detail page SEO', (name, { Page, params
 
 describe('seoMeta', () => {
     it('treats empty override strings as absent', () => {
-        expect(seoMeta({ seo: { title: '', description: '' } }, { title: 'T', description: 'D' })).toEqual({ title: 'T — ArtNiyyətli', description: 'D' });
+        expect(seoMeta({ seo: { title: '', description: '' } }, { title: 'T', description: 'D' })).toEqual({ title: 'T | ArtNiyyətli', description: 'D' });
     });
 });

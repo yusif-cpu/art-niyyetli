@@ -112,6 +112,6 @@ describe('ExhibitionsPage', () => {
     it('sets a static exhibitions document title', async () => {
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe('Sərgilər — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Sərgilər | ArtNiyyətli'));
     });
 });

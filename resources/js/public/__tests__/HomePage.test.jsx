@@ -158,7 +158,7 @@ describe('HomePage', () => {
         mockApi();
         renderHome();
 
-        await waitFor(() => expect(document.title).toBe('ArtNiyyətli — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('ArtNiyyətli | ArtNiyyətli'));
     });
 
     it('does not crash when the locale changes after the page has already loaded', async () => {
@@ -186,7 +186,7 @@ describe('HomePage', () => {
 
             expect(await screen.findByRole('heading', { level: 1, name: 'Real Hero' })).toBeInTheDocument();
             expect(screen.getByRole('heading', { level: 2, name: 'How it works' })).toBeInTheDocument();
-            await waitFor(() => expect(document.title).toBe('Real Hero — ArtNiyyətli'));
+            await waitFor(() => expect(document.title).toBe('Real Hero | ArtNiyyətli'));
         });
 
         it('renders steps and cta by key and ignores unknown keys', async () => {

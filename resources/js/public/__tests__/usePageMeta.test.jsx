@@ -13,9 +13,9 @@ describe('usePageMeta', () => {
     });
 
     it('sets document.title', () => {
-        renderHook(() => usePageMeta({ title: 'Sunset Over Baku — ArtNiyyətli' }));
+        renderHook(() => usePageMeta({ title: 'Sunset Over Baku | ArtNiyyətli' }));
 
-        expect(document.title).toBe('Sunset Over Baku — ArtNiyyətli');
+        expect(document.title).toBe('Sunset Over Baku | ArtNiyyətli');
     });
 
     it('upserts the description meta tag', () => {

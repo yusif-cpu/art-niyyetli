@@ -31,6 +31,7 @@ class ArtworkCardResource extends JsonResource
                 ];
             }),
             'image_url' => $mainImage ? $this->mediaVariantUrl($mainImage->media, 'catalogue') : null,
+            'thumbnail_url' => $mainImage ? $this->mediaVariantUrl($mainImage->media, 'thumbnail') : null,
             'genre' => $this->whenLoaded('genre', function () use ($locale) {
                 $f = LocalizedFields::resolve($this->genre->translations, $locale, ['name']);
 

@@ -18,7 +18,7 @@ class ExhibitionController extends Controller
         $query = Exhibition::query()
             ->where('is_active', true)
             ->with([
-                'translations', 'artists.translations',
+                'translations', 'artists.translations', 'artists.representationImage.variants',
                 'artworks' => fn ($q) => $q->where('is_active', true),
                 'artworks.translations',
                 'artworks.images' => fn ($q) => $q->orderBy('sort_order'),
@@ -46,7 +46,7 @@ class ExhibitionController extends Controller
             ->where('id', $translation->exhibition_id)
             ->where('is_active', true)
             ->with([
-                'translations', 'artists.translations',
+                'translations', 'artists.translations', 'artists.representationImage.variants',
                 'artworks' => fn ($q) => $q->where('is_active', true),
                 'artworks.translations',
                 'artworks.images' => fn ($q) => $q->orderBy('sort_order'),

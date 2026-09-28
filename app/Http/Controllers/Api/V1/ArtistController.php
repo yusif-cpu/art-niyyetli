@@ -16,6 +16,7 @@ class ArtistController extends Controller
             ->where('is_active', true)
             ->withUsableAzTranslation()
             ->with(['translations', 'representationImage.variants'])
+            ->withCount(['artworks as artworks_count' => fn ($q) => $q->where('is_active', true)])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();

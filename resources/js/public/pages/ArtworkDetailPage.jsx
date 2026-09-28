@@ -77,7 +77,7 @@ export default function ArtworkDetailPage({ params }) {
     const artistHref = useArtistHref(data?.artist);
 
     // seoMeta (shared with the other detail pages) lets the admin's SEO override in data.seo win and adds the
-    // "— ArtNiyyətli" suffix; the fallbacks are "title, artist" and a word-safe 155-character excerpt.
+    // "| ArtNiyyətli" suffix; the fallbacks are "title, artist" and a word-safe 155-character excerpt.
     const artistName = data?.artist?.name;
     const mainImage = data?.images?.find((image) => image.is_main)?.url ?? data?.images?.[0]?.url ?? data?.image_url;
     const meta = data

@@ -119,7 +119,7 @@ export default function HomePage() {
     const steps = findSection(data?.page, 'steps');
     const cta = findSection(data?.page, 'cta');
     usePageMeta({
-        title: data ? (hero ? `${hero.heading} — ArtNiyyətli` : 'ArtNiyyətli') : undefined,
+        title: data ? (hero ? `${hero.heading} | ArtNiyyətli` : 'ArtNiyyətli') : undefined,
         description: data ? hero?.body : undefined,
     });
 

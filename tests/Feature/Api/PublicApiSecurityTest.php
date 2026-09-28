@@ -70,7 +70,7 @@ class PublicApiSecurityTest extends TestCase
         $response = $this->getJson('/api/v1/artists');
         $response->assertOk();
 
-        $expected = ['id', 'slug', 'first_name', 'last_name', 'birth_year', 'birth_place', 'direction', 'biography', 'artistic_approach', 'portrait_url'];
+        $expected = ['id', 'slug', 'first_name', 'last_name', 'birth_year', 'birth_place', 'direction', 'biography', 'artistic_approach', 'artworks_count', 'portrait_url'];
         $this->assertSame($expected, array_keys($response->json('data.0')));
     }
 
@@ -88,7 +88,7 @@ class PublicApiSecurityTest extends TestCase
         $response = $this->getJson('/api/v1/artworks');
         $response->assertOk();
 
-        $expected = ['inventory_code', 'title', 'artist', 'image_url', 'genre', 'medium', 'price', 'currency', 'availability', 'width_cm', 'height_cm'];
+        $expected = ['inventory_code', 'title', 'artist', 'image_url', 'thumbnail_url', 'genre', 'medium', 'price', 'currency', 'availability', 'width_cm', 'height_cm'];
         $this->assertSame($expected, array_keys($response->json('data.0')));
         $this->assertArrayNotHasKey('frame_condition', $response->json('data.0'));
         $body = $response->getContent();

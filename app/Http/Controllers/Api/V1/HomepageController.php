@@ -68,10 +68,11 @@ class HomepageController extends Controller
 
         $artists = Artist::query()->where('is_active', true)->withUsableAzTranslation()
             ->with(['translations', 'representationImage.variants'])
+            ->withCount(['artworks as artworks_count' => fn ($q) => $q->where('is_active', true)])
             ->orderBy('sort_order')->orderBy('id')->get();
 
         $exhibitionWith = [
-            'translations', 'artists.translations',
+            'translations', 'artists.translations', 'artists.representationImage.variants',
             'artworks' => fn ($q) => $q->where('is_active', true),
             'artworks.translations',
             'artworks.images' => fn ($q) => $q->orderBy('sort_order'), 'artworks.images.media.variants',

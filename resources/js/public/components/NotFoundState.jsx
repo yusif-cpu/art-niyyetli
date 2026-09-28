@@ -5,7 +5,7 @@ import { usePageMeta } from '../lib/usePageMeta.js';
  * [{ href, label }]). Sets the title and `noindex`. No Signal: a missing page is not an error the visitor made.
  */
 export default function NotFoundState({ title, body, links = [] }) {
-    usePageMeta({ title: `${title} — ArtNiyyətli`, noIndex: true });
+    usePageMeta({ title: `${title} | ArtNiyyətli`, noIndex: true });
 
     return (
         <div className="px-page pt-step-8 pb-step-9 font-ui">

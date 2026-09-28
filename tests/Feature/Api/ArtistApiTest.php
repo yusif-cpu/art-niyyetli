@@ -52,6 +52,23 @@ class ArtistApiTest extends TestCase
         $this->assertArrayNotHasKey('artworks', $item);
     }
 
+    public function test_index_includes_artworks_count_of_only_publicly_visible_artworks(): void
+    {
+        $artist = $this->makeArtist();
+        $genre = Genre::factory()->create();
+        $medium = Medium::factory()->create();
+
+        Artwork::factory()->count(2)->create(['artist_id' => $artist->id, 'genre_id' => $genre->id, 'medium_id' => $medium->id, 'is_active' => true]);
+        $inactive = Artwork::factory()->create(['artist_id' => $artist->id, 'genre_id' => $genre->id, 'medium_id' => $medium->id, 'is_active' => false]);
+        $deleted = Artwork::factory()->create(['artist_id' => $artist->id, 'genre_id' => $genre->id, 'medium_id' => $medium->id, 'is_active' => true]);
+        $deleted->delete();
+
+        $response = $this->getJson('/api/v1/artists');
+
+        $response->assertOk();
+        $this->assertSame(2, $response->json('data.0.artworks_count'));
+    }
+
     public function test_show_returns_404_for_unknown_or_inactive_slug(): void
     {
         $this->getJson('/api/v1/artists/unknown-slug')->assertStatus(404);

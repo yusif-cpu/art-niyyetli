@@ -252,4 +252,22 @@ class HomepageApiTest extends TestCase
 
         $this->assertSame(['ok'], collect($artists)->pluck('slug')->all());
     }
+
+    public function test_artists_include_artworks_count_of_only_publicly_visible_artworks(): void
+    {
+        $artist = Artist::factory()->create(['is_active' => true]);
+        $artist->translations()->create(['locale' => 'az', 'slug' => 'artist-'.$artist->id, 'first_name' => 'A', 'last_name' => 'B']);
+        $genre = Genre::factory()->create();
+        $medium = Medium::factory()->create();
+
+        Artwork::factory()->count(2)->create(['artist_id' => $artist->id, 'genre_id' => $genre->id, 'medium_id' => $medium->id, 'is_active' => true]);
+        $inactive = Artwork::factory()->create(['artist_id' => $artist->id, 'genre_id' => $genre->id, 'medium_id' => $medium->id, 'is_active' => false]);
+        $deleted = Artwork::factory()->create(['artist_id' => $artist->id, 'genre_id' => $genre->id, 'medium_id' => $medium->id, 'is_active' => true]);
+        $deleted->delete();
+
+        $response = $this->getJson('/api/v1/homepage');
+
+        $response->assertOk();
+        $this->assertSame(2, $response->json('data.artists.0.artworks_count'));
+    }
 }

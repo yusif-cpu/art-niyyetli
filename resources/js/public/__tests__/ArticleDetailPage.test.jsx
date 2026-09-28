@@ -126,7 +126,7 @@ describe('ArticleDetailPage', () => {
 
         // The title may still be the previous test's (same article); the og:image tag is removed after each test.
         await waitFor(() => expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/cover.webp'));
-        expect(document.title).toBe('An Interview — ArtNiyyətli');
+        expect(document.title).toBe('An Interview | ArtNiyyətli');
     });
 
     it('does not crash when the locale changes after the page has already loaded', async () => {

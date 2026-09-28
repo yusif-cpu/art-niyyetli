@@ -38,15 +38,15 @@ class PublicApiQueryCountTest extends TestCase
      * @var array<string, int>
      */
     private const CEILINGS = [
-        'api homepage' => 58, // 56 + one id query per exhibition status (current and upcoming lists)
+        'api homepage' => 60, // 56 + one id query per exhibition status (current and upcoming lists) + 2 for exhibition artist portraits (S10)
         'api artworks' => 12,
         'api artworks filtered+sorted' => 12,
         'api artwork detail' => 26, // 25 + the one seo_metadata eager load (SEO overrides in detail responses)
-        'api artists' => 4,
+        'api artists' => 4, // artworks_count (S9) is a subselect on the same query, adds no query
         'api artist detail' => 19, // 18 + the seo_metadata eager load
-        'api exhibitions' => 19,
-        'api exhibitions current' => 19,
-        'api exhibition detail' => 20, // 19 + the seo_metadata eager load
+        'api exhibitions' => 21, // 19 + 2 for exhibition artist portraits: artists.representationImage + .variants (S10)
+        'api exhibitions current' => 21, // same as above
+        'api exhibition detail' => 22, // 19 + the seo_metadata eager load + 2 for exhibition artist portraits (S10)
         'api articles' => 5,
         'api article detail' => 6, // 5 + the seo_metadata eager load
         'api page (with image sections)' => 8, // 7 + the seo_metadata eager load

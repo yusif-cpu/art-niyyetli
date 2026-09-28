@@ -252,6 +252,6 @@ describe('Catalogue', () => {
 
     it('sets a static catalogue document title', async () => {
         renderPage();
-        await waitFor(() => expect(document.title).toBe('Əsərlər — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Əsərlər | ArtNiyyətli'));
     });
 });

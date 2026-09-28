@@ -100,6 +100,6 @@ describe('ArtistsPage', () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [AYGUN] }));
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe('Rəssamlar — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Rəssamlar | ArtNiyyətli'));
     });
 });

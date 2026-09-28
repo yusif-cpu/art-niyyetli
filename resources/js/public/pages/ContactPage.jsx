@@ -59,7 +59,7 @@ export default function ContactPage() {
     const { data: subjects, loading, error } = useApiData(() => getEnquirySubjects(locale), [locale, retryToken]);
     const [selectedSubject, setSelectedSubject] = useState('');
 
-    usePageMeta({ title: `${t(locale, 'contact.title')} — ArtNiyyətli` });
+    usePageMeta({ title: `${t(locale, 'contact.title')} | ArtNiyyətli` });
 
     const labeledSubjects = Array.isArray(subjects) ? subjects.filter((item) => item.label && !ARTWORK_ONLY_SUBJECTS.includes(item.key)) : [];
     const subject = labeledSubjects.some((item) => item.key === selectedSubject) ? selectedSubject : labeledSubjects[0]?.key || '';

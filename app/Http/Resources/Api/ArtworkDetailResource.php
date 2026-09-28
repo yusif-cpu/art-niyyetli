@@ -35,6 +35,7 @@ class ArtworkDetailResource extends JsonResource
                 'sort_order' => $image->sort_order,
                 'is_main' => $image->is_main,
                 'url' => $this->mediaVariantUrl($image->media, 'full'),
+                'thumbnail_url' => $this->mediaVariantUrl($image->media, 'thumbnail'),
             ])),
             'similar' => $this->when(
                 $this->relationLoaded('similar'),

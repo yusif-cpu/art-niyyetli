@@ -146,7 +146,7 @@ describe('ExhibitionDetailPage', () => {
     it('sets the title from the exhibition and the first photo as og:image', async () => {
         renderPage();
 
-        await waitFor(() => expect(document.title).toBe(`${detail.title} — ArtNiyyətli`));
+        await waitFor(() => expect(document.title).toBe(`${detail.title} | ArtNiyyətli`));
         expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/ex.webp');
     });
 

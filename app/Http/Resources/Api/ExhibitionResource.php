@@ -39,6 +39,9 @@ class ExhibitionResource extends JsonResource
                         'id' => $artist->id,
                         'slug' => $f['slug'],
                         'name' => trim(($f['first_name'] ?? '').' '.($f['last_name'] ?? '')),
+                        'portrait_url' => $artist->representationImage
+                            ? $this->mediaVariantUrl($artist->representationImage, 'detail')
+                            : null,
                     ];
                 });
             }),

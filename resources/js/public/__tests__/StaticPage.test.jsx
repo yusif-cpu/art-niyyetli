@@ -103,7 +103,7 @@ describe('StaticPage', () => {
 
         render(<LocaleProvider><StaticPage params={{ slug: 'about' }} /></LocaleProvider>);
 
-        await waitFor(() => expect(document.title).toBe('Haqqımızda — ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('Haqqımızda | ArtNiyyətli'));
     });
 
     it('does not crash when the locale changes after the page has already loaded', async () => {

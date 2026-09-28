@@ -8,7 +8,7 @@ describe('NotFoundPage', () => {
         render(<LocaleProvider><NotFoundPage /></LocaleProvider>);
 
         await waitFor(() => {
-            expect(document.title).toBe('Səhifə tapılmadı — ArtNiyyətli');
+            expect(document.title).toBe('Səhifə tapılmadı | ArtNiyyətli');
             expect(document.querySelector('meta[name="robots"]').getAttribute('content')).toBe('noindex, follow');
         });
     });

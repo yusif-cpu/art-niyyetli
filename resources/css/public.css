@@ -170,11 +170,11 @@
     --text-hero--line-height: 1;
     --text-hero--letter-spacing: -0.03em;
     --text-hero--font-weight: 600;
-    --text-display: clamp(32px, 4.1vw, 64px);    /* section h2, the artist's big name; demo clamp(34px, 4.4vw, 68px) −0.025em [1.26] */
+    --text-display: clamp(38px, 4.6vw, 59px);    /* page h1, the artist's name; 38px at 768 stays clear of text-heading's 28 */
     --text-display--line-height: 1.02;
     --text-display--letter-spacing: -0.035em;
     --text-display--font-weight: 600;
-    --text-heading: clamp(30px, 3.4vw, 48px);    /* section h2, detail-page titles; demo 63px (4.4vw) −0.025em */
+    --text-heading: clamp(28px, 3.4vw, 48px);    /* section h2, detail-page titles; demo 63px (4.4vw) −0.025em */
     --text-heading--line-height: 1.1;
     --text-heading--letter-spacing: -0.02em;
     --text-heading--font-weight: 600;
@@ -250,9 +250,10 @@
 
     /* ---------------------------------------------------------------- borders, radius, motion
     | Borders are always 1px (hairline = line, interactive = line-strong); 2px only for strong rules.
-    | Radius is 0 everywhere except inputs and chips (2px). No shadows.
+    | Radius is 0 everywhere, inputs included: the brief allows no rounded corner. The token stays (so no class has
+    | to change) with the value 0. No shadows.
     */
-    --radius-input: 2px;
+    --radius-input: 0px;
     --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
     /* The brief's ONE shadow exception (2px, 6%): only under a work shown as hung — the main image of the artwork
        page and works on a wall section. Never on catalogue cards or similar-work grids. */

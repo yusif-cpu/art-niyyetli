@@ -11,6 +11,7 @@ import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import ExhibitionRow from '../components/ExhibitionRow.jsx';
 import SectionHeading from '../components/SectionHeading.jsx';
+import ArtistCard from '../components/ArtistCard.jsx';
 
 const LATEST_ARTICLES = 3;
 
@@ -162,16 +163,11 @@ export default function HomePage() {
 
             {artists.length > 0 && (
                 <Block id="home-artists" label={t(locale, 'labels.representation')} title={t(locale, 'home.artists')}>
-                    <ul className="grid grid-cols-1 gap-x-step-6 gap-y-step-5 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* The artists list's own card: 4:5 portrait, name, direction. 4 / 3 / 3 / 1 columns. */}
+                    <ul className="grid grid-cols-1 gap-x-step-6 gap-y-step-7 md:grid-cols-3 xl:grid-cols-4" data-testid="home-artists">
                         {artists.map((artist) => (
                             <li key={artist.slug}>
-                                <a href={`/artists/${encodeURIComponent(artist.slug)}`} className="group flex items-start gap-step-3 text-ink">
-                                    {artist.portrait_url && <img src={artist.portrait_url} alt="" loading="lazy" decoding="async" className="h-16 w-16 shrink-0 border border-line object-cover" />}
-                                    <span className="flex flex-col">
-                                        <span className="text-byline-lg decoration-1 underline-offset-2 group-hover:underline">{[artist.first_name, artist.last_name].filter(Boolean).join(' ')}</span>
-                                        {artist.direction && <span className="text-meta text-ink-muted">{artist.direction}</span>}
-                                    </span>
-                                </a>
+                                <ArtistCard artist={artist} />
                             </li>
                         ))}
                     </ul>

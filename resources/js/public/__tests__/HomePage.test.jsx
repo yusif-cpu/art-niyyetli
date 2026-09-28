@@ -448,6 +448,17 @@ describe('HomePage', () => {
         expect(screen.queryByRole('heading', { name: 'Seçilmiş əsərlər' })).not.toBeInTheDocument();
     });
 
+    it('shows the artists with the artists list card (4:5 portrait, name, direction) in 1 / 3 / 4 columns', async () => {
+        renderHome();
+
+        const list = await screen.findByTestId('home-artists');
+        expect(list).toHaveClass('grid-cols-1', 'md:grid-cols-3', 'xl:grid-cols-4');
+        const card = within(list).getByRole('link', { name: /A B/ });
+        expect(card).toHaveAttribute('href', '/artists/a');
+        expect(within(card).getByTestId('artist-portrait')).toHaveClass('aspect-[4/5]');
+        expect(within(card).getByText('Modern')).toHaveClass('text-meta', 'text-ink-muted');
+    });
+
     it('leaves out empty blocks: artists, exhibitions, journal, FAQ', async () => {
         homepage = { ...homepageData, artists: [], exhibition: null, exhibitions: { current: [], upcoming: [] }, faqs: [] };
         articles = [];

@@ -48,13 +48,13 @@
 export const HUMAN_HEIGHT_CM = 170;
 /**
  * Silhouette geometry, in cm (x from the left of the 46 cm box, heights from the floor). It reads as a person, not a
- * skittle: the body is 34 cm wide at the floor and narrows to 28 cm at flat shoulders (146 cm, corner radius 6), a
- * short 8 cm wide neck joins a Ø16 head whose top is the 170 cm line. Everything is centred on the box.
+ * skittle or a bottle: the body is 30 cm wide at the floor and widens to 34 cm at flat shoulders (146 cm, corner
+ * radius 6), a short 8 cm wide neck joins a Ø16 head whose top is the 170 cm line. Everything is centred on the box.
  */
 export const FIGURE_CM = {
     width: 46,
-    bodyBottomWidth: 34,
-    shoulderWidth: 28,
+    bodyBottomWidth: 30,
+    shoulderWidth: 34,
     shoulderHeight: 146,
     shoulderRadius: 6,
     neckWidth: 8,

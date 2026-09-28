@@ -27,7 +27,6 @@ function mockApi() {
     global.fetch = vi.fn((url) => {
         if (url.startsWith('/api/v1/enquiries')) return Promise.resolve(enquiryResponse());
         if (url.startsWith('/api/v1/artworks/')) return Promise.resolve(typeof artwork === 'function' ? artwork() : jsonResponse(200, { data: artwork }));
-        if (url.startsWith('/api/v1/artists')) return Promise.resolve(jsonResponse(200, { data: [{ id: 5, slug: 'aygun-memmedova', first_name: 'Aygün', last_name: 'Məmmədova' }] }));
         if (url.startsWith('/api/v1/navigation')) return Promise.resolve(jsonResponse(200, { data: { header: [], footer: [] } }));
         return Promise.resolve(jsonResponse(200, { data: url.includes('social') ? [] : {} }));
     });
@@ -94,19 +93,23 @@ describe('ArtworkDetailPage', () => {
         expect(screen.getByTestId('artwork-price')).toHaveClass('text-ink-muted');
     });
 
-    it('links the artist through the /artists index when the artwork has no slug (S3)', async () => {
-        renderPage();
-
-        expect(await screen.findByRole('link', { name: 'Aygün Məmmədova' })).toHaveAttribute('href', '/artists/aygun-memmedova');
-        expect(calls('/api/v1/artists')).toHaveLength(1);
-    });
-
     it('uses artist.slug directly once the API sends it, without the index request', async () => {
         artwork = { ...detail, artist: { id: 5, slug: 'from-api', name: 'Aygün Məmmədova' } };
         mockApi();
         renderPage();
 
         expect(await screen.findByRole('link', { name: 'Aygün Məmmədova' })).toHaveAttribute('href', '/artists/from-api');
+        expect(calls('/api/v1/artists')).toHaveLength(0);
+    });
+
+    it('never requests /artists on the artwork page; without a slug the artist is plain text', async () => {
+        renderPage(); // the fixture's artist has no slug
+        await screen.findByRole('heading', { level: 1, name: 'Sunset Over Baku' });
+        // Let every request the page might make settle before counting.
+        await waitFor(() => expect(calls('/api/v1/artworks/')).toHaveLength(1));
+
+        expect(screen.getByText('Aygün Məmmədova').closest('a')).toBeNull();
+        expect(screen.queryByRole('link', { name: 'Aygün Məmmədova' })).not.toBeInTheDocument();
         expect(calls('/api/v1/artists')).toHaveLength(0);
     });
 

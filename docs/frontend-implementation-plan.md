@@ -1127,7 +1127,7 @@ State at the end: 76 test files, 567 tests, all passing; build green; no CSP vio
 
 ### 11.3 Open (not done)
 
-- **Backend:** S9 (`artworks_count` on artists: the card shows it when it arrives), S10 (`portrait_url` on exhibition `artists[]`), S12 proposal (structured "steps" section), S1 (analytics: needs a CSP and consent decision). S3 is **resolved in the API** (the artwork's `artist` now carries `slug`): the `useArtistHref` workaround and the artist index in `SiteDataProvider` can be removed.
+- **Backend:** S9 (`artworks_count` on artists: the card shows it when it arrives), S10 (`portrait_url` on exhibition `artists[]`), S12 proposal (structured "steps" section), S1 (analytics: needs a CSP and consent decision). S3 is **resolved in the API** (the artwork's `artist` now carries `slug`): the `useArtistHref` workaround and the artist index in `SiteDataProvider` were removed after stage 10 (the artwork page no longer requests `/artists`).
 - **Frontend clean-up:** `BrandMark` is no longer used by the shell (kept with its tests); `LoadingState`, `EmptyState` and `ExhibitionCard` are used only by tests.
 - **Content:** legal pages are `[PLACEHOLDER]`; site settings (address, phone, e-mail, hours) are empty locally; no artist portraits and no articles in the local data; real artwork photos.
 - **Not measured here:** Lighthouse, CSP in *enforce* mode on a production server, real devices (all checks ran in headless Edge with device emulation).

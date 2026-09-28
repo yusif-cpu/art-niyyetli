@@ -62,7 +62,7 @@ describe.each(Object.entries(PAGES))('%s detail page SEO', (name, { Page, params
 
     function renderWith(seo) {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(200, { data: { ...data, seo } }));
-        // The artwork page reads the shared site data (the artist link, S3), so every page renders inside the provider.
+        // Every page renders inside the provider, as in the app shell.
         render(<LocaleProvider><SiteDataProvider><Page params={params} /></SiteDataProvider></LocaleProvider>);
     }
 

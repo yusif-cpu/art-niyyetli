@@ -134,7 +134,7 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 
 Həll olunanlar:
 
-- **S3:** əsərin `artist` obyektində artıq `slug` var. Müvəqqəti həll (`useArtistHref` indeksi) silinə bilər.
+- **S3:** əsərin `artist` obyektində artıq `slug` var. Müvəqqəti həll (rəssam indeksi) silindi: əsər səhifəsi `/artists` sorğusu göndərmir, slug yoxdursa ad sadə mətndir.
 - **S5:** ana səhifə artıq cari və gələcək sərgi siyahılarını qaytarır.
 - **S6:** detal səhifələrində `seo` sahəsi var.
 - **S11** lazım deyil: loqo SVG ilə həll olundu.
@@ -160,7 +160,6 @@ Həll olunanlar:
 - **Şəkillər:** API şəklin eni və hündürlüyünü vermir. Sahə santimetrlə qurulur; real fotonun nisbəti fərqli olarsa, şəkil sahənin içində `contain` ilə yerləşir.
 - **Təmizlik:**
   - `BrandMark` artıq işlənmir;
-  - `LoadingState`, `EmptyState`, `ExhibitionCard` yalnız testlərdə işlənir;
-  - S3 həll olunduğu üçün rəssam indeksi silinə bilər.
+  - `LoadingState`, `EmptyState`, `ExhibitionCard` yalnız testlərdə işlənir.
 - **Testlər:** tam paketdə bir dəfə bir testin 5 saniyəlik limiti yüklənmədən keçildi (NotFoundPage). Yenidən işlədəndə keçdi. Paket iki işçi ilə təxminən 55-70 saniyə çəkir.
 - **Brauzerin mətn böyütməsi:** ölçülər pikseldədir. Səhifə böyütməsi (200%) yoxlanılıb və dağılmır. Mobil sistemin şrift ölçüsü ayarı ilə yoxlama aparılmayıb.

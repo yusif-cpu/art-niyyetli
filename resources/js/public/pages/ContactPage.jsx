@@ -90,7 +90,7 @@ export default function ContactPage() {
                                     <select
                                         value={subject}
                                         onChange={(e) => setSelectedSubject(e.target.value)}
-                                        className="mt-step-1 block w-full cursor-pointer border border-line-strong bg-surface-raised px-step-3 py-step-2 text-ui text-ink"
+                                        className="mt-step-1 block min-h-11 w-full cursor-pointer border border-line-strong bg-surface-raised px-step-3 py-step-2 text-ui text-ink"
                                     >
                                         {labeledSubjects.map((item) => (
                                             <option key={item.key} value={item.key}>

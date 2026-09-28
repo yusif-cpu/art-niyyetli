@@ -11,7 +11,8 @@ export default function LocaleSwitcher({ className = '' }) {
     const { locale, setLocale } = useLocale();
 
     return (
-        <div className={`flex items-baseline gap-1.5 text-label text-ink-muted ${className}`} role="group" aria-label="Language">
+        // Each language is a 44px touch target; the text stays small.
+        <div className={`flex items-center text-label text-ink-muted ${className}`} role="group" aria-label="Language">
             {LOCALES.map((option, index) => {
                 const current = locale === option.value;
 
@@ -22,7 +23,7 @@ export default function LocaleSwitcher({ className = '' }) {
                             type="button"
                             aria-current={current ? 'true' : undefined}
                             onClick={() => setLocale(option.value)}
-                            className={`cursor-pointer transition-colors duration-150 ease-standard ${current ? 'font-semibold text-ink' : 'text-ink-muted hover:text-ink'}`}
+                            className={`inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center transition-colors duration-150 ease-standard ${current ? 'font-semibold text-ink' : 'text-ink-muted hover:text-ink'}`}
                         >
                             {option.label}
                         </button>

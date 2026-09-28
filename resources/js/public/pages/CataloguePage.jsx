@@ -110,7 +110,7 @@ export default function CataloguePage() {
                                 aria-expanded={filtersOpen}
                                 aria-controls="catalogue-filters"
                                 onClick={() => setFiltersOpen((open) => !open)}
-                                className="cursor-pointer text-meta text-ink lg:hidden"
+                                className="-my-step-3 inline-flex min-h-11 cursor-pointer items-center text-meta text-ink lg:hidden"
                             >
                                 {t(locale, filtersOpen ? 'filters.hide' : 'filters.show')}
                             </button>

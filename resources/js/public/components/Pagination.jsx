@@ -14,7 +14,7 @@ export function pageWindow(current, last) {
     return out;
 }
 
-const buttonClass = 'min-w-9 cursor-pointer border border-line px-step-2 py-step-1 text-meta text-ink-muted transition-colors duration-[120ms] ease-standard hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-muted';
+const buttonClass = 'min-h-11 min-w-11 cursor-pointer border border-line px-step-2 py-step-1 text-meta text-ink-muted transition-colors duration-[120ms] ease-standard hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-muted';
 
 export default function Pagination({ meta, onPageChange }) {
     const { locale } = useLocale();

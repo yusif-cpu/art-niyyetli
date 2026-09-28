@@ -13,10 +13,11 @@ function LinkColumn({ label, items, locale, testId }) {
 
     return (
         <nav aria-label={label} data-testid={testId}>
-            <ul className="flex flex-col gap-step-2">
+            {/* Phones: each link a 44px row (no gap between them, so the rows do not grow apart). */}
+            <ul className="flex flex-col gap-step-2 max-md:gap-0">
                 {items.map((item) => (
                     <li key={item.href}>
-                        <a href={item.href} className="text-ui text-wine-ink hover:underline">
+                        <a href={item.href} className="text-ui text-wine-ink hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
                             {itemLabel(locale, item)}
                         </a>
                     </li>
@@ -44,7 +45,7 @@ export default function Footer() {
         <footer data-surface="wine" className="bg-wine px-page pt-step-8 pb-step-7 font-ui text-wine-ink">
             <div className="grid gap-step-7 md:grid-cols-4 md:gap-step-6" data-testid="footer-columns">
                 <div className="flex flex-col items-start gap-step-4">
-                    <a href="/" className="text-wine-ink" data-testid="footer-brand">
+                    <a href="/" className="inline-flex min-h-11 items-center text-wine-ink" data-testid="footer-brand">
                         <BrandLogo variant="lockup" className="h-6" />
                     </a>
                     {site.footer_text && <p className="max-w-xs text-meta text-wine-ink-muted">{site.footer_text}</p>}
@@ -63,12 +64,12 @@ export default function Footer() {
                     {(site.contact_email || site.phone) && (
                         <div className="flex flex-col gap-step-1">
                             {site.contact_email && (
-                                <a href={`mailto:${site.contact_email}`} className="hover:underline">
+                                <a href={`mailto:${site.contact_email}`} className="hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
                                     {site.contact_email}
                                 </a>
                             )}
                             {site.phone && (
-                                <a href={phoneHref} className="figures hover:underline">
+                                <a href={phoneHref} className="figures hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
                                     {site.phone}
                                 </a>
                             )}

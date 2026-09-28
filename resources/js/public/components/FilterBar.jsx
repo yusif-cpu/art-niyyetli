@@ -5,9 +5,10 @@ import { t } from '../i18n/dictionary.js';
 // With more artists than this the artist choice becomes a <select>, otherwise an inline option list.
 const ARTIST_LIST_MAX = 12;
 
+// Options and fields are 44px touch targets (min-h-11), the text stays text-meta.
 const optionClass = (selected) =>
-    `cursor-pointer border px-step-2 py-step-1 text-meta transition-colors duration-[120ms] ease-standard ${selected ? 'border-line-strong text-ink' : 'border-line text-ink-muted hover:text-ink'}`;
-const fieldClass = 'w-full rounded-input border border-line-strong bg-surface-raised px-step-2 py-step-1 text-meta text-ink';
+    `inline-flex min-h-11 cursor-pointer items-center border px-step-3 text-meta transition-colors duration-[120ms] ease-standard ${selected ? 'border-line-strong text-ink' : 'border-line text-ink-muted hover:text-ink'}`;
+const fieldClass = 'min-h-11 w-full rounded-input border border-line-strong bg-surface-raised px-step-2 py-step-1 text-meta text-ink';
 
 /**
  * An inline single-choice list (the API filters on ONE genre / medium / artist, E7). Clicking the selected option

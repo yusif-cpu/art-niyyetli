@@ -21,7 +21,7 @@ export default function SocialLinks({ links, className = '', imgClassName = 'h-5
         <ul className={`flex flex-wrap items-center ${className}`}>
             {visibleLinks.map((link, index) => (
                 <li key={`${index}-${link.url}`}>
-                    <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center">{/* 44px touch target */}
                         <BrandMark
                             logoUrl={link.logo_url}
                             displayMode={link.display_mode || 'logo_text'}

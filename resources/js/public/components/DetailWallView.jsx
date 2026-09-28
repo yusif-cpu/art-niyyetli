@@ -34,7 +34,7 @@ export default function DetailWallView({ artwork }) {
         <section aria-labelledby="wall-view-title" className="font-ui">
             <div className="flex flex-wrap items-baseline justify-between gap-step-4">
                 <h2 id="wall-view-title" className="text-subheading">{t(locale, 'artwork.wallTitle')}</h2>
-                <fieldset className="flex flex-wrap items-baseline gap-step-2">
+                <fieldset className="flex flex-wrap items-center gap-step-2">
                     <legend className="sr-only">{t(locale, 'artwork.wallHeight')}</legend>
                     <span aria-hidden="true" className="mr-step-2 text-label text-ink-muted">{t(locale, 'artwork.wallHeight')}</span>
                     {WALL_HEIGHTS_CM.map((cm) => (
@@ -43,7 +43,7 @@ export default function DetailWallView({ artwork }) {
                             type="button"
                             aria-pressed={cm === wallCm}
                             onClick={() => setWallCm(cm)}
-                            className={`figures cursor-pointer border px-step-2 py-step-1 text-meta ${cm === wallCm ? 'border-line-strong text-ink' : 'border-line text-ink-muted hover:text-ink'}`}
+                            className={`figures inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center border px-step-3 text-meta ${cm === wallCm ? 'border-line-strong text-ink' : 'border-line text-ink-muted hover:text-ink'}`}
                         >
                             {metres(cm, locale)}
                         </button>

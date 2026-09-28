@@ -5,7 +5,7 @@ import { submitEnquiry } from '../services/enquiries.js';
 import { PublicApiError } from '../lib/api.js';
 
 // Square fields (no radius, not even the input token here): raised surface, 1px line-strong, interface text.
-const inputBase = 'mt-step-1 block w-full border bg-surface-raised px-step-3 py-step-2 text-ui text-ink';
+const inputBase = 'mt-step-1 block min-h-11 w-full border bg-surface-raised px-step-3 py-step-2 text-ui text-ink';
 
 /**
  * One labelled field. The label sits above in text-label / ink-muted; a server error turns the border signal-ink and

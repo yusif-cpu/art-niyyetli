@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
 import { SiteDataProvider } from '../layout/SiteDataContext.jsx';
 import SiteShell from '../layout/SiteShell.jsx';
@@ -161,7 +161,8 @@ describe('Site chrome (header + footer)', () => {
         const header = within(screen.getByRole('banner'));
         const active = await header.findByRole('link', { name: 'Əsərlər' });
         expect(active).toHaveAttribute('aria-current', 'page');
-        expect(active).toHaveClass('text-signal-ink', 'border-signal');
+        // (was: border-signal) — the underline belongs to the row layout; the phone panel uses 44px rows instead.
+        expect(active).toHaveClass('text-signal-ink', 'md:border-signal');
         expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Əsərlər' })).not.toHaveClass('text-signal-ink');
 
         for (const name of ['Ana səhifə', 'Rəssamlar']) {
@@ -187,5 +188,65 @@ describe('Site chrome (header + footer)', () => {
         await userEvent.click(toggle);
         expect(toggle).toHaveAttribute('aria-expanded', 'false');
         expect(menu).toHaveClass('hidden');
+    });
+
+    describe('the phone menu panel', () => {
+        const { innerWidth } = window;
+        beforeEach(() => {
+            window.innerWidth = 375;
+        });
+        afterEach(() => {
+            window.innerWidth = innerWidth;
+            document.documentElement.style.overflow = '';
+        });
+
+        it('closes on Escape and gives the focus back to the "menyu" button', async () => {
+            mockShell();
+            renderShell();
+            const toggle = await screen.findByRole('button', { name: 'menyu' });
+
+            await userEvent.click(toggle);
+            expect(toggle).toHaveAttribute('aria-expanded', 'true');
+            within(document.getElementById('site-menu')).getAllByRole('link')[0].focus();
+
+            await userEvent.keyboard('{Escape}');
+            expect(toggle).toHaveAttribute('aria-expanded', 'false');
+            expect(document.getElementById('site-menu')).toHaveClass('hidden');
+            expect(document.activeElement).toBe(toggle);
+        });
+
+        it('keeps the page behind from scrolling while it is open, and lets it scroll again after', async () => {
+            mockShell();
+            renderShell();
+            const toggle = await screen.findByRole('button', { name: 'menyu' });
+
+            await userEvent.click(toggle);
+            expect(document.documentElement.style.overflow).toBe('hidden');
+            await userEvent.click(toggle);
+            expect(document.documentElement.style.overflow).toBe('');
+        });
+
+        it('shows the language choice in the panel, and 44px link rows', async () => {
+            mockShell();
+            renderShell();
+            const toggle = await screen.findByRole('button', { name: 'menyu' });
+            const menu = document.getElementById('site-menu');
+            expect(within(menu).queryByRole('group', { name: 'Language' })).not.toBeInTheDocument();
+
+            await userEvent.click(toggle);
+            expect(within(menu).getByRole('group', { name: 'Language' })).toBeInTheDocument();
+            within(menu).getAllByRole('link').forEach((link) => expect(link).toHaveClass('text-nav', 'max-md:min-h-11'));
+            expect(toggle).toHaveClass('min-h-11');
+        });
+    });
+
+    it('gives the small header controls 44px touch targets without growing the bar', async () => {
+        mockShell();
+        renderShell();
+        const header = screen.getByRole('banner');
+        await within(header).findByRole('button', { name: 'menyu' });
+
+        within(header).getAllByRole('button', { name: /^(AZ|EN)$/ }).forEach((button) => expect(button).toHaveClass('min-h-11', 'min-w-11'));
+        expect(within(header).getByTestId('header-brand')).toHaveClass('min-h-11', '-my-2');
     });
 });

@@ -43,14 +43,14 @@ function Block({ id, label, title, children }) {
 
 /**
  * The current exhibition as a wine band across the full width (out of the page gutter), filled from inside with
- * step-8; the page's step-9 gaps above and below are cancelled, so the band meets the sections around it. Wine is a
- * brand surface, not Signal: only wine-ink and wine-ink-muted on it, and no red.
+ * step-8. It keeps the page's step-9 gaps above and below: flush, the featured works' prices sat on its top edge and
+ * the next label on its bottom edge. Wine is a brand surface, not Signal: only wine-ink and wine-ink-muted on it.
  */
 function CurrentShowBlock({ exhibition, locale }) {
     const dates = formatDateRange(exhibition.start_date, exhibition.end_date, locale);
 
     return (
-        <section aria-labelledby="home-current-show" data-surface="wine" data-testid="home-current-show" className="-mx-page -my-step-9 bg-wine px-page py-step-8 text-wine-ink">
+        <section aria-labelledby="home-current-show" data-surface="wine" data-testid="home-current-show" className="-mx-page bg-wine px-page py-step-8 text-wine-ink">
             <p className="mb-step-2 text-label text-wine-ink-muted">{t(locale, 'home.currentExhibition')}</p>
             <h2 id="home-current-show" className="text-heading">{exhibition.title}</h2>
             {(dates || exhibition.venue) && (

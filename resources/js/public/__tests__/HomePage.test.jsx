@@ -329,7 +329,8 @@ describe('HomePage', () => {
         const { container } = renderHome();
 
         const block = await screen.findByTestId('home-current-show');
-        expect(block).toHaveClass('bg-wine', 'text-wine-ink', '-mx-page', '-my-step-9', 'py-step-8');
+        expect(block).toHaveClass('bg-wine', 'text-wine-ink', '-mx-page', 'py-step-8');
+        expect(block.className).not.toMatch(/-my-/); // keeps the step-9 rhythm around it (flush, neighbours touched its edges)
         expect(within(block).getByRole('heading', { level: 2, name: 'Now Show' })).toHaveClass('text-heading');
         expect(within(block).getByText('10 yanvar 2026 – 10 fevral 2026 · Main Gallery')).toHaveClass('text-wine-ink-muted');
         expect(within(block).getByRole('link', { name: 'Sərgi haqqında' })).toHaveAttribute('href', '/exhibitions/now');

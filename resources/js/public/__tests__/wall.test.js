@@ -326,6 +326,27 @@ describe('wall: the home wall (horizontal and vertical)', () => {
         expect(wall.items[0].width / wall.items[7].width).toBeCloseTo(4.5, 1);
     });
 
+    it('vertical: 20 cm between a caption and the next work, not 43 cm, never under 48px', () => {
+        expect(PRESETS.homeWall.verticalGapCm).toBe(20);
+        const cap = PRESETS.homeWall.captionPx;
+        const gapOf = (wall) => wall.items.slice(1).map((it, i) => it.top - (wall.items[i].top + wall.items[i].height) - cap);
+
+        // A phone: 20 × k is under 48px, so the 48px floor holds (±1px for edge rounding).
+        const phone = wallLayout(LOCAL, { width: 335 });
+        expect(20 * phone.k).toBeLessThan(48);
+        gapOf(phone).forEach((gap) => expect(Math.abs(gap - 48)).toBeLessThanOrEqual(1));
+
+        // A wider stack (k > 2.4): the 20 cm term takes over, still far under the wall's 43 cm.
+        const wide = wallLayout([work(40, 30), work(40, 30)], { width: 700, vertical: true });
+        expect(20 * wide.k).toBeGreaterThan(48);
+        gapOf(wide).forEach((gap) => expect(Math.abs(gap - 20 * wide.k)).toBeLessThanOrEqual(1));
+        expect(gapOf(wide)[0]).toBeLessThan(43 * wide.k);
+
+        // The stack ends at the last caption: no trailing gap.
+        const last = phone.items[phone.items.length - 1];
+        expect(phone.height).toBe(Math.round(Math.max(last.top + last.height + cap, phone.figure.height)));
+    });
+
     it('lays out the eight local works with the catalogue preset at 1296px', () => {
         const { k, valid, skipped } = computeScale(LOCAL, { mode: 'grid', width: 1296, share: PRESETS.catalogue.share, minItemPx: PRESETS.catalogue.minItemPx });
         const sizes = sizeItems(valid, k);

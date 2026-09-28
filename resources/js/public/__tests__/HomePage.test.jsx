@@ -415,6 +415,29 @@ describe('HomePage', () => {
         }
     });
 
+    it('keeps the tallest work of the vertical stack under 60% of a low screen (a phone on its side)', async () => {
+        const { innerWidth, innerHeight } = window;
+        window.innerWidth = 667;
+        window.innerHeight = 375;
+        global.ResizeObserver = class {
+            constructor(cb) { this.cb = cb; }
+            observe() { this.cb([{ contentRect: { width: 627 } }]); }
+            disconnect() {}
+        };
+        try {
+            renderHome();
+            await screen.findByText('Wall Piece');
+
+            const tallest = Math.max(...wallFields().map((f) => parseFloat(f.style.height)));
+            expect(tallest).toBeLessThanOrEqual(Math.round(375 * 0.6) + 1);
+            // One k still: the figure is 170 × k where k = tallest / 140 cm.
+            expect(Number(screen.getByTestId('human-figure').getAttribute('height'))).toBe(Math.round(170 * (tallest / 140)));
+        } finally {
+            window.innerWidth = innerWidth;
+            window.innerHeight = innerHeight;
+        }
+    });
+
     it('puts the scale rule and the figure label under the floor on the left, the counter on the right', async () => {
         renderHome();
         await screen.findByText('Wall Piece');

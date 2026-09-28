@@ -67,7 +67,7 @@ export const PRESETS = {
     // work is not shown as large as a big one (at 1440: 180 cm → 810px, 40 cm → 240px). One cap for every width.
     detailMain: { mode: 'grid', share: 1, maxItemHeightRatio: 0.7, maxK: 6 },
     // gap = max(43 cm × k, 48px, caption overflow of the two neighbours + 24px); captions at most 180px wide.
-    homeWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, topCm: 30, minK: 0.4, gapCm: 43, minGapPx: 48, captionMaxPx: 180, captionGapPx: 24, captionPx: 64 },
+    homeWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, topCm: 30, minK: 0.4, gapCm: 43, verticalGapCm: 20, minGapPx: 48, captionMaxPx: 180, captionGapPx: 24, captionPx: 64 },
     detailWall: { wallCm: 270, centreCm: HANG_CENTRE_CM, sideCm: 30, gapCm: 60, maxK: 1.6 },
 };
 
@@ -305,7 +305,8 @@ export function figureAt(k) {
  * so two neighbouring captions keep 24px between them, and at a tiny k works still keep 48px. The first work leaves
  * the same room after the figure column. Each item carries its caption box (captionLeft, captionWidth).
  * Vertical (< VERTICAL_BELOW_PX): works stack top to bottom in one column right of the figure; k comes from the
- * WIDTH so the widest work fits next to the figure column.
+ * WIDTH so the widest work fits next to the figure column. Between a work's caption band and the next work:
+ *     gap = max(verticalGapCm × k, minGapPx)                   (20 cm, never under 48px; captions are left-aligned)
  * The demo's hand-hung jitter/pairing offsets and its "cut" rule are cosmetic and deliberately not reproduced here.
  */
 export function wallLayout(items, {
@@ -316,6 +317,7 @@ export function wallLayout(items, {
     centreCm = PRESETS.homeWall.centreCm,
     topCm = PRESETS.homeWall.topCm,
     gapCm = PRESETS.homeWall.gapCm,
+    verticalGapCm = PRESETS.homeWall.verticalGapCm,
     minGapPx = PRESETS.homeWall.minGapPx,
     captionMaxPx = PRESETS.homeWall.captionMaxPx,
     captionGapPx = PRESETS.homeWall.captionGapPx,
@@ -337,17 +339,21 @@ export function wallLayout(items, {
         const maxW = Math.max(...valid.map((e) => e.w));
         const maxH = Math.max(...valid.map((e) => e.h));
         const k = Math.min(width / (leftCm + maxW), Number.isFinite(maxItemHeightPx) && maxItemHeightPx > 0 ? maxItemHeightPx / maxH : Infinity, Number.isFinite(maxK) && maxK > 0 ? maxK : Infinity);
+        // A stack is a list, not a wall: 20 cm between a caption and the next work (not the wall's 43 cm), never under
+        // minGapPx. Captions sit under their work, left-aligned, so no caption-overflow term.
+        const gapPx = Math.max(verticalGapCm * k, minGapPx);
         let y = 0;
-        const placed = valid.map((e) => {
+        const placed = valid.map((e, i) => {
             const top = roundSpan(y, e.h * k);
             const left = roundSpan(leftCm * k, e.w * k);
-            y += e.h * k + captionPx + gapCm * k;
+            const gapAfter = i < valid.length - 1 ? gapPx : 0;
+            y += e.h * k + captionPx + gapAfter;
 
-            return { item: e.item, index: e.index, widthCm: e.w, heightCm: e.h, left: left.start, top: top.start, width: left.length, height: top.length };
+            return { item: e.item, index: e.index, widthCm: e.w, heightCm: e.h, left: left.start, top: top.start, width: left.length, height: top.length, gapAfter: Math.round(gapAfter) };
         });
         const figure = { ...figureAt(k), left: 0, top: 0 };
 
-        return { k, ready: k > 0, vertical, items: placed, skipped, figure, width: Math.round(width), height: Math.round(Math.max(y - gapCm * k, figure.height)) };
+        return { k, ready: k > 0, vertical, items: placed, skipped, figure, width: Math.round(width), height: Math.round(Math.max(y, figure.height)) };
     }
 
     const { valid, skipped } = partition(items, { maxCm });

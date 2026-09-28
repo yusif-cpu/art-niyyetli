@@ -16,10 +16,22 @@ const CAPTION_OFFSET_PX = 10;
 const CAPTION_BLOCK_PX = 56; // room for title, artist and size under a work
 const VERTICAL_INSET_PX = 17; // the vertical surface's padding (16) + its 1px edge
 const FLOOR_OVERHANG_PX = 12; // the short floor line under the figure reaches a little past it
-function wallHeight() {
-    const vh = typeof window !== 'undefined' && window.innerHeight > 0 ? window.innerHeight : 900;
+// The vertical stack takes k from the width; on a low screen (a phone on its side) that would make the tallest work
+// fill the screen. It may take at most this share of the viewport height, never less than the floor.
+const STACK_MAX_ITEM_RATIO = 0.6;
+const STACK_MAX_ITEM_FLOOR_PX = 200;
 
-    return Math.round(Math.min(WALL_MAX_PX, Math.max(WALL_MIN_PX, vh * WALL_VIEWPORT_RATIO)));
+function viewportHeight() {
+    return typeof window !== 'undefined' && window.innerHeight > 0 ? window.innerHeight : 900;
+}
+
+function wallHeight() {
+    return Math.round(Math.min(WALL_MAX_PX, Math.max(WALL_MIN_PX, viewportHeight() * WALL_VIEWPORT_RATIO)));
+}
+
+/** The tallest a work may be in the vertical stack: 60% of the viewport height, at least 200px. */
+export function stackMaxItemHeight() {
+    return Math.max(STACK_MAX_ITEM_FLOOR_PX, Math.round(viewportHeight() * STACK_MAX_ITEM_RATIO));
 }
 
 /** Index of the first work whose right edge is past the scroll position: what the "1 / 8" counter shows. */
@@ -45,7 +57,7 @@ export default function HomeWall({ artworks, label }) {
     const vertical = typeof window !== 'undefined' && window.innerWidth < VERTICAL_BELOW_PX;
     // Vertical: the works hang inside a framed surface, so they are laid out in the width inside its padding and edge.
     const innerWidth = vertical ? Math.max(0, width - 2 * VERTICAL_INSET_PX) : width;
-    const L = wallLayout(artworks, { width: innerWidth, height: wallHeight(), vertical });
+    const L = wallLayout(artworks, { width: innerWidth, height: wallHeight(), vertical, ...(vertical ? { maxItemHeightPx: stackMaxItemHeight() } : {}) });
     const count = L.items.length;
     // Horizontal: the canvas ends at the floor unless a caption hangs below it (a work reaching the floor).
     const canvasHeight = vertical ? L.height : Math.max(L.floor, ...L.items.map((it) => it.top + it.height + CAPTION_OFFSET_PX + CAPTION_BLOCK_PX));

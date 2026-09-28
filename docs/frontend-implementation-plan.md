@@ -1,6 +1,6 @@
 # ArtNiyyətli — Public Frontend Implementation Plan (demo design → live API)
 
-> **Status:** research and planning only. This document changes no application code.
+> **Status (2026-09-28): implemented.** The plan below was carried out in ten stages on `frontend`, last commit `c2456d9`; §11 records each stage with its commits, where we left the plan and why, and what is still open. The sections 0–10 are kept as written (the plan of record); read them with §11. A summary in Azerbaijani is in `docs/frontend-yekun.md`.
 > **Branch / commit:** written at `frontend` @ `88e5407` (`chore: finalize phase 12 security hardening`); **updated for `3b3e806`** (`docs: update frontend api guide`), which brings `b2bab8d` (genre/medium lists, size filter, `price_max` fix, artist AZ-slug rule, wall cap), `2c64176` (homepage sections by key) and `23ce451` (collectors page unlisted).
 > **Date:** 2026-09-25; updated 2026-09-26. What changed at `3b3e806` is summarised in §0.1; the status of the six open questions S1–S6 is in §9.3.
 > **Inputs read:**
@@ -28,6 +28,7 @@
 8. [Stage 7 — Work plan](#8-stage-7--work-plan)
 9. [Stage 8 — Risks and open questions](#9-stage-8--risks-and-open-questions)
 10. [Appendix — API guide vs. code discrepancies](#10-appendix--api-guide-vs-code-discrepancies)
+11. [Execution status (2026-09-28)](#11-execution-status-2026-09-28)
 
 ---
 
@@ -1081,3 +1082,52 @@ Everything else checked matches the guide:
 - cache TTLs
 - the site-settings allow-list
 - the navigation and social-link shapes
+
+---
+
+## 11. Execution status (2026-09-28)
+
+The work ran in ten stages, each started by a written brief from the owner and closed with tests green, `npm run build` green and a visual check (1440 / 1280 / 1024 / 768 / 375, from stage 9 also 320, 414 and 667 × 375). The stage numbers below are the ones used during the work; they do not follow §8's numbering.
+
+### 11.1 Stages
+
+| # | Stage | Status | Commits |
+|---|---|---|---|
+| 0 | Sync with `origin/frontend`, API check, local demo content | done | `6a9e5ea`, `7050fab`, `18b3a76` (rebase follow-ups) |
+| 1 | Design tokens and self-hosted fonts (Montserrat + Spectral) | done | `d1ddd21`, `de1bda0` |
+| 2 | Header and footer on the tokens; social links in the footer only | done | `b12f8af`, `a61646f` |
+| 3 | The shared wall module (`lib/wall.js`) | done | `a75765d`, `c5e2046` |
+| 4 | True-size card and catalogue (filters, URL state, scale rule) | done | `977518b`, `7627d23`, `35f229f`, `6c53913` |
+| 5 | Artwork page (viewer, "divarda gör", enquiry form) | done | `43e77df`, `f5c21e1`, `81275dd`, `c75bd3c` |
+| 6 | Home page around the wall | done | `34aa5c9`, `3d0215e` |
+| 7 | Artists list and artist page | done | `6a12a34`, `c3bebb1`, `071721b`, `52bd1f5` |
+| 8 | Exhibitions, journal, contact, CMS pages, 404 | done | `17b4d9c`, `21e6580`, `cbe2ede` |
+| – | Design pass: demo comparison, then logo, type scale, labels, home rhythm | done | `077f222` (comparison), `e7248eb`, `5d470f9`, `6104ffa`, `c8bda49`, `0a80fa6` |
+| 9 | Mobile (320–768, landscape, touch targets, 14px floor, menu panel) | done | `2b28aee`, `f1f9720`, `92173e7`, `a96cf95`, `c166fab` |
+| 10 | Final check: CSP, accessibility, performance, documents | done | `c2456d9` (accessibility), this document update |
+
+State at the end: 76 test files, 567 tests, all passing; build green; no CSP violation on any public page (report-only mode, headless Edge, every main page).
+
+### 11.2 Where we left the plan, and why
+
+| Plan | What was done | Why |
+|---|---|---|
+| Archivo Narrow for display type (§6.1) | **Montserrat** (§6.3, stage 1) | The owner's decision at stage 1. Montserrat is ~20% wider, so the heading scale was set lower than the demo's (hero 72px, section 48px instead of 130 / 63). |
+| Full-screen photo hero, stats band (§3.2, stage 5 row) | **Text hero** on the plain surface; no stats band | The wall must stay on the first screen (stage 6). The demo's hero image is AI-generated (C2PA: OpenAI gpt-image), not usable. |
+| Scroll-pinned, draggable home wall with a 60 ms timer (R-1) | A plain horizontal scroller, keyboard-focusable, "1 / N" counter, no pinning, no drag, no animation | Accessibility and motion cost (Q-D-7); the physical model (k from height, 270 cm wall, 150 cm hang line, one k with the 170 cm figure) is kept. |
+| Collection layout 0–6 (demo's staggered act) | A true-size grid at one k ("Seçilmiş əsərlər") | The demo's hand-set widths break true scale (40 cm shown at 28% next to 180 cm at 76%). |
+| Artist accordion, artist tab row (§3.5, Q-D-5) | 4:5 portrait cards; no tab row | Portraits come from the API; a tab row does not scale past a handful of artists. |
+| StickyContactBar (§7.3, stage 2 row) | Not built | On the demo it covers content; a phone-only version was considered in stage 9 and not needed. |
+| Raster `logo_url` from site settings (Q-D-3) | **Inline SVG** from the brand book (`brand/`), `currentColor`: wine on light, wine-ink on wine | One drawing works on both surfaces; a raster cannot change colour. Proposed S11 (a second logo field) was dropped. |
+| Error/success colours (Q-D-8) | Errors in `signal-ink` (counted in the Signal budget, error wins over the filter count); success in plain ink | No new hue; decided in stage 5. |
+| Google Maps embed (S2) | A "Xəritədə aç" link (new window, `noopener noreferrer`) | CSP `frame-src` allows only youtube-nocookie; a map frame also tracks. |
+| `buy` subject on the contact form | Left out of the contact page | The API answers 422 without an artwork code (guide §22.1); `buy` belongs to the artwork page's form. |
+| Mobile gap on the vertical wall 43 cm | 20 cm, floor 48px; tallest work ≤ 60% of the viewport height | A stack is a list; on phones the 48px floor governs (20 cm × k is 20–28px). The height cap fixes landscape phones. |
+| Rounded inputs (2px) | Radius 0 everywhere (`--radius-input: 0px`) | The brief allows no rounded corner. |
+
+### 11.3 Open (not done)
+
+- **Backend:** S9 (`artworks_count` on artists: the card shows it when it arrives), S10 (`portrait_url` on exhibition `artists[]`), S12 proposal (structured "steps" section), S1 (analytics: needs a CSP and consent decision). S3 is **resolved in the API** (the artwork's `artist` now carries `slug`): the `useArtistHref` workaround and the artist index in `SiteDataProvider` can be removed.
+- **Frontend clean-up:** `BrandMark` is no longer used by the shell (kept with its tests); `LoadingState`, `EmptyState` and `ExhibitionCard` are used only by tests.
+- **Content:** legal pages are `[PLACEHOLDER]`; site settings (address, phone, e-mail, hours) are empty locally; no artist portraits and no articles in the local data; real artwork photos.
+- **Not measured here:** Lighthouse, CSP in *enforce* mode on a production server, real devices (all checks ran in headless Edge with device emulation).

@@ -35,6 +35,7 @@
         <script type="application/ld+json">{!! json_encode($seo->jsonLd, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!}</script>
     @endif
 
+    @viteReactRefresh
     @vite(['resources/css/public.css', 'resources/js/public/main.jsx'])
 </head>
 <body class="bg-surface text-ink font-ui antialiased">

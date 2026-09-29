@@ -57,7 +57,7 @@ function Skeleton() {
 }
 
 function NotFound({ locale }) {
-    usePageMeta({ title: `${t(locale, 'artwork.notFoundTitle')} — ${SITE}`, noIndex: true });
+    usePageMeta({ title: `${t(locale, 'artwork.notFoundTitle')} | ${SITE}`, noIndex: true });
 
     return (
         <div className="px-page pt-step-8 pb-step-9 font-ui">

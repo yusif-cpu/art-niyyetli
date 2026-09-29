@@ -207,6 +207,7 @@ describe('ArtworkDetailPage', () => {
         expect(await screen.findByRole('heading', { name: 'Əsər tapılmadı' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Kataloqa qayıt' })).toHaveAttribute('href', '/artworks');
         await waitFor(() => expect(document.head.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow'));
+        expect(document.title).toBe('Əsər tapılmadı | ArtNiyyətli'); // the "|" separator, like every other page
     });
 
     it('leaves out the similar-works section entirely when there are none, and shows it with a scale rule when there are', async () => {

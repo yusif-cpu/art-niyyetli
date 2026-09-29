@@ -59,6 +59,7 @@ describe('EnquiryForm', () => {
 
         expect(await screen.findByText('This artwork is no longer available.')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
+        expect(screen.getByLabelText('Əsərin kodu')).toHaveFocus();
     });
 
     it('blocks submission and shows required-field messages when name, email or message are empty, without calling the API', async () => {
@@ -73,6 +74,7 @@ describe('EnquiryForm', () => {
         expect(screen.getByLabelText('E-poçt')).toHaveAttribute('aria-invalid', 'true');
         expect(screen.getByLabelText('Mesaj')).toHaveAttribute('aria-invalid', 'true');
         expect(global.fetch).not.toHaveBeenCalled();
+        expect(screen.getByLabelText('Ad')).toHaveFocus();
     });
 
     it('does not require the optional phone field', async () => {

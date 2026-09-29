@@ -7,7 +7,9 @@
     @if ($seo->description)
         <meta name="description" content="{{ $seo->description }}">
     @endif
-    <link rel="canonical" href="{{ $seo->canonicalUrl }}">
+    @if ($seo->canonicalUrl)
+        <link rel="canonical" href="{{ $seo->canonicalUrl }}">
+    @endif
     <meta name="robots" content="{{ $seo->robotsContent() }}">
 
     <meta property="og:site_name" content="{{ \App\Support\Seo\SeoText::SITE_NAME }}">
@@ -16,7 +18,9 @@
     @if ($seo->description)
         <meta property="og:description" content="{{ $seo->description }}">
     @endif
-    <meta property="og:url" content="{{ $seo->canonicalUrl }}">
+    @if ($seo->canonicalUrl)
+        <meta property="og:url" content="{{ $seo->canonicalUrl }}">
+    @endif
     <meta property="og:locale" content="{{ $seo->ogLocale }}">
     @if ($seo->ogImageUrl)
         <meta property="og:image" content="{{ $seo->ogImageUrl }}">

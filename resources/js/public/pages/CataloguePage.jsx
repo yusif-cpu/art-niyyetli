@@ -3,7 +3,7 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
-import { activeFilterCount, parseQuery, toSearch } from '../lib/catalogueQuery.js';
+import { activeFilterCount, invalidRangePairs, parseQuery, toSearch } from '../lib/catalogueQuery.js';
 import { listArtworks } from '../services/artworks.js';
 import { listArtists } from '../services/artists.js';
 import { listGenres, listMediums } from '../services/lookups.js';
@@ -28,6 +28,10 @@ function prefersReducedMotion() {
 export default function CataloguePage() {
     const { locale } = useLocale();
     const [query, setQuery] = useState(() => parseQuery(window.location.search));
+    // A snapshot taken once, from the URL the visitor actually arrived with (before parseQuery's cross-field
+    // cleanup below ever runs): a hand-edited or shared link with price_max below price_min still needs its
+    // validation message and its original values shown, even though the request itself must stay valid.
+    const [invalidRanges] = useState(() => invalidRangePairs(window.location.search));
     const [retryToken, setRetryToken] = useState(0);
     const [filtersOpen, setFiltersOpen] = useState(false);
     const listRef = useRef(null);
@@ -39,13 +43,27 @@ export default function CataloguePage() {
         return () => window.removeEventListener('popstate', onPopState);
     }, []);
 
+    // The address bar must not go on showing a price_max/size_max that nothing is actually applying.
+    useEffect(() => {
+        if (Object.keys(invalidRanges).length > 0) {
+            window.history.replaceState(null, '', `${window.location.pathname}${toSearch(query)}`);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const genres = useApiData(() => listGenres(locale), [locale]);
     const mediums = useApiData(() => listMediums(locale), [locale]);
     const artists = useApiData(() => listArtists(locale), [locale]);
     const search = toSearch(query);
     const artworks = useApiData(() => listArtworks(locale, query), [locale, search, retryToken]);
 
-    usePageMeta({ title: `${t(locale, 'nav.artworks')} | ArtNiyyətli`, description: t(locale, 'catalogue.description') });
+    // Matches the server's own count-bearing description (PublicPageSeoResolver::catalogue()) once it is known, so
+    // hydration does not swap the crawler-visible description for an unrelated static one; /catalogue is an alias
+    // of this same page, so its canonical must keep pointing at /artworks, the one URL the server ever indexes.
+    const seoDescription = typeof artworks.meta?.total === 'number'
+        ? t(locale, 'catalogue.descriptionWithCount').replace('{count}', artworks.meta.total)
+        : t(locale, 'catalogue.description');
+    usePageMeta({ title: `${t(locale, 'nav.artworks')} | ArtNiyyətli`, description: seoDescription, canonicalPath: '/artworks' });
 
     function writeUrl(next, mode) {
         const nextSearch = toSearch(next);
@@ -121,7 +139,7 @@ export default function CataloguePage() {
                     </div>
                     {/* Below lg the panel folds under the heading; no animation. */}
                     <div id="catalogue-filters" className={`${filtersOpen ? 'block' : 'hidden'} mt-step-5 lg:block`}>
-                        <FilterBar filters={query} onChange={updateFilters} genres={genres.data || []} mediums={mediums.data || []} artists={artists.data || []} />
+                        <FilterBar filters={query} onChange={updateFilters} genres={genres.data || []} mediums={mediums.data || []} artists={artists.data || []} invalidRanges={invalidRanges} />
                     </div>
                 </aside>
 

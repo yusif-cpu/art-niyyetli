@@ -233,6 +233,18 @@ describe('HomePage', () => {
         expect(within(screen.getByTestId('wall-footer')).getByTestId('scale-rule-line').style.width).toBe(`${Math.round(100 * K)}px`);
     });
 
+    it('shows the 800px catalogue image on the wall, not the 300px thumbnail (which would blur at this size)', async () => {
+        homepage = {
+            ...homepageData,
+            wall: [card('AN-1', 'Wall Piece', 180, 140, { image_url: 'https://example.test/catalogue.webp', thumbnail_url: 'https://example.test/thumb.webp' })],
+        };
+        mockApi();
+        renderHome();
+        await screen.findByText('Wall Piece');
+
+        expect(screen.getByTestId('wall-field').querySelector('img')).toHaveAttribute('src', 'https://example.test/catalogue.webp');
+    });
+
     it('spaces neighbours by max(43 × k, 48px, caption overflow + 24px)', async () => {
         homepage = { ...homepageData, wall: [card('AN-1', 'Wall Piece', 180, 140), card('AN-4', 'Middle', 150, 110), card('AN-2', 'Small Piece', 40, 30)] };
         mockApi();

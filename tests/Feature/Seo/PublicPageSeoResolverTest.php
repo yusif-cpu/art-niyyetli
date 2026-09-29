@@ -111,6 +111,8 @@ class PublicPageSeoResolverTest extends TestCase
         $this->assertSame(404, $seo->httpStatus);
         $this->assertFalse($seo->index);
         $this->assertTrue($seo->follow);
+        // Nothing valid lives at this address, so there is nothing for a canonical to point at.
+        $this->assertNull($seo->canonicalUrl);
     }
 
     public function test_static_page_is_not_found_for_an_inactive_page(): void

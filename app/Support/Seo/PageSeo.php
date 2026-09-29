@@ -7,7 +7,7 @@ final class PageSeo
     public function __construct(
         public readonly string $title,
         public readonly ?string $description,
-        public readonly string $canonicalUrl,
+        public readonly ?string $canonicalUrl,
         public readonly bool $index,
         public readonly bool $follow,
         public readonly string $ogType,

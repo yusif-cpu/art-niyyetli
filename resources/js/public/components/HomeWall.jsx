@@ -85,7 +85,9 @@ export default function HomeWall({ artworks, label }) {
                                 const artwork = it.item;
                                 const dims = formatDimensions(it.widthCm, it.heightCm, locale);
                                 const artist = artwork.artist?.name;
-                                const wallImage = artwork.thumbnail_url || artwork.image_url;
+                                // image_url is the 800px "catalogue" variant, sized for this wall's cards (up to
+                                // ~560px); thumbnail_url is the 300px variant and would visibly blur if upscaled here.
+                                const wallImage = artwork.image_url || artwork.thumbnail_url;
 
                                 return (
                                     <a

@@ -42,7 +42,10 @@ export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }
     const artistName = artwork.artist?.name || null;
     const price = priceLine(artwork, locale);
     const label = [artwork.title, artistName, dims].filter(Boolean).join(', ');
-    const cardImage = artwork.thumbnail_url || artwork.image_url;
+    // image_url is the "catalogue" media variant (800px longest edge) — sized for a card this size. thumbnail_url
+    // is the 300px variant meant for genuinely small art (e.g. the 64px image-picker strip on the detail page);
+    // using it here upscales a 300px asset into a ~400-560px card, which is what caused the visible blur.
+    const cardImage = artwork.image_url || artwork.thumbnail_url;
 
     const field = (
         <div

@@ -82,6 +82,18 @@ describe('ArtworkCard', () => {
         expect(img).toHaveClass('object-cover');
     });
 
+    it('prefers image_url (the 800px catalogue variant) over the 300px thumbnail_url, which would blur at card size', () => {
+        renderCard({ artwork: { ...baseArtwork, thumbnail_url: 'https://example.test/thumb.webp' }, k: 1 });
+
+        expect(field().querySelector('img')).toHaveAttribute('src', 'https://example.test/catalogue.webp');
+    });
+
+    it('falls back to thumbnail_url only when image_url is missing', () => {
+        renderCard({ artwork: { ...baseArtwork, image_url: null, thumbnail_url: 'https://example.test/thumb.webp' }, k: 1 });
+
+        expect(field().querySelector('img')).toHaveAttribute('src', 'https://example.test/thumb.webp');
+    });
+
     it('shows code, title, artist, dimensions with × and the medium, and a formatted price', () => {
         renderCard({ k: 1 });
 

@@ -68,12 +68,16 @@ export default function ContactPage() {
         <div className="px-page pt-step-8 pb-step-9 font-ui">
             <h1 className="border-b border-line pb-step-5 text-display">{t(locale, 'contact.title')}</h1>
 
-            <div className="mt-step-7 grid gap-step-8 md:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] md:gap-step-9">
-                <aside className="md:col-start-2 md:row-start-1">
+            {/* A 36rem-capped column beside a flexible one needs room for both: at md (768px) the cap plus its gap
+                already exceeds the content width, squeezing the flexible column until its content overflows. The
+                other pages with this exact shape (CataloguePage, ArtworkDetailPage) already wait for lg for the
+                same reason, so this one now matches them instead of switching a tablet-width column too early. */}
+            <div className="mt-step-7 grid gap-step-8 lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:gap-step-9">
+                <aside className="lg:col-start-2 lg:row-start-1">
                     <Details settings={settings} locale={locale} />
                 </aside>
 
-                <div className="md:col-start-1 md:row-start-1">
+                <div className="lg:col-start-1 lg:row-start-1">
                     {loading && !subjects && (
                         <div aria-busy="true" data-testid="contact-skeleton">
                             <div aria-hidden="true" className="flex flex-col gap-step-4">

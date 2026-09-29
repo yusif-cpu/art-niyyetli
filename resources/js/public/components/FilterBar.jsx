@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 
@@ -35,15 +35,29 @@ function OptionList({ legend, options, value, onChange }) {
     );
 }
 
-/** Two number fields (at least / at most). Applied on blur or Enter, so typing does not fire a request per key. */
-function RangeFields({ legend, minKey, maxKey, filters, onChange }) {
+/**
+ * Two number fields (at least / at most). Applied on blur or Enter, so typing does not fire a request per key.
+ * `invalid`, when given, is a { min, max } pair read straight from the URL the visitor arrived with: `filters`
+ * itself never holds an inconsistent range (parseQuery already dropped the max), so without it a URL like
+ * ?price_min=500&price_max=100 would just show an empty max field with no explanation.
+ */
+function RangeFields({ legend, minKey, maxKey, filters, onChange, invalid }) {
     const { locale } = useLocale();
     const applied = { min: filters[minKey] ?? '', max: filters[maxKey] ?? '' };
-    const [draft, setDraft] = useState(applied);
-    const [error, setError] = useState(false);
+    const [draft, setDraft] = useState(() => (invalid ? { min: invalid.min, max: invalid.max } : applied));
+    const [error, setError] = useState(() => Boolean(invalid));
+    // This effect also fires once on mount (React runs every effect after the first render, not just on later
+    // dependency changes) — which would otherwise immediately overwrite the invalid draft/error just initialized
+    // above with `applied` (already stripped of its max by parseQuery), erasing the very message this exists to show.
+    const skipNextSync = useRef(Boolean(invalid));
 
     // Follow the URL (Back, "clear filters"), but only when the applied values themselves change.
     useEffect(() => {
+        if (skipNextSync.current) {
+            skipNextSync.current = false;
+
+            return;
+        }
         setDraft({ min: applied.min, max: applied.max });
         setError(false);
     }, [applied.min, applied.max]);
@@ -98,7 +112,7 @@ function RangeFields({ legend, minKey, maxKey, filters, onChange }) {
  * The catalogue filters. `filters` uses the API parameter names (genre, medium, artist, size_min, size_max,
  * price_min, price_max, status, sort); onChange receives a patch.
  */
-export default function FilterBar({ filters, onChange, genres = [], mediums = [], artists = [] }) {
+export default function FilterBar({ filters, onChange, genres = [], mediums = [], artists = [], invalidRanges = {} }) {
     const { locale } = useLocale();
     const nameOf = (item) => item.name || item.slug;
     const artistName = (artist) => [artist.first_name, artist.last_name].filter(Boolean).join(' ');
@@ -122,8 +136,8 @@ export default function FilterBar({ filters, onChange, genres = [], mediums = []
                 <OptionList legend={t(locale, 'filters.artist')} value={filters.artist} options={artists.map((a) => ({ value: String(a.id), label: artistName(a) }))} onChange={(artist) => onChange({ artist })} />
             )}
 
-            <RangeFields legend={t(locale, 'filters.size')} minKey="size_min" maxKey="size_max" filters={filters} onChange={onChange} />
-            <RangeFields legend={t(locale, 'filters.price')} minKey="price_min" maxKey="price_max" filters={filters} onChange={onChange} />
+            <RangeFields legend={t(locale, 'filters.size')} minKey="size_min" maxKey="size_max" filters={filters} onChange={onChange} invalid={invalidRanges.size_min} />
+            <RangeFields legend={t(locale, 'filters.price')} minKey="price_min" maxKey="price_max" filters={filters} onChange={onChange} invalid={invalidRanges.price_min} />
 
             <OptionList
                 legend={t(locale, 'filters.status')}

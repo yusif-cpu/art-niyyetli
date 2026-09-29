@@ -139,6 +139,9 @@ export const dictionary = {
         catalogue: {
             count: 'əsər',
             description: 'Hər əsər həqiqi ölçü nisbətində göstərilir: böyük əsər böyük, kiçik əsər kiçik görünür.',
+            // Matches PublicPageSeoResolver::catalogue()'s description exactly, so the meta description does not
+            // change the moment React hydrates: server-rendered for bots, this for anyone whose browser runs it.
+            descriptionWithCount: '{count} əsərdən ibarət kataloqu kəşf edin.',
             empty: 'Bu şərtlərə uyğun əsər yoxdur.',
             error: 'Əsərləri yükləmək alınmadı.',
             reload: 'Yenidən yüklə',
@@ -329,6 +332,7 @@ export const dictionary = {
         catalogue: {
             count: 'works',
             description: 'Every work is shown at its true relative size: a large work looks large, a small one small.',
+            descriptionWithCount: 'Explore a catalogue of {count} artworks.',
             empty: 'No works match these filters.',
             error: 'The works could not be loaded.',
             reload: 'Reload',

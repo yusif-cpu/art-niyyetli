@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { submitEnquiry } from '../services/enquiries.js';
@@ -38,6 +38,14 @@ export default function EnquiryForm({ subject, artworkCode }) {
     const [banner, setBanner] = useState('');
     const honeypotId = useId();
 
+    // Tab order, so focus lands on whichever invalid field the visitor would reach first — client-side required
+    // checks and server-side field errors (422) both resolve through the same map.
+    const fieldRefs = { artwork_code: useRef(null), name: useRef(null), email: useRef(null), phone: useRef(null), message: useRef(null) };
+    function focusFirstError(errorsByField) {
+        const firstKey = Object.keys(fieldRefs).find((key) => errorsByField[key]?.length);
+        fieldRefs[firstKey]?.current?.focus();
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
 
@@ -48,6 +56,7 @@ export default function EnquiryForm({ subject, artworkCode }) {
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
             setBanner('');
+            focusFirstError(validationErrors);
 
             return;
         }
@@ -68,6 +77,7 @@ export default function EnquiryForm({ subject, artworkCode }) {
                 setStatus('idle');
                 setErrors(err.errors || {});
                 setBanner(err.message);
+                focusFirstError(err.errors || {});
             } else {
                 setStatus('idle');
                 setBanner(t(locale, 'common.error'));
@@ -89,24 +99,24 @@ export default function EnquiryForm({ subject, artworkCode }) {
 
             {artworkCode && (
                 <Field label={t(locale, 'enquiryForm.artworkCode')} error={errorOf('artwork_code')}>
-                    {(props) => <input {...props} value={artworkCode} readOnly className={`${props.className} figures text-ink-muted`} />}
+                    {(props) => <input {...props} ref={fieldRefs.artwork_code} value={artworkCode} readOnly className={`${props.className} figures text-ink-muted`} />}
                 </Field>
             )}
 
             <Field label={t(locale, 'enquiryForm.name')} error={errorOf('name')}>
-                {(props) => <input {...props} value={fields.name} onChange={set('name')} autoComplete="name" />}
+                {(props) => <input {...props} ref={fieldRefs.name} value={fields.name} onChange={set('name')} autoComplete="name" />}
             </Field>
 
             <Field label={t(locale, 'enquiryForm.email')} error={errorOf('email')}>
-                {(props) => <input {...props} type="email" value={fields.email} onChange={set('email')} autoComplete="email" />}
+                {(props) => <input {...props} ref={fieldRefs.email} type="email" value={fields.email} onChange={set('email')} autoComplete="email" />}
             </Field>
 
             <Field label={t(locale, 'enquiryForm.phone')} error={errorOf('phone')}>
-                {(props) => <input {...props} type="tel" value={fields.phone} onChange={set('phone')} autoComplete="tel" />}
+                {(props) => <input {...props} ref={fieldRefs.phone} type="tel" value={fields.phone} onChange={set('phone')} autoComplete="tel" />}
             </Field>
 
             <Field label={t(locale, 'enquiryForm.message')} error={errorOf('message')}>
-                {(props) => <textarea {...props} rows={5} value={fields.message} onChange={set('message')} />}
+                {(props) => <textarea {...props} ref={fieldRefs.message} rows={5} value={fields.message} onChange={set('message')} />}
             </Field>
 
             {/* Honeypot: a real, tabbable-by-default field visually moved off-screen (never display:none/type=hidden,

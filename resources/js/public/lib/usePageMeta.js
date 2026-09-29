@@ -23,10 +23,10 @@ function upsertMetaByName(name, content) {
 }
 
 // A 404/invalid route must never canonicalize to itself (there is nothing valid at that URL to point crawlers at).
-function upsertCanonical(enabled) {
+function upsertCanonical(href) {
     let tag = document.querySelector('link[rel="canonical"]');
 
-    if (!enabled) {
+    if (!href) {
         tag?.remove();
 
         return;
@@ -38,7 +38,7 @@ function upsertCanonical(enabled) {
         document.head.appendChild(tag);
     }
 
-    tag.setAttribute('href', `${window.location.origin}${window.location.pathname}`);
+    tag.setAttribute('href', href);
 }
 
 function upsertMetaByProperty(property, content) {
@@ -82,8 +82,12 @@ function upsertAlternate(hreflang, href) {
  * (as the detail pages do, for a suffix-free/truncated variant) still wins. `og.image` has no such fallback.
  * The active locale (from `useLocale`, so every caller gets this for free) drives `html[lang]`, `og:locale` and a
  * self-referencing hreflang pair — suppressed, like the canonical link, when the page is `noIndex`.
+ * `canonicalPath`, when given, overrides the current pathname for both the canonical link and the hreflang pair.
+ * A route that the server treats as an alias of another (e.g. /catalogue, consolidated server-side onto /artworks
+ * in PublicPageSeoResolver) must keep pointing at that same authoritative path after hydration too, or the
+ * canonical would flip the moment React takes over — the opposite of what a canonical is for.
  */
-export function usePageMeta({ title, description, noIndex = false, og } = {}) {
+export function usePageMeta({ title, description, noIndex = false, og, canonicalPath } = {}) {
     const { locale } = useLocale();
     const ogTitle = og?.title ?? title;
     const ogDescription = og?.description ?? description;
@@ -98,15 +102,16 @@ export function usePageMeta({ title, description, noIndex = false, og } = {}) {
 
         upsertMetaByName('description', description || null);
         upsertMetaByName('robots', noIndex ? 'noindex, follow' : null);
-        upsertCanonical(!noIndex);
+
+        const canonicalHref = noIndex ? null : `${window.location.origin}${canonicalPath ?? window.location.pathname}`;
+        upsertCanonical(canonicalHref);
         upsertMetaByProperty('og:title', ogTitle);
         upsertMetaByProperty('og:description', ogDescription);
         upsertMetaByProperty('og:image', ogImage);
         upsertMetaByProperty('og:locale', OG_LOCALE[locale]);
 
-        const selfHref = noIndex ? null : `${window.location.origin}${window.location.pathname}`;
-        upsertAlternate('az', selfHref);
-        upsertAlternate('en', selfHref);
-        upsertAlternate('x-default', selfHref);
-    }, [title, description, noIndex, ogTitle, ogDescription, ogImage, locale]);
+        upsertAlternate('az', canonicalHref);
+        upsertAlternate('en', canonicalHref);
+        upsertAlternate('x-default', canonicalHref);
+    }, [title, description, noIndex, ogTitle, ogDescription, ogImage, locale, canonicalPath]);
 }

@@ -68,6 +68,16 @@ class PublicPageHttpTest extends TestCase
         $response->assertSee('<meta name="robots" content="noindex, follow">', false);
     }
 
+    public function test_a_404_page_has_no_canonical_link_or_og_url(): void
+    {
+        // A canonical (or og:url) of "/" here would tell crawlers this 404 IS the homepage.
+        $response = $this->get('/this/does/not/exist');
+
+        $response->assertStatus(404);
+        $response->assertDontSee('rel="canonical"', false);
+        $response->assertDontSee('property="og:url"', false);
+    }
+
     public function test_admin_route_is_unaffected_and_carries_its_own_noindex_tag(): void
     {
         $response = $this->get('/admin');

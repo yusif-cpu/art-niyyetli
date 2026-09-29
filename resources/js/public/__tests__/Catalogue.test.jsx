@@ -255,6 +255,18 @@ describe('Catalogue', () => {
         await waitFor(() => expect(document.title).toBe('Əsərlər | ArtNiyyətli'));
     });
 
+    it('canonicalizes /catalogue onto /artworks after hydration too, matching the server, and updates the description with the live count', async () => {
+        window.history.replaceState(null, '', '/catalogue');
+        mockApi();
+        renderPage();
+        await screen.findByText('Uzun divar');
+
+        await waitFor(() => {
+            expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', `${window.location.origin}/artworks`);
+        });
+        expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', '50 əsərdən ibarət kataloqu kəşf edin.');
+    });
+
     it('shows a validation message and does not apply price_max when it is below price_min, keeping the URL consistent', async () => {
         renderPage();
         await screen.findByText('Uzun divar');
@@ -273,6 +285,25 @@ describe('Catalogue', () => {
         // Neither value reached the URL or the API: the invalid pair is rejected outright, not half-applied.
         expect(window.location.search).toBe('');
         expect(artworkUrls().every((url) => !url.includes('price_min') && !url.includes('price_max'))).toBe(true);
+    });
+
+    it('shows the same validation message and the raw values for an invalid range loaded straight from the URL, and sends only the valid part to the API', async () => {
+        window.history.replaceState(null, '', '/artworks?price_min=500&price_max=100');
+        mockApi();
+        renderPage();
+        await screen.findByText('Uzun divar');
+
+        const [, priceMin] = screen.getAllByLabelText('ən azı');
+        const [, priceMax] = screen.getAllByLabelText('ən çoxu');
+
+        expect(priceMin).toHaveValue(500);
+        expect(priceMax).toHaveValue(100);
+        expect(await screen.findByText('"ən çoxu" "ən azı"-dan kiçik ola bilməz.')).toBeInTheDocument();
+        expect(priceMax).toHaveAttribute('aria-invalid', 'true');
+        // The invalid max never reaches the request, and the address bar stops implying it still applies.
+        expect(artworkUrls().every((url) => !url.includes('price_max'))).toBe(true);
+        expect(artworkUrls().some((url) => url.includes('price_min=500'))).toBe(true);
+        expect(window.location.search).toBe('?price_min=500');
     });
 
     it('treats a page past the last one as a distinct state from "no matching artworks", with a way back', async () => {

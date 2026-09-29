@@ -25,14 +25,35 @@ const RULES = {
     page: (v) => (positiveInt(v) && v !== '1' ? positiveInt(v) : undefined),
 };
 
+const RANGE_PAIRS = [['size_min', 'size_max'], ['price_min', 'price_max']];
+
 // A max below its min would be a 422: drop the max. Shared by parseQuery and toSearch so the app can never write
 // an inconsistent range to the URL itself (a hand-edited URL may still arrive with one; that is parseQuery's job).
 function dropInvalidRanges(state) {
-    for (const [min, max] of [['size_min', 'size_max'], ['price_min', 'price_max']]) {
+    for (const [min, max] of RANGE_PAIRS) {
         if (state[min] !== undefined && state[max] !== undefined && Number(state[max]) < Number(state[min])) delete state[max];
     }
 
     return state;
+}
+
+/**
+ * Range pairs from a raw query string whose max is below its min, keyed by minKey, with their raw (but
+ * individually-valid) values. parseQuery drops the max from its returned state so the request that follows can
+ * never be invalid, but that alone leaves a visitor who opened such a link with no explanation for why their max
+ * seemingly vanished. The catalogue page uses this to show the same validation message and pre-filled values a
+ * visitor gets when they type an invalid range by hand, instead of silently acting as if only the min was given.
+ */
+export function invalidRangePairs(search) {
+    const params = new URLSearchParams(search);
+    const found = {};
+    for (const [minKey, maxKey] of RANGE_PAIRS) {
+        const min = RULES[minKey](params.get(minKey) ?? undefined);
+        const max = RULES[maxKey](params.get(maxKey) ?? undefined);
+        if (min !== undefined && max !== undefined && Number(max) < Number(min)) found[minKey] = { min, max };
+    }
+
+    return found;
 }
 
 /** Clean state from a query string: only known keys with valid values. Page 1 is implicit. */

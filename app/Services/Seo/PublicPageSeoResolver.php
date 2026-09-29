@@ -423,7 +423,9 @@ class PublicPageSeoResolver
         return new PageSeo(
             title: SeoText::pageTitle(null),
             description: null,
-            canonicalUrl: SeoText::absoluteUrl('/'),
+            // Never "/" or any other real URL: nothing valid lives at the requested address, so there is nothing
+            // for a canonical to point at. A canonical here would tell crawlers this 404 IS the homepage.
+            canonicalUrl: null,
             index: false,
             follow: true,
             ogType: 'website',

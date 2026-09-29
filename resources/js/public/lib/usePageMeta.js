@@ -54,6 +54,21 @@ function upsertMetaByProperty(property, content) {
     tag.setAttribute('content', content);
 }
 
+// Twitter's card tags use name=, not property=, but should behave like the OG ones they mirror: leave the
+// server-rendered value in place rather than blank it while a page has not resolved its own title/description yet.
+function upsertMetaByNameIfPresent(name, content) {
+    if (!content) return;
+    let tag = document.querySelector(`meta[name="${name}"]`);
+
+    if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', name);
+        document.head.appendChild(tag);
+    }
+
+    tag.setAttribute('content', content);
+}
+
 // The routing has no distinct URL per locale (locale is a client-side, localStorage-backed choice, not a path), so
 // the only honest hreflang is self-referencing: this one URL declares itself as both the az and en version.
 function upsertAlternate(hreflang, href) {
@@ -109,6 +124,9 @@ export function usePageMeta({ title, description, noIndex = false, og, canonical
         upsertMetaByProperty('og:description', ogDescription);
         upsertMetaByProperty('og:image', ogImage);
         upsertMetaByProperty('og:locale', OG_LOCALE[locale]);
+        // Twitter's card mirrors the OG title/description exactly, the same way the server's own head already does.
+        upsertMetaByNameIfPresent('twitter:title', ogTitle);
+        upsertMetaByNameIfPresent('twitter:description', ogDescription);
 
         upsertAlternate('az', canonicalHref);
         upsertAlternate('en', canonicalHref);

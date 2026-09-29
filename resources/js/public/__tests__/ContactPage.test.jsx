@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
 import { SiteDataProvider } from '../layout/SiteDataContext.jsx';
 import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
@@ -41,6 +41,10 @@ function renderWithSite(settings = SETTINGS) {
 }
 
 describe('ContactPage', () => {
+    beforeEach(() => {
+        localStorage.removeItem('public-locale'); // the locale-switch test changes it; every other test starts in AZ
+    });
+
     it('lists address, phone, e-mail and hours from the site settings, as plain links', async () => {
         renderWithSite();
 
@@ -184,5 +188,53 @@ describe('ContactPage', () => {
         await userEvent.click(submitButton);
 
         await screen.findByText('Your enquiry has been recorded.');
+    });
+
+    it('sets the meta and og/twitter descriptions from the CMS contact page once it loads (the server resolves the same record for its SSR head)', async () => {
+        global.fetch = vi.fn((url) => {
+            if (url.startsWith('/api/v1/enquiry-subjects')) return Promise.resolve(jsonResponse(200, { data: SUBJECTS }));
+            if (url.startsWith('/api/v1/pages/contact')) return Promise.resolve(jsonResponse(200, { data: { slug: 'contact', title: 'Əlaqə', content: 'AZ contact page text.', seo: null, sections: [] } }));
+            return Promise.resolve(jsonResponse(200, { data: [] }));
+        });
+
+        render(<LocaleProvider><ContactPage /></LocaleProvider>);
+        await screen.findByLabelText('Mövzu');
+
+        await waitFor(() => {
+            expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', 'AZ contact page text.');
+        });
+        expect(document.querySelector('meta[property="og:description"]')).toHaveAttribute('content', 'AZ contact page text.');
+        expect(document.querySelector('meta[name="twitter:description"]')).toHaveAttribute('content', 'AZ contact page text.');
+        expect(document.title).toBe('Əlaqə | ArtNiyyətli');
+    });
+
+    it('updates the description to the English CMS content on a locale switch, instead of leaving the Azerbaijani one behind', async () => {
+        global.fetch = vi.fn((url) => {
+            if (url.startsWith('/api/v1/enquiry-subjects')) {
+                const subjects = url.includes('locale=en') ? SUBJECTS_EN : SUBJECTS;
+
+                return Promise.resolve(jsonResponse(200, { data: subjects }));
+            }
+            if (url.startsWith('/api/v1/pages/contact')) {
+                const content = url.includes('locale=en') ? 'EN contact page text.' : 'AZ contact page text.';
+
+                return Promise.resolve(jsonResponse(200, { data: { slug: 'contact', title: url.includes('locale=en') ? 'Contact' : 'Əlaqə', content, seo: null, sections: [] } }));
+            }
+
+            return Promise.resolve(jsonResponse(200, { data: [] }));
+        });
+
+        render(<LocaleProvider><LocaleSwitcher /><ContactPage /></LocaleProvider>);
+        await waitFor(() => {
+            expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', 'AZ contact page text.');
+        });
+
+        await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+
+        await waitFor(() => {
+            expect(document.querySelector('meta[name="description"]')).toHaveAttribute('content', 'EN contact page text.');
+        });
+        expect(document.querySelector('meta[property="og:description"]')).toHaveAttribute('content', 'EN contact page text.');
+        expect(document.querySelector('meta[property="og:locale"]')).toHaveAttribute('content', 'en_US');
     });
 });

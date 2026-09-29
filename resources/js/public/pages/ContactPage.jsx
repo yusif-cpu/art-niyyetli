@@ -3,8 +3,11 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
 import { useApiData } from '../lib/useApiData.js';
+import { seoMeta } from '../lib/seoMeta.js';
+import { excerpt } from '../lib/text.js';
 import { useSiteSettings } from '../layout/SiteDataContext.jsx';
 import { getEnquirySubjects } from '../services/enquiries.js';
+import { getPage } from '../services/pages.js';
 import EnquiryForm from '../components/EnquiryForm.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 
@@ -59,7 +62,13 @@ export default function ContactPage() {
     const { data: subjects, loading, error } = useApiData(() => getEnquirySubjects(locale), [locale, retryToken]);
     const [selectedSubject, setSelectedSubject] = useState('');
 
-    usePageMeta({ title: `${t(locale, 'contact.title')} | ArtNiyyətli` });
+    // This page's own content (the enquiry form, address/phone/email/hours) never comes from a CMS Page — but the
+    // server's SSR head for /contact does resolve one (PublicPageSeoResolver's generic static-page lookup, by slug),
+    // so without this fetch the client has no description at all to hydrate with: it would drop the tag entirely
+    // and leave og:description/twitter:description frozen at whatever locale the server happened to render first.
+    // Fetching the same record keeps client and server in agreement in both locales, admin content unchanged.
+    const { data: contactPage } = useApiData(() => getPage(locale, 'contact'), [locale]);
+    usePageMeta(seoMeta(contactPage, { title: t(locale, 'contact.title'), description: excerpt(contactPage?.content) || undefined }));
 
     const labeledSubjects = Array.isArray(subjects) ? subjects.filter((item) => item.label && !ARTWORK_ONLY_SUBJECTS.includes(item.key)) : [];
     const subject = labeledSubjects.some((item) => item.key === selectedSubject) ? selectedSubject : labeledSubjects[0]?.key || '';

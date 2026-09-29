@@ -24,7 +24,7 @@ describe('usePageMeta', () => {
     beforeEach(() => {
         document.title = '';
         document.documentElement.lang = '';
-        document.querySelectorAll('meta[name="description"], meta[name="robots"], meta[property^="og:"], link[rel="canonical"], link[rel="alternate"]').forEach((el) => el.remove());
+        document.querySelectorAll('meta[name="description"], meta[name="robots"], meta[property^="og:"], meta[name^="twitter:"], link[rel="canonical"], link[rel="alternate"]').forEach((el) => el.remove());
         try {
             localStorage.removeItem('public-locale');
         } catch {
@@ -125,5 +125,19 @@ describe('usePageMeta', () => {
 
         expect(ogMeta('og:title').getAttribute('content')).toBe('OG Title');
         expect(ogMeta('og:description').getAttribute('content')).toBe('OG description.');
+    });
+
+    it('mirrors twitter:title/twitter:description from the same og values, so they track the active locale too', () => {
+        renderMeta({ title: 'Artists | ArtNiyyətli', description: 'The gallery represented artists.' });
+
+        expect(meta('twitter:title').getAttribute('content')).toBe('Artists | ArtNiyyətli');
+        expect(meta('twitter:description').getAttribute('content')).toBe('The gallery represented artists.');
+    });
+
+    it('leaves a prior twitter:description in place rather than blanking it while a page has not resolved its own yet', () => {
+        renderMeta({ title: 'x', description: 'Known description.' });
+        renderMeta({}); // a page mid-load, e.g. usePageMeta(data ? {...} : {})
+
+        expect(meta('twitter:description').getAttribute('content')).toBe('Known description.');
     });
 });

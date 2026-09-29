@@ -85,6 +85,7 @@ export default function HomeWall({ artworks, label }) {
                                 const artwork = it.item;
                                 const dims = formatDimensions(it.widthCm, it.heightCm, locale);
                                 const artist = artwork.artist?.name;
+                                const wallImage = artwork.thumbnail_url || artwork.image_url;
 
                                 return (
                                     <a
@@ -95,11 +96,11 @@ export default function HomeWall({ artworks, label }) {
                                         data-testid="wall-item"
                                     >
                                         <span
-                                            className={`absolute block overflow-hidden border border-line shadow-hang transition-colors duration-[120ms] ease-standard group-hover:border-line-strong ${artwork.image_url ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
+                                            className={`absolute block overflow-hidden border border-line shadow-hang transition-colors duration-[120ms] ease-standard group-hover:border-line-strong ${wallImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
                                             style={{ left: it.left, top: it.top, width: it.width, height: it.height }}
                                             data-testid="wall-field"
                                         >
-                                            {artwork.image_url && <img src={artwork.image_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
+                                            {wallImage && <img src={wallImage} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
                                         </span>
                                         <span
                                             className="absolute flex flex-col items-center text-center"

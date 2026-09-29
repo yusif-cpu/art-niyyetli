@@ -31,7 +31,7 @@ class PublicPageSeoResolver
     {
         return match (true) {
             $segments === [] => $this->home($locale),
-            $segments === ['artworks'] => $this->catalogue($locale),
+            $segments === ['artworks'], $segments === ['catalogue'] => $this->catalogue($locale),
             count($segments) === 2 && $segments[0] === 'artworks' => $this->artworkDetail($segments[1], $locale),
             $segments === ['artists'] => $this->artists($locale),
             count($segments) === 2 && $segments[0] === 'artists' => $this->artistDetail($segments[1], $locale),

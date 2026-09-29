@@ -53,7 +53,7 @@ export default function ExhibitionsPage() {
     const upcoming = useApiData(() => listExhibitions(locale, { filter: 'upcoming', per_page: OPEN_PER_PAGE }), [locale, retryToken]);
     const archive = useApiData(() => listExhibitions(locale, { filter: 'archive', page: archivePage > 1 ? archivePage : undefined }), [locale, archivePage, retryToken]);
 
-    usePageMeta({ title: `${t(locale, 'nav.exhibitions')} | ArtNiyyətli` });
+    usePageMeta({ title: `${t(locale, 'nav.exhibitions')} | ArtNiyyətli`, description: t(locale, 'exhibitions.description') });
 
     const requests = [current, upcoming, archive];
     const error = requests.find((r) => r.error)?.error;

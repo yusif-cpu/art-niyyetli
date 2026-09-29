@@ -46,16 +46,46 @@ describe('EnquiryForm', () => {
     });
 
     it('shows field-level errors on a 422 and leaves the button enabled', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse(422, { message: 'The given data was invalid.', errors: { email: ['The email field is required.'] } }));
+        // A server-only rejection unreachable by client validation: every required field is filled, but the artwork
+        // named by the (non-editable) artworkCode prop is no longer available.
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(422, { message: 'The given data was invalid.', errors: { artwork_code: ['This artwork is no longer available.'] } }));
 
         render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
 
         await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
         await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
         await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
 
-        expect(await screen.findByText('The email field is required.')).toBeInTheDocument();
+        expect(await screen.findByText('This artwork is no longer available.')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
+    });
+
+    it('blocks submission and shows required-field messages when name, email or message are empty, without calling the API', async () => {
+        global.fetch = vi.fn();
+
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+
+        expect(await screen.findAllByText('Bu sahə mütləqdir.')).toHaveLength(3);
+        expect(screen.getByLabelText('Ad')).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByLabelText('E-poçt')).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByLabelText('Mesaj')).toHaveAttribute('aria-invalid', 'true');
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('does not require the optional phone field', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' }));
+
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
+
+        await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
+        await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
+        await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+
+        expect(await screen.findByText('Sorğunuz qeydə alındı.')).toBeInTheDocument();
     });
 
     it('recovers to an enabled, retryable state on a non-API failure (e.g. network error)', async () => {

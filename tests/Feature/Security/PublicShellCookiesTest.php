@@ -161,7 +161,7 @@ class PublicShellCookiesTest extends TestCase
 
         $this->get('/artworks/AN-COOKIE-1')
             ->assertOk()
-            ->assertSee('<title>Sunset Over Baku — ArtNiyyətli</title>', false)
+            ->assertSee('<title>Sunset Over Baku | ArtNiyyətli</title>', false)
             ->assertSee('<link rel="canonical" href="http://localhost:8080/artworks/AN-COOKIE-1">', false);
     }
 

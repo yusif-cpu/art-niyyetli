@@ -62,7 +62,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['about'], Locale::Az);
 
-        $this->assertSame('Haqqımızda — ArtNiyyətli', $seo->title);
+        $this->assertSame('Haqqımızda | ArtNiyyətli', $seo->title);
         $this->assertSame('Qalereya haqqında məlumat.', $seo->description);
         $this->assertSame('http://localhost:8080/about', $seo->canonicalUrl);
         $this->assertTrue($seo->index);
@@ -83,7 +83,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['about'], Locale::Az);
 
-        $this->assertSame('SEO başlıq — ArtNiyyətli', $seo->title);
+        $this->assertSame('SEO başlıq | ArtNiyyətli', $seo->title);
         $this->assertSame('SEO təsvir', $seo->description);
         $this->assertSame(Storage::disk('public')->url('seo/about.webp'), $seo->ogImageUrl);
 
@@ -97,7 +97,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['privacy-policy'], Locale::Az);
 
-        $this->assertSame('Məxfilik siyasəti — ArtNiyyətli', $seo->title);
+        $this->assertSame('Məxfilik siyasəti | ArtNiyyətli', $seo->title);
         $this->assertSame('http://localhost:8080/privacy-policy', $seo->canonicalUrl);
         $this->assertTrue($seo->index);
         $this->assertTrue($seo->follow);
@@ -164,11 +164,24 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['artworks'], Locale::Az);
 
-        $this->assertSame('Əsərlər — ArtNiyyətli', $seo->title);
+        $this->assertSame('Əsərlər | ArtNiyyətli', $seo->title);
         $this->assertSame('2 əsərdən ibarət kataloqu kəşf edin.', $seo->description);
         $this->assertSame('http://localhost:8080/artworks', $seo->canonicalUrl);
         $this->assertTrue($seo->index);
         $this->assertNull($seo->jsonLd);
+    }
+
+    public function test_the_catalogue_alias_route_resolves_the_same_indexable_seo_as_artworks(): void
+    {
+        $this->makeArtwork('AN-CAT-3');
+
+        $seo = $this->resolver()->resolve(['catalogue'], Locale::Az);
+
+        $this->assertSame('Əsərlər | ArtNiyyətli', $seo->title);
+        // The canonical still points at /artworks: one URL, not two, is the authoritative one for crawlers.
+        $this->assertSame('http://localhost:8080/artworks', $seo->canonicalUrl);
+        $this->assertTrue($seo->index);
+        $this->assertSame(200, $seo->httpStatus);
     }
 
     public function test_artwork_detail_resolves_title_description_and_json_ld(): void
@@ -177,7 +190,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['artworks', 'AN-DETAIL-1'], Locale::Az);
 
-        $this->assertSame('Sunset Over Baku — ArtNiyyətli', $seo->title);
+        $this->assertSame('Sunset Over Baku | ArtNiyyətli', $seo->title);
         $this->assertSame('An oil painting of the Baku skyline at dusk.', $seo->description);
         $this->assertSame('http://localhost:8080/artworks/AN-DETAIL-1', $seo->canonicalUrl);
         $this->assertTrue($seo->index);
@@ -248,7 +261,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['artists'], Locale::Az);
 
-        $this->assertSame('Rəssamlar — ArtNiyyətli', $seo->title);
+        $this->assertSame('Rəssamlar | ArtNiyyətli', $seo->title);
         $this->assertSame('2 rəssamla tanış olun.', $seo->description);
         $this->assertSame('http://localhost:8080/artists', $seo->canonicalUrl);
         $this->assertTrue($seo->index);
@@ -260,7 +273,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['artists', 'aygun-mammadova'], Locale::Az);
 
-        $this->assertSame('Aygün Məmmədova — ArtNiyyətli', $seo->title);
+        $this->assertSame('Aygün Məmmədova | ArtNiyyətli', $seo->title);
         $this->assertSame('Aygün Məmmədova müasir Azərbaycan rəssamıdır.', $seo->description);
         $this->assertSame('http://localhost:8080/artists/aygun-mammadova', $seo->canonicalUrl);
         $this->assertTrue($seo->index);
@@ -306,7 +319,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['exhibitions'], Locale::Az);
 
-        $this->assertSame('Sərgilər — ArtNiyyətli', $seo->title);
+        $this->assertSame('Sərgilər | ArtNiyyətli', $seo->title);
         $this->assertSame('1 sərgiyə baxın.', $seo->description);
         $this->assertTrue($seo->index);
     }
@@ -317,7 +330,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['exhibitions', 'winter-show-2026'], Locale::Az);
 
-        $this->assertSame('Winter Show 2026 — ArtNiyyətli', $seo->title);
+        $this->assertSame('Winter Show 2026 | ArtNiyyətli', $seo->title);
         $this->assertSame('A winter showcase of new work.', $seo->description);
         $this->assertSame('http://localhost:8080/exhibitions/winter-show-2026', $seo->canonicalUrl);
         $this->assertTrue($seo->index);
@@ -359,7 +372,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['articles'], Locale::Az);
 
-        $this->assertSame('Jurnal — ArtNiyyətli', $seo->title);
+        $this->assertSame('Jurnal | ArtNiyyətli', $seo->title);
         $this->assertSame('1 jurnal yazısını oxuyun.', $seo->description);
         $this->assertTrue($seo->index);
     }
@@ -370,7 +383,7 @@ class PublicPageSeoResolverTest extends TestCase
 
         $seo = $this->resolver()->resolve(['articles', 'an-interview'], Locale::Az);
 
-        $this->assertSame('An Interview — ArtNiyyətli', $seo->title);
+        $this->assertSame('An Interview | ArtNiyyətli', $seo->title);
         $this->assertSame('A short teaser.', $seo->description);
         $this->assertSame('http://localhost:8080/articles/an-interview', $seo->canonicalUrl);
         $this->assertSame('article', $seo->ogType);

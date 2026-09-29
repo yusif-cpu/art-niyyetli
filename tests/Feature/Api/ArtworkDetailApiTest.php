@@ -287,6 +287,19 @@ class ArtworkDetailApiTest extends TestCase
         $this->assertNull($this->whatsappLinkFor($this->makeArtwork()));
     }
 
+    public function test_the_prefilled_message_is_in_english_on_the_english_locale(): void
+    {
+        config(['gallery.whatsapp_number' => '994501234567']);
+        $artwork = $this->makeArtwork();
+
+        $az = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}?locale=az")->json('data.whatsapp_link');
+        $en = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}?locale=en")->json('data.whatsapp_link');
+
+        $this->assertStringContainsString(rawurlencode('maraqlanıram'), $az);
+        $this->assertStringContainsString(rawurlencode('interested'), $en);
+        $this->assertStringNotContainsString(rawurlencode('maraqlanıram'), $en);
+    }
+
     public function test_the_link_host_and_number_cannot_be_altered_by_the_stored_value(): void
     {
         SiteSetting::query()->create(['key' => 'whatsapp_number', 'value' => 'evil.example/#994501234567', 'type' => 'string']);

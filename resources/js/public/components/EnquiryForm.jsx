@@ -36,9 +36,22 @@ export default function EnquiryForm({ subject, artworkCode }) {
     const [errors, setErrors] = useState({});
     const [status, setStatus] = useState('idle'); // idle | submitting | success | rate-limited
     const [banner, setBanner] = useState('');
+    const honeypotId = useId();
 
     async function handleSubmit(e) {
         e.preventDefault();
+
+        const required = { name: fields.name, email: fields.email, message: fields.message };
+        const validationErrors = Object.fromEntries(
+            Object.entries(required).filter(([, value]) => value.trim() === '').map(([key]) => [key, [t(locale, 'enquiryForm.required')]])
+        );
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            setBanner('');
+
+            return;
+        }
+
         setStatus('submitting');
         setErrors({});
         setBanner('');
@@ -96,12 +109,14 @@ export default function EnquiryForm({ subject, artworkCode }) {
                 {(props) => <textarea {...props} rows={5} value={fields.message} onChange={set('message')} />}
             </Field>
 
-            {/* Honeypot: a real, tabbable field visually moved off-screen (never display:none/type=hidden, which bots skip). Left empty by real users. */}
-            <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
-                <label>
-                    Leave this field empty
-                    <input name="website" tabIndex={-1} autoComplete="off" value={fields.website} onChange={set('website')} />
-                </label>
+            {/* Honeypot: a real, tabbable-by-default field visually moved off-screen (never display:none/type=hidden,
+                which bots skip). tabIndex={-1} keeps it out of the Tab order for sighted keyboard users; the label
+                stays a plain, non-instructional "Website" rather than aria-hidden, because an aria-hidden ancestor
+                must never contain a focusable element (WCAG 4.1.2) — that would hide the field from a screen reader
+                without also making it unfocusable, leaving focus able to land somewhere assistive tech can't announce. */}
+            <div style={{ position: 'absolute', left: '-9999px' }}>
+                <label htmlFor={honeypotId} className="sr-only">Website</label>
+                <input id={honeypotId} name="website" tabIndex={-1} autoComplete="off" value={fields.website} onChange={set('website')} />
             </div>
 
             <div>

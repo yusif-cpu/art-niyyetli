@@ -305,20 +305,26 @@ describe('ArtworkDetailPage', () => {
         expect(within(form).getByRole('button', { name: 'Göndər' })).toHaveClass('bg-wine', 'text-wine-ink');
 
         await userEvent.type(within(form).getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(within(form).getByLabelText('E-poçt'), 'aysel@example.com');
+        await userEvent.type(within(form).getByLabelText('Mesaj'), 'Salam');
         await userEvent.click(within(form).getByRole('button', { name: 'Göndər' }));
         const [, init] = global.fetch.mock.calls.find(([url]) => url.startsWith('/api/v1/enquiries'));
         expect(JSON.parse(init.body)).toMatchObject({ subject: 'buy', artwork_code: 'AN-2026-014', name: 'Aysel' });
     });
 
     it('shows a server field error in signal-ink, tied to the field', async () => {
-        enquiryResponse = () => jsonResponse(422, { message: 'The given data was invalid.', errors: { email: ['The email field is required.'] } });
+        // A server-only rejection (email format), unreachable by the client's own required-field check.
+        enquiryResponse = () => jsonResponse(422, { message: 'The given data was invalid.', errors: { email: ['The email must be a valid email address.'] } });
         mockApi();
         renderPage();
 
         const form = (await screen.findByLabelText('Əsərin kodu')).closest('form');
+        await userEvent.type(within(form).getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(within(form).getByLabelText('E-poçt'), 'not-an-email');
+        await userEvent.type(within(form).getByLabelText('Mesaj'), 'Salam');
         await userEvent.click(within(form).getByRole('button', { name: 'Göndər' }));
 
-        const message = await within(form).findByText('The email field is required.');
+        const message = await within(form).findByText('The email must be a valid email address.');
         expect(message).toHaveClass('text-caption', 'text-signal-ink');
         const email = within(form).getByLabelText('E-poçt');
         expect(email).toHaveClass('border-signal-ink');
@@ -331,6 +337,9 @@ describe('ArtworkDetailPage', () => {
         renderPage();
 
         const form = (await screen.findByLabelText('Əsərin kodu')).closest('form');
+        await userEvent.type(within(form).getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(within(form).getByLabelText('E-poçt'), 'aysel@example.com');
+        await userEvent.type(within(form).getByLabelText('Mesaj'), 'Salam');
         await userEvent.click(within(form).getByRole('button', { name: 'Göndər' }));
 
         const success = await within(form).findByRole('status');

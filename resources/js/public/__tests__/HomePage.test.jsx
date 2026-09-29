@@ -150,7 +150,7 @@ describe('HomePage', () => {
         expect(await screen.findByText('Wall Piece')).toBeInTheDocument();
     });
 
-    it('sets document.title from the hero section heading', async () => {
+    it('collapses the title to just the site name when the hero heading IS the site name, instead of doubling it', async () => {
         homepage = {
             page: { sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Discover Azerbaijani art.', sort_order: 0, image_url: null }] },
             stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [],
@@ -158,7 +158,7 @@ describe('HomePage', () => {
         mockApi();
         renderHome();
 
-        await waitFor(() => expect(document.title).toBe('ArtNiyyətli | ArtNiyyətli'));
+        await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
     });
 
     it('does not crash when the locale changes after the page has already loaded', async () => {

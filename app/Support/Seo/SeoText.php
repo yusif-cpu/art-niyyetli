@@ -13,7 +13,7 @@ class SeoText
     {
         $entityTitle = trim((string) $entityTitle);
 
-        return $entityTitle === '' ? self::SITE_NAME : "{$entityTitle} — ".self::SITE_NAME;
+        return $entityTitle === '' ? self::SITE_NAME : "{$entityTitle} | ".self::SITE_NAME;
     }
 
     public static function description(?string $text, int $limit = 160): ?string

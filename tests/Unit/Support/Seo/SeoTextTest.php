@@ -10,7 +10,7 @@ class SeoTextTest extends TestCase
 {
     public function test_page_title_appends_the_site_name(): void
     {
-        $this->assertSame('Sunset Over Baku — ArtNiyyətli', SeoText::pageTitle('Sunset Over Baku'));
+        $this->assertSame('Sunset Over Baku | ArtNiyyətli', SeoText::pageTitle('Sunset Over Baku'));
     }
 
     public function test_page_title_falls_back_to_the_bare_site_name_when_entity_title_is_null(): void

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 const ROUTES = [
     { pattern: '/', page: 'home' },
     { pattern: '/artworks', page: 'catalogue' },
+    { pattern: '/catalogue', page: 'catalogue' },
     { pattern: '/artworks/:code', page: 'artwork-detail' },
     { pattern: '/artists', page: 'artists' },
     { pattern: '/artists/:slug', page: 'artist-detail' },

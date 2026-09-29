@@ -40,19 +40,28 @@ function RangeFields({ legend, minKey, maxKey, filters, onChange }) {
     const { locale } = useLocale();
     const applied = { min: filters[minKey] ?? '', max: filters[maxKey] ?? '' };
     const [draft, setDraft] = useState(applied);
+    const [error, setError] = useState(false);
 
     // Follow the URL (Back, "clear filters"), but only when the applied values themselves change.
     useEffect(() => {
         setDraft({ min: applied.min, max: applied.max });
+        setError(false);
     }, [applied.min, applied.max]);
 
     const commit = () => {
+        if (draft.min !== '' && draft.max !== '' && Number(draft.max) < Number(draft.min)) {
+            setError(true);
+
+            return;
+        }
+        setError(false);
         const next = { [minKey]: draft.min === '' ? undefined : draft.min, [maxKey]: draft.max === '' ? undefined : draft.max };
         if (next[minKey] !== filters[minKey] || next[maxKey] !== filters[maxKey]) onChange(next);
     };
     const onKeyDown = (event) => {
         if (event.key === 'Enter') commit();
     };
+    const errorId = `${minKey}-${maxKey}-error`;
 
     return (
         <fieldset className="flex flex-col gap-step-2">
@@ -67,14 +76,20 @@ function RangeFields({ legend, minKey, maxKey, filters, onChange }) {
                             min="0"
                             name={key}
                             value={draft[side]}
-                            onChange={(event) => setDraft((current) => ({ ...current, [side]: event.target.value }))}
+                            onChange={(event) => {
+                                setError(false);
+                                setDraft((current) => ({ ...current, [side]: event.target.value }));
+                            }}
                             onBlur={commit}
                             onKeyDown={onKeyDown}
-                            className={`figures ${fieldClass}`}
+                            aria-invalid={error ? 'true' : undefined}
+                            aria-describedby={error ? errorId : undefined}
+                            className={`figures ${fieldClass} ${error ? 'border-signal-ink' : ''}`}
                         />
                     </label>
                 ))}
             </div>
+            {error && <p id={errorId} role="alert" className="text-caption text-signal-ink">{t(locale, 'filters.rangeInvalid')}</p>}
         </fieldset>
     );
 }

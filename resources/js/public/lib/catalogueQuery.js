@@ -25,6 +25,16 @@ const RULES = {
     page: (v) => (positiveInt(v) && v !== '1' ? positiveInt(v) : undefined),
 };
 
+// A max below its min would be a 422: drop the max. Shared by parseQuery and toSearch so the app can never write
+// an inconsistent range to the URL itself (a hand-edited URL may still arrive with one; that is parseQuery's job).
+function dropInvalidRanges(state) {
+    for (const [min, max] of [['size_min', 'size_max'], ['price_min', 'price_max']]) {
+        if (state[min] !== undefined && state[max] !== undefined && Number(state[max]) < Number(state[min])) delete state[max];
+    }
+
+    return state;
+}
+
 /** Clean state from a query string: only known keys with valid values. Page 1 is implicit. */
 export function parseQuery(search) {
     const params = new URLSearchParams(search);
@@ -33,19 +43,16 @@ export function parseQuery(search) {
         const value = RULES[key](params.get(key) ?? undefined);
         if (value !== undefined) state[key] = value;
     }
-    // A max below the given min would be a 422: drop the max.
-    for (const [min, max] of [['size_min', 'size_max'], ['price_min', 'price_max']]) {
-        if (state[min] !== undefined && state[max] !== undefined && Number(state[max]) < Number(state[min])) delete state[max];
-    }
 
-    return state;
+    return dropInvalidRanges(state);
 }
 
 /** "?genre=abstraksiya&page=2", or "" when there is nothing to keep. Keys in a stable order. */
 export function toSearch(state) {
+    const clean = dropInvalidRanges({ ...state });
     const params = new URLSearchParams();
     for (const key of QUERY_KEYS) {
-        const value = RULES[key](state[key] === undefined || state[key] === null ? undefined : String(state[key]));
+        const value = RULES[key](clean[key] === undefined || clean[key] === null ? undefined : String(clean[key]));
         if (value !== undefined) params.set(key, value);
     }
     const text = params.toString();

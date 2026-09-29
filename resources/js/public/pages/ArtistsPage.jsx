@@ -21,7 +21,7 @@ export default function ArtistsPage() {
     const [retryToken, setRetryToken] = useState(0);
     const { data, meta, loading, error } = useApiData(() => listArtists(locale, page > 1 ? { page } : undefined), [locale, page, retryToken]);
 
-    usePageMeta({ title: `${t(locale, 'nav.artists')} | ArtNiyyətli` });
+    usePageMeta({ title: `${t(locale, 'nav.artists')} | ArtNiyyətli`, description: t(locale, 'artist.listDescription') });
 
     return (
         <div className="px-page pb-step-9 font-ui">

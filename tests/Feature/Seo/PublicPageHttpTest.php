@@ -47,7 +47,7 @@ class PublicPageHttpTest extends TestCase
         $response = $this->get('/artworks/AN-HTTP-1');
 
         $response->assertOk();
-        $response->assertSee('<title>Sunset Over Baku — ArtNiyyətli</title>', false);
+        $response->assertSee('<title>Sunset Over Baku | ArtNiyyətli</title>', false);
         $response->assertSee('<link rel="canonical" href="http://localhost:8080/artworks/AN-HTTP-1">', false);
     }
 
@@ -74,6 +74,16 @@ class PublicPageHttpTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<meta name="robots" content="noindex, nofollow">', false);
+    }
+
+    public function test_catalogue_alias_route_returns_200_not_404(): void
+    {
+        // /catalogue used to fall through to the CMS static-page lookup (no such page exists) and 404 at the
+        // HTTP level even though the client-side shell still rendered something on top of it.
+        $response = $this->get('/catalogue');
+
+        $response->assertOk();
+        $response->assertSee('<link rel="canonical" href="http://localhost:8080/artworks">', false);
     }
 
     public function test_locale_query_param_selects_the_rendered_locale(): void

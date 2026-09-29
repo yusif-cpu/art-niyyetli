@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api;
 
+use App\Enums\Locale;
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
 use App\Http\Resources\Api\Concerns\ResolvesSeoOverride;
 use App\Http\Resources\Api\Concerns\ResolvesYoutubeVideo;
@@ -43,11 +44,11 @@ class ArtworkDetailResource extends JsonResource
             ),
             'video' => $this->videoResource(),
             'seo' => $this->when($this->relationLoaded('seoMetadata'), fn () => $this->seoOverrideBlock($request)),
-            'whatsapp_link' => $this->buildWhatsAppLink($card['title']),
+            'whatsapp_link' => $this->buildWhatsAppLink($card['title'], $locale),
         ]);
     }
 
-    private function buildWhatsAppLink(?string $title): ?string
+    private function buildWhatsAppLink(?string $title, Locale $locale): ?string
     {
         // Digits only, from the admin setting when it holds a usable number, otherwise from the env config.
         // (An emptied setting is stored as '', which `??` used to treat as "set", hiding the env fallback.)
@@ -61,7 +62,11 @@ class ArtworkDetailResource extends JsonResource
             return null;
         }
 
-        $text = trim(sprintf('Salam, %s (%s) əsəri ilə maraqlanıram.', $title ?? $this->inventory_code, $this->inventory_code));
+        $template = match ($locale) {
+            Locale::En => 'Hello, I am interested in %s (%s).',
+            Locale::Az => 'Salam, %s (%s) əsəri ilə maraqlanıram.',
+        };
+        $text = trim(sprintf($template, $title ?? $this->inventory_code, $this->inventory_code));
 
         return 'https://wa.me/'.$number.'?text='.rawurlencode($text);
     }

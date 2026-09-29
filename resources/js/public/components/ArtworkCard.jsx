@@ -42,14 +42,15 @@ export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }
     const artistName = artwork.artist?.name || null;
     const price = priceLine(artwork, locale);
     const label = [artwork.title, artistName, dims].filter(Boolean).join(', ');
+    const cardImage = artwork.thumbnail_url || artwork.image_url;
 
     const field = (
         <div
             data-testid="artwork-field"
-            className={`overflow-hidden border border-line transition-colors duration-[120ms] ease-standard group-hover:border-line-strong ${artwork.image_url ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
+            className={`overflow-hidden border border-line transition-colors duration-[120ms] ease-standard group-hover:border-line-strong ${cardImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
             style={size ? { width: size.fieldWidth, height: size.fieldHeight } : { aspectRatio: validDims ? `${w} / ${h}` : '4 / 5' }}
         >
-            {artwork.image_url && <img src={artwork.image_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
+            {cardImage && <img src={cardImage} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
         </div>
     );
 

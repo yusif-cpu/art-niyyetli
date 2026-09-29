@@ -10,7 +10,7 @@ class PageSeoTest extends TestCase
     private function makeSeo(bool $index = true, bool $follow = true): PageSeo
     {
         return new PageSeo(
-            title: 'Sunset Over Baku — ArtNiyyətli',
+            title: 'Sunset Over Baku | ArtNiyyətli',
             description: 'An oil painting by Aygün Məmmədova.',
             canonicalUrl: 'http://localhost:8080/artworks/AN-1',
             index: $index,

@@ -77,6 +77,7 @@ export const dictionary = {
             artworkCode: 'Əsərin kodu',
             success: 'Sorğunuz qeydə alındı.',
             rateLimited: 'Həddindən çox sorğu göndərildi. Zəhmət olmasa bir az sonra yenidən cəhd edin.',
+            required: 'Bu sahə mütləqdir.',
         },
         notFound: {
             title: 'Səhifə tapılmadı',
@@ -133,6 +134,7 @@ export const dictionary = {
             activeCount: 'aktiv filtr',
             show: 'göstər',
             hide: 'gizlət',
+            rangeInvalid: '"ən çoxu" "ən azı"-dan kiçik ola bilməz.',
         },
         catalogue: {
             count: 'əsər',
@@ -142,6 +144,8 @@ export const dictionary = {
             reload: 'Yenidən yüklə',
             page: 'Səhifə',
             unsized: 'Ölçüsü göstərilməyib',
+            pageOutOfRange: 'Bu səhifə mövcud deyil.',
+            backToFirstPage: 'Birinci səhifəyə qayıt',
         },
         exhibitions: {
             all: 'Hamısı',
@@ -263,6 +267,7 @@ export const dictionary = {
             artworkCode: 'Artwork code',
             success: 'Your enquiry has been recorded.',
             rateLimited: 'Too many requests. Please try again later.',
+            required: 'This field is required.',
         },
         notFound: {
             title: 'Page not found',
@@ -319,6 +324,7 @@ export const dictionary = {
             activeCount: 'active filters',
             show: 'show',
             hide: 'hide',
+            rangeInvalid: '"at most" cannot be less than "at least".',
         },
         catalogue: {
             count: 'works',
@@ -328,6 +334,8 @@ export const dictionary = {
             reload: 'Reload',
             page: 'Page',
             unsized: 'Size not given',
+            pageOutOfRange: "This page doesn't exist.",
+            backToFirstPage: 'Back to the first page',
         },
         exhibitions: {
             all: 'All',

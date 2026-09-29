@@ -45,7 +45,7 @@ export default function CataloguePage() {
     const search = toSearch(query);
     const artworks = useApiData(() => listArtworks(locale, query), [locale, search, retryToken]);
 
-    usePageMeta({ title: `${t(locale, 'nav.artworks')} | ArtNiyyətli` });
+    usePageMeta({ title: `${t(locale, 'nav.artworks')} | ArtNiyyətli`, description: t(locale, 'catalogue.description') });
 
     function writeUrl(next, mode) {
         const nextSearch = toSearch(next);
@@ -71,6 +71,9 @@ export default function CataloguePage() {
 
     const count = activeFilterCount(query);
     const total = artworks.meta?.total;
+    // Past the last real page (e.g. a hand-edited ?page=5): the API returns an empty page, not an error, so this
+    // reads like "no artworks match" unless told apart from a genuinely empty filter result.
+    const outOfRange = Boolean(artworks.meta && artworks.meta.current_page > artworks.meta.last_page);
     const clearButton = count > 0 && (
         <button type="button" onClick={clearFilters} className="cursor-pointer text-meta text-ink-muted underline decoration-1 underline-offset-2 hover:text-ink">
             {t(locale, 'filters.clear')}
@@ -131,7 +134,15 @@ export default function CataloguePage() {
                         </div>
                     )}
                     {artworks.error && <ErrorState error={artworks.error} onRetry={() => setRetryToken((n) => n + 1)} />}
-                    {!artworks.loading && !artworks.error && artworks.data?.length === 0 && (
+                    {!artworks.loading && !artworks.error && artworks.data?.length === 0 && outOfRange && (
+                        <div className="flex flex-col items-start gap-step-3 py-step-6">
+                            <p className="text-ui text-ink-muted">{t(locale, 'catalogue.pageOutOfRange')}</p>
+                            <button type="button" onClick={() => changePage(1)} className="cursor-pointer text-meta text-ink underline decoration-1 underline-offset-2 hover:text-ink-muted">
+                                {t(locale, 'catalogue.backToFirstPage')}
+                            </button>
+                        </div>
+                    )}
+                    {!artworks.loading && !artworks.error && artworks.data?.length === 0 && !outOfRange && (
                         <div className="flex flex-col items-start gap-step-3 py-step-6">
                             <p className="text-ui text-ink-muted">{t(locale, 'catalogue.empty')}</p>
                             {clearButton}

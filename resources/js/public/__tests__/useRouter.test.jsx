@@ -19,6 +19,12 @@ describe('useRouter', () => {
         expect(result.current.page).toBe('catalogue');
     });
 
+    it('resolves /catalogue to the same catalogue page as /artworks, not a 404 or a CMS page lookup', () => {
+        window.history.pushState(null, '', '/catalogue');
+        const { result } = renderHook(() => useRouter());
+        expect(result.current.page).toBe('catalogue');
+    });
+
     it('resolves a dynamic segment and captures its param', () => {
         window.history.pushState(null, '', '/artworks/AN-2026-014');
         const { result } = renderHook(() => useRouter());

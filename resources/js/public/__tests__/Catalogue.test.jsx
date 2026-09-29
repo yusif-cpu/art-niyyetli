@@ -254,4 +254,49 @@ describe('Catalogue', () => {
         renderPage();
         await waitFor(() => expect(document.title).toBe('Əsərlər | ArtNiyyətli'));
     });
+
+    it('shows a validation message and does not apply price_max when it is below price_min, keeping the URL consistent', async () => {
+        renderPage();
+        await screen.findByText('Uzun divar');
+
+        const [, priceMin] = screen.getAllByLabelText('ən azı');
+        const [, priceMax] = screen.getAllByLabelText('ən çoxu');
+        // fireEvent, not userEvent.type: typing into each field in turn would blur the first the moment focus moves
+        // to the second, independently (and validly, since nothing conflicts yet) committing price_min on its own.
+        fireEvent.change(priceMin, { target: { value: '500' } });
+        fireEvent.change(priceMax, { target: { value: '100' } });
+        fireEvent.blur(priceMax);
+
+        const message = await screen.findByText('"ən çoxu" "ən azı"-dan kiçik ola bilməz.');
+        expect(message).toHaveAttribute('role', 'alert');
+        expect(priceMax).toHaveAttribute('aria-invalid', 'true');
+        // Neither value reached the URL or the API: the invalid pair is rejected outright, not half-applied.
+        expect(window.location.search).toBe('');
+        expect(artworkUrls().every((url) => !url.includes('price_min') && !url.includes('price_max'))).toBe(true);
+    });
+
+    it('treats a page past the last one as a distinct state from "no matching artworks", with a way back', async () => {
+        window.history.replaceState(null, '', '/artworks?page=5');
+        artworksResponse = () => jsonResponse({ data: [], meta: { current_page: 5, last_page: 1, total: 2, per_page: 24 } });
+        mockApi();
+        renderPage();
+
+        expect(await screen.findByText('Bu səhifə mövcud deyil.')).toBeInTheDocument();
+        expect(screen.queryByText('Bu şərtlərə uyğun əsər yoxdur.')).not.toBeInTheDocument();
+
+        artworksResponse = () => jsonResponse({ data: [artwork('AN-1', 'Uzun divar', 180, 140)], meta: { current_page: 1, last_page: 3, total: 50, per_page: 24 } });
+        await userEvent.click(screen.getByRole('button', { name: 'Birinci səhifəyə qayıt' }));
+
+        expect(window.location.search).toBe('');
+        await screen.findByText('Uzun divar');
+    });
+
+    it('still shows the ordinary empty state for a genuinely empty first page (not an out-of-range page)', async () => {
+        artworksResponse = () => jsonResponse({ data: [], meta: { current_page: 1, last_page: 1, total: 0, per_page: 24 } });
+        mockApi();
+        renderPage();
+
+        expect(await screen.findByText('Bu şərtlərə uyğun əsər yoxdur.')).toBeInTheDocument();
+        expect(screen.queryByText('Bu səhifə mövcud deyil.')).not.toBeInTheDocument();
+    });
 });

@@ -19,7 +19,7 @@ export default function ArticlesPage() {
     const [retryToken, setRetryToken] = useState(0);
     const { data, meta, loading, error } = useApiData(() => listArticles(locale, page > 1 ? { page } : undefined), [locale, page, retryToken]);
 
-    usePageMeta({ title: `${t(locale, 'nav.articles')} | ArtNiyyətli` });
+    usePageMeta({ title: `${t(locale, 'nav.articles')} | ArtNiyyətli`, description: t(locale, 'articles.description') });
 
     return (
         <div className="px-page pb-step-9 font-ui">

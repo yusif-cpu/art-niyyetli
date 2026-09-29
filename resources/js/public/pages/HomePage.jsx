@@ -118,8 +118,13 @@ export default function HomePage() {
     const hero = findSection(data?.page, 'hero');
     const steps = findSection(data?.page, 'steps');
     const cta = findSection(data?.page, 'cta');
+    // A hero heading that already IS the site name (a legitimate admin choice) would otherwise double up as
+    // "ArtNiyyətli | ArtNiyyətli"; every other case keeps the "Page Title | ArtNiyyətli" convention.
+    const heroTitle = hero?.heading?.trim();
+    const homeTitle = heroTitle && heroTitle.toLocaleLowerCase('az') !== 'artniyyətli' ? `${heroTitle} | ArtNiyyətli` : 'ArtNiyyətli';
+
     usePageMeta({
-        title: data ? (hero ? `${hero.heading} | ArtNiyyətli` : 'ArtNiyyətli') : undefined,
+        title: data ? homeTitle : undefined,
         description: data ? hero?.body : undefined,
     });
 

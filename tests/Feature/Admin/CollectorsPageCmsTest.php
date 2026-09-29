@@ -129,7 +129,7 @@ class CollectorsPageCmsTest extends TestCase
         $az->assertJsonPath('data.sections.0.heading', 'Necə almaq olar');
         $this->getJson('/api/v1/pages/collectors?locale=en')->assertOk()->assertJsonPath('data.content', 'EN main text');
 
-        $this->get('/collectors?locale=en')->assertOk()->assertSee('<title>For collectors — ArtNiyyətli</title>', false);
+        $this->get('/collectors?locale=en')->assertOk()->assertSee('<title>For collectors | ArtNiyyətli</title>', false);
 
         // Re-linking is an explicit admin action from Admin → Navigation.
         $this->actingAs($this->admin)->postJson('/admin/navigation', ['placement' => 'header', 'nav_type' => 'page', 'page_id' => $id])->assertOk();

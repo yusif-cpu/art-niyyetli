@@ -17,6 +17,21 @@ describe('EnquiryForm', () => {
         expect(honeypot.closest('div')).toHaveStyle({ position: 'absolute' });
     });
 
+    it('hides the honeypot from screen readers: aria-hidden, no accessible name, out of the Tab order', () => {
+        render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
+
+        const honeypot = document.querySelector('input[name="website"]');
+        expect(screen.getByTestId('honeypot')).toHaveAttribute('aria-hidden', 'true');
+        expect(honeypot.labels).toHaveLength(0);
+        expect(honeypot).not.toHaveAttribute('aria-label');
+        expect(honeypot).not.toHaveAttribute('aria-labelledby');
+        expect(honeypot).toHaveAttribute('tabindex', '-1');
+        expect(honeypot).toHaveAttribute('autocomplete', 'off');
+        // Not in the accessibility tree: the visible textboxes are the real fields only.
+        expect(screen.getAllByRole('textbox')).not.toContain(honeypot);
+        expect(screen.queryByText('Website')).not.toBeInTheDocument();
+    });
+
     it('submits the form and shows the success message, disabling the submit button', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' }));
 

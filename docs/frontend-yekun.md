@@ -120,7 +120,7 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 - yumru künc yoxdur (`--radius-input: 0`);
 - təkrarlanan animasiya yoxdur;
 - böyük hərfli etiket yoxdur;
-- Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil;
+- Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil. Bu büdcə səhifənin sakit vəziyyətinə aiddir: xəta görünəndə (API xətası, forma və ya aralıq doğrulaması) ekranda üçdən çox qırmızı element ola bilər, çünki xəta görünməlidir; bu halda aktiv filtr sayı kimi məlumat elementləri Signal-ı itirir;
 - CSP: inline skript və `<style>` yoxdur, `100vh` işlənmir, xarici şrift və xəritə çərçivəsi yoxdur.
 
 ## 4. Backend-dən gözlənilən açıq maddələr

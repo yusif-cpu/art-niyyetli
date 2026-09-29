@@ -34,7 +34,7 @@ trait ValidatesSeoPayload
         $locales = collect($this->input('seo', []))->pluck('locale')->filter();
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('seo', 'Each locale may only appear once.');
+            $validator->errors()->add('seo', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 }

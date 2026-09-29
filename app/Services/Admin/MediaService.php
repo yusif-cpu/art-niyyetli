@@ -45,7 +45,7 @@ class MediaService
 
         if ($extension === null) {
             throw ValidationException::withMessages([
-                'file' => ['Only JPEG, PNG, and WebP images are accepted.'],
+                'file' => ['Yalnız JPEG, PNG və WebP tipli şəkillərə icazə verilir.'],
             ]);
         }
 
@@ -177,7 +177,7 @@ class MediaService
     private function invalidImage(): ValidationException
     {
         return ValidationException::withMessages([
-            'file' => ['The uploaded file is not a valid, readable image.'],
+            'file' => ['Yüklənən fayl etibarlı, oxuna bilən şəkil deyil.'],
         ]);
     }
 
@@ -193,10 +193,9 @@ class MediaService
             return;
         }
 
-        // Worded to read sensibly in the admin's existing upload error display (which recognises "large"/"maximum").
         throw ValidationException::withMessages([
             'file' => [sprintf(
-                'The image is too large to process (%d × %d pixels, %s megapixels). The maximum is %s megapixels and %d pixels on the longest side.',
+                'Şəkil emal üçün çox böyükdür (%d × %d piksel, %s meqapiksel). Maksimum icazə verilən ölçü %s meqapiksel və uzun tərəfdə ən çoxu %d pikseldir.',
                 $width,
                 $height,
                 round($width * $height / 1_000_000, 1),

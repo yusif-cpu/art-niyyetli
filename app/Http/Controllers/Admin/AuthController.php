@@ -32,7 +32,7 @@ class AuthController extends Controller
         if (RateLimiter::tooManyAttempts($usernameIpKey, self::MAX_ATTEMPTS_PER_USERNAME_IP)
             || RateLimiter::tooManyAttempts($ipKey, self::MAX_ATTEMPTS_PER_IP)) {
             throw ValidationException::withMessages([
-                'username' => ['Too many login attempts. Please try again later.'],
+                'username' => [trans('validation.custom_messages.too_many_login_attempts')],
             ])->status(429);
         }
 
@@ -43,7 +43,7 @@ class AuthController extends Controller
             RateLimiter::hit($ipKey, self::DECAY_SECONDS);
 
             throw ValidationException::withMessages([
-                'username' => ['These credentials do not match our records.'],
+                'username' => [trans('validation.custom_messages.invalid_credentials')],
             ]);
         }
 
@@ -53,7 +53,7 @@ class AuthController extends Controller
             RateLimiter::hit($ipKey, self::DECAY_SECONDS);
 
             throw ValidationException::withMessages([
-                'username' => ['These credentials do not match our records.'],
+                'username' => [trans('validation.custom_messages.invalid_credentials')],
             ]);
         }
 

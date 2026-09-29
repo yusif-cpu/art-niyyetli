@@ -13,7 +13,7 @@ trait ValidatesExhibitionPayload
         $locales = collect($this->input('translations', []))->pluck('locale');
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('translations', 'Each locale may only appear once.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 
@@ -23,7 +23,7 @@ trait ValidatesExhibitionPayload
             ->map(fn ($t) => ($t['locale'] ?? '').'|'.($t['slug'] ?? ''));
 
         if ($pairs->count() !== $pairs->unique()->count()) {
-            $validator->errors()->add('translations', 'Duplicate slug within the same locale.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_slug_within_locale'));
         }
     }
 
@@ -46,7 +46,7 @@ trait ValidatesExhibitionPayload
             if ($failed) {
                 $validator->errors()->add(
                     "translations.{$index}.slug",
-                    'This slug is already in use for the given locale.'
+                    trans('validation.custom_messages.slug_already_used_for_locale')
                 );
             }
         }
@@ -57,7 +57,7 @@ trait ValidatesExhibitionPayload
         $ids = collect($this->input('artists', []))->pluck('artist_id');
 
         if ($ids->count() !== $ids->unique()->count()) {
-            $validator->errors()->add('artists', 'Duplicate artist_id in the artists list.');
+            $validator->errors()->add('artists', 'Rəssamlar siyahısında təkrarlanan artist_id.');
         }
     }
 
@@ -66,7 +66,7 @@ trait ValidatesExhibitionPayload
         $ids = collect($this->input('artworks', []))->pluck('artwork_id');
 
         if ($ids->count() !== $ids->unique()->count()) {
-            $validator->errors()->add('artworks', 'Duplicate artwork_id in the artworks list.');
+            $validator->errors()->add('artworks', 'Əsərlər siyahısında təkrarlanan artwork_id.');
         }
     }
 
@@ -77,13 +77,13 @@ trait ValidatesExhibitionPayload
         $ids = $entries->pluck('id')->filter(fn ($id) => $id !== null && $id !== '');
 
         if ($ids->count() !== $ids->unique()->count()) {
-            $validator->errors()->add('media', 'Duplicate media entry id in the media list.');
+            $validator->errors()->add('media', 'Media siyahısında təkrarlanan media qeydi ID-si.');
         }
 
         $mediaIds = $entries->pluck('media_id')->filter(fn ($id) => $id !== null && $id !== '');
 
         if ($mediaIds->count() !== $mediaIds->unique()->count()) {
-            $validator->errors()->add('media', 'Duplicate media_id in the media list.');
+            $validator->errors()->add('media', trans('validation.custom_messages.duplicate_media_id'));
         }
     }
 
@@ -111,7 +111,7 @@ trait ValidatesExhibitionPayload
         }
 
         if (strtotime($endDate) < strtotime($startDate)) {
-            $validator->errors()->add('end_date', 'The end date must be on or after the start date.');
+            $validator->errors()->add('end_date', 'Bitmə tarixi başlama tarixi ilə eyni və ya ondan sonra olmalıdır.');
         }
     }
 

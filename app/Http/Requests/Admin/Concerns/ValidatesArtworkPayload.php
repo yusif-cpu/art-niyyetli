@@ -13,7 +13,7 @@ trait ValidatesArtworkPayload
         $locales = collect($this->input('translations', []))->pluck('locale');
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('translations', 'Each locale may only appear once.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 
@@ -23,7 +23,7 @@ trait ValidatesArtworkPayload
             ->map(fn ($t) => ($t['locale'] ?? '').'|'.($t['slug'] ?? ''));
 
         if ($pairs->count() !== $pairs->unique()->count()) {
-            $validator->errors()->add('translations', 'Duplicate slug within the same locale.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_slug_within_locale'));
         }
     }
 
@@ -46,7 +46,7 @@ trait ValidatesArtworkPayload
             if ($failed) {
                 $validator->errors()->add(
                     "translations.{$index}.slug",
-                    'This slug is already in use for the given locale.'
+                    trans('validation.custom_messages.slug_already_used_for_locale')
                 );
             }
         }
@@ -57,7 +57,7 @@ trait ValidatesArtworkPayload
         $mainCount = collect($this->input('images', []))->filter(fn ($i) => (bool) ($i['is_main'] ?? false))->count();
 
         if ($mainCount > 1) {
-            $validator->errors()->add('images', 'Only one image may be marked as main.');
+            $validator->errors()->add('images', trans('validation.custom_messages.only_one_main_image'));
         }
     }
 

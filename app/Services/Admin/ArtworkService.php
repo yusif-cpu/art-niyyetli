@@ -47,7 +47,7 @@ class ArtworkService
             } catch (UniqueConstraintViolationException $e) {
                 if ($manualCode !== null) {
                     throw ValidationException::withMessages([
-                        'inventory_code' => ['This inventory code is already in use.'],
+                        'inventory_code' => ['Bu inventar kodu artıq istifadə olunur.'],
                     ]);
                 }
 
@@ -126,7 +126,7 @@ class ArtworkService
         $mainCount = collect($images)->filter(fn ($i) => (bool) ($i['is_main'] ?? false))->count();
 
         if ($mainCount > 1) {
-            throw ValidationException::withMessages(['images' => ['Only one image may be marked as main.']]);
+            throw ValidationException::withMessages(['images' => [trans('validation.custom_messages.only_one_main_image')]]);
         }
 
         $keepIds = [];
@@ -139,7 +139,7 @@ class ArtworkService
 
                 if (! $existing || $existing->artwork_id !== $artwork->id) {
                     throw ValidationException::withMessages([
-                        'images' => ["Image {$id} does not belong to this artwork."],
+                        'images' => ["{$id} nömrəli şəkil bu əsərə aid deyil."],
                     ]);
                 }
 

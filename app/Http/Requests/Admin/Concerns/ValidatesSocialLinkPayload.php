@@ -29,7 +29,7 @@ trait ValidatesSocialLinkPayload
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
 
         if (! in_array($scheme, ['http', 'https'], true)) {
-            $validator->errors()->add('url', 'Only http/https links are allowed.');
+            $validator->errors()->add('url', 'Yalnız http/https keçidlərinə icazə verilir.');
         }
     }
 
@@ -43,7 +43,7 @@ trait ValidatesSocialLinkPayload
         $logoId = $this->has('logo_media_id') ? $this->input('logo_media_id') : $existing?->logo_media_id;
 
         if ($mode === LogoDisplayMode::LogoOnly->value && ! $logoId) {
-            $validator->errors()->add('logo_media_id', 'A logo is required when the display mode is logo only.');
+            $validator->errors()->add('logo_media_id', 'Göstərilmə tərzi yalnız loqo olduqda loqo mütləqdir.');
         }
     }
 }

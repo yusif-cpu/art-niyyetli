@@ -11,7 +11,7 @@ trait ValidatesFaqPayload
         $locales = collect($this->input('translations', []))->pluck('locale');
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('translations', 'Each locale may only appear once.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 
@@ -30,7 +30,7 @@ trait ValidatesFaqPayload
                 if (preg_match($pattern, $value) === 1) {
                     $validator->errors()->add(
                         "translations.{$index}.answer",
-                        'This field contains disallowed content (scripts, iframes, or event-handler attributes are not permitted).'
+                        trans('validation.custom_messages.disallowed_content')
                     );
 
                     break;

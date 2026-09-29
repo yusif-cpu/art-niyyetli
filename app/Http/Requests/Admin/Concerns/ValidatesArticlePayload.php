@@ -55,10 +55,25 @@ trait ValidatesArticlePayload
 
             foreach (self::TRANSLATION_FIELDS as $field) {
                 if (! filled($translation[$field] ?? null)) {
-                    $validator->errors()->add("translations.{$index}.{$field}", 'This field is required.');
+                    $validator->errors()->add(
+                        "translations.{$index}.{$field}",
+                        trans('validation.required', ['attribute' => $this->translationFieldAttribute($field)])
+                    );
                 }
             }
         }
+    }
+
+    /**
+     * The same display name Laravel's own :attribute substitution would use for this field on a real
+     * "translations.*.{field}" rule — looked up directly since this message is built by hand rather than
+     * through the validator's own required rule.
+     */
+    private function translationFieldAttribute(string $field): string
+    {
+        $attributes = trans('validation.attributes');
+
+        return is_array($attributes) ? ($attributes["translations.*.{$field}"] ?? $field) : $field;
     }
 
     protected function rejectDuplicateTranslationLocales(Validator $validator): void
@@ -66,7 +81,7 @@ trait ValidatesArticlePayload
         $locales = collect($this->input('translations', []))->pluck('locale');
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('translations', 'Each locale may only appear once.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 
@@ -76,7 +91,7 @@ trait ValidatesArticlePayload
             ->map(fn ($t) => ($t['locale'] ?? '').'|'.($t['slug'] ?? ''));
 
         if ($pairs->count() !== $pairs->unique()->count()) {
-            $validator->errors()->add('translations', 'Duplicate slug within the same locale.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_slug_within_locale'));
         }
     }
 
@@ -99,7 +114,7 @@ trait ValidatesArticlePayload
             if ($failed) {
                 $validator->errors()->add(
                     "translations.{$index}.slug",
-                    'This slug is already in use for the given locale.'
+                    trans('validation.custom_messages.slug_already_used_for_locale')
                 );
             }
         }
@@ -110,7 +125,7 @@ trait ValidatesArticlePayload
         $ids = collect($this->input('media', []))->pluck('media_id')->filter(fn ($id) => $id !== null && $id !== '');
 
         if ($ids->count() !== $ids->unique()->count()) {
-            $validator->errors()->add('media', 'Duplicate media_id in the media list.');
+            $validator->errors()->add('media', trans('validation.custom_messages.duplicate_media_id'));
         }
     }
 
@@ -130,7 +145,7 @@ trait ValidatesArticlePayload
                     if (preg_match($pattern, $value) === 1) {
                         $validator->errors()->add(
                             "translations.{$index}.{$field}",
-                            'This field contains disallowed content (scripts, iframes, or event-handler attributes are not permitted).'
+                            trans('validation.custom_messages.disallowed_content')
                         );
 
                         break;

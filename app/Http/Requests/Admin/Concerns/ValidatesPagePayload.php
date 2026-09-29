@@ -13,7 +13,7 @@ trait ValidatesPagePayload
         $locales = collect($this->input('translations', []))->pluck('locale');
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('translations', 'Each locale may only appear once.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 
@@ -23,7 +23,7 @@ trait ValidatesPagePayload
             ->map(fn ($t) => ($t['locale'] ?? '').'|'.($t['slug'] ?? ''));
 
         if ($pairs->count() !== $pairs->unique()->count()) {
-            $validator->errors()->add('translations', 'Duplicate slug within the same locale.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_slug_within_locale'));
         }
     }
 
@@ -46,7 +46,7 @@ trait ValidatesPagePayload
             if ($failed) {
                 $validator->errors()->add(
                     "translations.{$index}.slug",
-                    'This slug is already in use for the given locale.'
+                    trans('validation.custom_messages.slug_already_used_for_locale')
                 );
             }
         }
@@ -67,7 +67,7 @@ trait ValidatesPagePayload
                 if (preg_match($pattern, $value) === 1) {
                     $validator->errors()->add(
                         "translations.{$index}.content",
-                        'This field contains disallowed content (scripts, iframes, or event-handler attributes are not permitted).'
+                        trans('validation.custom_messages.disallowed_content')
                     );
 
                     break;

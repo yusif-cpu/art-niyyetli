@@ -43,7 +43,7 @@ class UpdateNavigationItemRequest extends FormRequest
                 ->exists();
 
             if ($duplicate) {
-                $validator->errors()->add('placement', 'This item already exists in the target placement.');
+                $validator->errors()->add('placement', 'Bu element hədəf yerləşdirmədə artıq mövcuddur.');
             }
         });
     }

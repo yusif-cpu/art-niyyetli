@@ -28,7 +28,7 @@ class ReorderSocialLinksRequest extends FormRequest
             $ids = collect($this->input('items', []))->pluck('id');
 
             if ($ids->count() !== $ids->unique()->count()) {
-                $validator->errors()->add('items', 'Duplicate social link id in the reorder payload.');
+                $validator->errors()->add('items', 'Sıralama məlumatında təkrarlanan sosial keçid ID-si.');
             }
         });
     }

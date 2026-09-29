@@ -42,13 +42,13 @@ trait ValidatesCatalogTermPayload
             $locales = collect($this->input('translations', []))->pluck('locale');
 
             if ($locales->count() !== $locales->unique()->count()) {
-                $validator->errors()->add('translations', 'Each locale may only appear once.');
+                $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
             }
 
             $hasStoredAz = $current?->translations()->where('locale', 'az')->exists() ?? false;
 
             if (! $locales->contains('az') && ! $hasStoredAz) {
-                $validator->errors()->add('translations', 'An Azerbaijani (az) translation is required.');
+                $validator->errors()->add('translations', 'Azərbaycan dilində (az) tərcümə mütləqdir.');
             }
         });
     }

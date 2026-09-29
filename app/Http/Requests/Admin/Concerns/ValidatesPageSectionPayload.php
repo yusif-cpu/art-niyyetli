@@ -14,7 +14,7 @@ trait ValidatesPageSectionPayload
         $locales = collect($this->input('translations', []))->pluck('locale');
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('translations', 'Each locale may only appear once.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 
@@ -35,7 +35,7 @@ trait ValidatesPageSectionPayload
         $validatorForKey = validator(['key' => $key], ['key' => [$exists]]);
 
         if ($validatorForKey->fails()) {
-            $validator->errors()->add('key', 'This key is already used by another section on this page.');
+            $validator->errors()->add('key', 'Bu açar artıq bu səhifədəki başqa bir bölmə tərəfindən istifadə olunur.');
         }
     }
 
@@ -54,7 +54,7 @@ trait ValidatesPageSectionPayload
                 if (preg_match($pattern, $value) === 1) {
                     $validator->errors()->add(
                         "translations.{$index}.body",
-                        'This field contains disallowed content (scripts, iframes, or event-handler attributes are not permitted).'
+                        trans('validation.custom_messages.disallowed_content')
                     );
 
                     break;
@@ -76,7 +76,7 @@ trait ValidatesPageSectionPayload
         }
 
         if (preg_match(PageSection::KEY_PATTERN, $key) !== 1) {
-            $validator->errors()->add('key', 'The key may only contain lower-case letters and numbers, with single hyphens or underscores between them.');
+            $validator->errors()->add('key', 'Açar yalnız kiçik hərflər və rəqəmlərdən, aralarında tək tire və ya alt xətt ilə ibarət ola bilər.');
         }
     }
 
@@ -96,7 +96,7 @@ trait ValidatesPageSectionPayload
         $page = Page::query()->find($section->page_id);
 
         if ($page && in_array($section->key, PageSection::contractKeysFor($page->type), true)) {
-            $validator->errors()->add('key', "The \"{$section->key}\" section is part of the homepage layout and its key cannot be changed.");
+            $validator->errors()->add('key', "\"{$section->key}\" bölməsi ana səhifə düzəninin bir hissəsidir və onun açarı dəyişdirilə bilməz.");
         }
     }
 }

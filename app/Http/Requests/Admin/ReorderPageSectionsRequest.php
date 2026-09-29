@@ -28,7 +28,7 @@ class ReorderPageSectionsRequest extends FormRequest
             $ids = collect($this->input('items', []))->pluck('id');
 
             if ($ids->count() !== $ids->unique()->count()) {
-                $validator->errors()->add('items', 'Duplicate section id in the reorder payload.');
+                $validator->errors()->add('items', 'Sıralama məlumatında təkrarlanan bölmə ID-si.');
             }
 
             $page = $this->route('page');
@@ -37,7 +37,7 @@ class ReorderPageSectionsRequest extends FormRequest
                 $foreignIds = $ids->filter(fn ($id) => ! $page->sections()->where('id', $id)->exists());
 
                 if ($foreignIds->isNotEmpty()) {
-                    $validator->errors()->add('items', 'One or more sections do not belong to this page.');
+                    $validator->errors()->add('items', 'Bir və ya bir neçə bölmə bu səhifəyə aid deyil.');
                 }
             }
         });

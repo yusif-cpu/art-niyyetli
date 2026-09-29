@@ -300,7 +300,7 @@ class AdminAuthTest extends TestCase
         $response = $this->postJson('/admin/login', ['username' => str_repeat('u', 255), 'password' => str_repeat('p', 1024)]);
 
         $response->assertStatus(422)->assertJsonValidationErrors(['username']);
-        $this->assertSame('These credentials do not match our records.', $response->json('errors.username.0'));
+        $this->assertSame('Daxil edilən məlumatlar qeydlərimizlə uyğun gəlmir.', $response->json('errors.username.0'));
     }
 
     public function test_array_valued_credentials_are_a_validation_error(): void

@@ -13,7 +13,7 @@ trait ValidatesArtistPayload
         $locales = collect($this->input('translations', []))->pluck('locale');
 
         if ($locales->count() !== $locales->unique()->count()) {
-            $validator->errors()->add('translations', 'Each locale may only appear once.');
+            $validator->errors()->add('translations', trans('validation.custom_messages.duplicate_locale'));
         }
     }
 
@@ -29,7 +29,7 @@ trait ValidatesArtistPayload
         $hasStoredAz = $this->route('artist')?->translations()->where('locale', 'az')->exists() ?? false;
 
         if (! $locales->contains('az') && ! $hasStoredAz) {
-            $validator->errors()->add('translations', 'An Azerbaijani (az) translation with a slug is required.');
+            $validator->errors()->add('translations', 'Slug-a malik Azərbaycan dilində (az) tərcümə mütləqdir.');
         }
     }
 
@@ -52,7 +52,7 @@ trait ValidatesArtistPayload
             if ($failed) {
                 $validator->errors()->add(
                     "translations.{$index}.slug",
-                    'This slug is already in use for the given locale.'
+                    trans('validation.custom_messages.slug_already_used_for_locale')
                 );
             }
         }

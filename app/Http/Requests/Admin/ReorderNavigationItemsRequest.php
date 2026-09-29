@@ -28,7 +28,7 @@ class ReorderNavigationItemsRequest extends FormRequest
             $ids = collect($this->input('items', []))->pluck('id');
 
             if ($ids->count() !== $ids->unique()->count()) {
-                $validator->errors()->add('items', 'Duplicate navigation item id in the reorder payload.');
+                $validator->errors()->add('items', 'Sıralama məlumatında təkrarlanan naviqasiya elementi ID-si.');
             }
         });
     }

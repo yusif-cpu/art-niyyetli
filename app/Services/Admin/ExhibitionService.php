@@ -129,7 +129,7 @@ class ExhibitionService
 
                 if (! $existing || $existing->exhibition_id !== $exhibition->id) {
                     throw ValidationException::withMessages([
-                        'media' => ["Media {$id} does not belong to this exhibition."],
+                        'media' => ["{$id} nömrəli media bu sərgiyə aid deyil."],
                     ]);
                 }
 

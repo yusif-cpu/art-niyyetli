@@ -82,20 +82,20 @@ class MediaUploadDimensionsTest extends TestCase
 
         $response->assertStatus(422)->assertJsonValidationErrors(['file']);
         $this->assertSame(
-            'The image is too large to process (1000 × 1001 pixels, 1 megapixels). The maximum is 1 megapixels and 2000 pixels on the longest side.',
+            'Şəkil emal üçün çox böyükdür (1000 × 1001 piksel, 1 meqapiksel). Maksimum icazə verilən ölçü 1 meqapiksel və uzun tərəfdə ən çoxu 2000 pikseldir.',
             $response->json('errors.file.0')
         );
         $this->assertNothingWasStored();
     }
 
-    public function test_the_error_reads_correctly_in_the_admins_existing_upload_error_display(): void
+    public function test_the_error_reads_in_azerbaijani_not_english(): void
     {
-        // The admin UI turns an upload error containing mime/extension/format/type into "unsupported format" advice and
-        // one containing max/size/large into "too large". This message must land in the second bucket, not the first.
+        // The message is now sent already localized, so the admin UI displays it as-is (see MediaPicker.jsx's
+        // explainUploadError, which otherwise only recognises English "large"/"format" keywords to rewrite it).
         $message = $this->upload(UploadedFile::fake()->image('big.jpg', 1000, 1001))->json('errors.file.0');
 
-        $this->assertDoesNotMatchRegularExpression('/mime|extension|format|type/i', $message);
-        $this->assertMatchesRegularExpression('/max|size|kilobytes|large/i', $message);
+        $this->assertStringContainsString('böyükdür', $message);
+        $this->assertDoesNotMatchRegularExpression('/\btoo large\b|\bmegapixels\b/i', $message);
     }
 
     // -- the longest-edge ceiling ------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ class MediaUploadDimensionsTest extends TestCase
         $response = $this->upload(UploadedFile::fake()->image('too-wide.png', 2001, 400));
 
         $response->assertStatus(422)->assertJsonValidationErrors(['file']);
-        $this->assertStringContainsString('too large', $response->json('errors.file.0'));
+        $this->assertStringContainsString('böyükdür', $response->json('errors.file.0'));
         $this->assertNothingWasStored();
     }
 
@@ -134,9 +134,9 @@ class MediaUploadDimensionsTest extends TestCase
         $start = microtime(true);
         $response = $this->upload(UploadedFile::fake()->createWithContent('bomb.png', $bytes));
 
-        // "too large", not "not a valid image": had it been decoded first it would have exhausted memory or failed to decode.
+        // "too large" (böyükdür), not "not a valid image": had it been decoded first it would have exhausted memory or failed to decode.
         $response->assertStatus(422)->assertJsonValidationErrors(['file']);
-        $this->assertStringContainsString('20000 × 20000 pixels, 400 megapixels', $response->json('errors.file.0'));
+        $this->assertStringContainsString('20000 × 20000 piksel, 400 meqapiksel', $response->json('errors.file.0'));
         $this->assertLessThan(2.0, microtime(true) - $start);
         $this->assertNothingWasStored();
     }
@@ -146,7 +146,7 @@ class MediaUploadDimensionsTest extends TestCase
         $response = $this->upload(UploadedFile::fake()->createWithContent('strip.png', $this->pngDeclaring(60000, 10)));
 
         $response->assertStatus(422);
-        $this->assertStringContainsString('too large', $response->json('errors.file.0'));
+        $this->assertStringContainsString('böyükdür', $response->json('errors.file.0'));
     }
 
     // -- unchanged behaviour ---------------------------------------------------------------------------------
@@ -156,7 +156,7 @@ class MediaUploadDimensionsTest extends TestCase
         $response = $this->upload(UploadedFile::fake()->create('broken.jpg', 5, 'image/jpeg'));
 
         $response->assertStatus(422);
-        $this->assertSame('The uploaded file is not a valid, readable image.', $response->json('errors.file.0'));
+        $this->assertSame('Yüklənən fayl etibarlı, oxuna bilən şəkil deyil.', $response->json('errors.file.0'));
     }
 
     public function test_an_in_limit_image_is_processed_exactly_as_before(): void

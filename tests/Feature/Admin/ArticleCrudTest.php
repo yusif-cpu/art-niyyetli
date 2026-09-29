@@ -90,6 +90,56 @@ class ArticleCrudTest extends TestCase
         $this->assertDatabaseHas('article_translations', ['article_id' => $article->id, 'locale' => 'az', 'title' => 'AZ Title Updated']);
     }
 
+    public function test_sending_an_en_locale_entry_with_every_field_blank_deletes_it_because_articles_may_be_az_only(): void
+    {
+        $article = Article::factory()->create();
+        $article->translations()->create(['locale' => 'az', 'slug' => 'az-slug-'.uniqid(), 'title' => 'AZ Title', 'short_text' => 'S', 'content' => 'C']);
+        $article->translations()->create(['locale' => 'en', 'slug' => 'en-slug-'.uniqid(), 'title' => 'EN Title', 'short_text' => 'S', 'content' => 'C']);
+
+        $response = $this->actingAs($this->admin)->putJson("/admin/articles/{$article->id}", [
+            'translations' => [
+                ['locale' => 'az', 'slug' => 'az-slug-'.uniqid(), 'title' => 'AZ Title', 'short_text' => 'S', 'content' => 'C'],
+                ['locale' => 'en', 'slug' => '', 'title' => '', 'short_text' => '', 'content' => ''],
+            ],
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseMissing('article_translations', ['article_id' => $article->id, 'locale' => 'en']);
+        $this->assertDatabaseHas('article_translations', ['article_id' => $article->id, 'locale' => 'az']);
+    }
+
+    public function test_a_partially_filled_en_locale_is_rejected_with_field_errors_instead_of_being_saved_incomplete(): void
+    {
+        $article = Article::factory()->create();
+        $article->translations()->create(['locale' => 'az', 'slug' => 'az-slug-'.uniqid(), 'title' => 'AZ Title', 'short_text' => 'S', 'content' => 'C']);
+
+        $response = $this->actingAs($this->admin)->putJson("/admin/articles/{$article->id}", [
+            'translations' => [
+                ['locale' => 'az', 'slug' => 'az-slug-'.uniqid(), 'title' => 'AZ Title', 'short_text' => 'S', 'content' => 'C'],
+                ['locale' => 'en', 'slug' => 'en-slug-'.uniqid(), 'title' => '', 'short_text' => '', 'content' => ''],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['translations.1.title', 'translations.1.short_text', 'translations.1.content']);
+    }
+
+    public function test_the_az_translation_can_never_be_blanked_out(): void
+    {
+        $article = Article::factory()->create();
+        $article->translations()->create(['locale' => 'az', 'slug' => 'az-slug-'.uniqid(), 'title' => 'AZ Title', 'short_text' => 'S', 'content' => 'C']);
+
+        $response = $this->actingAs($this->admin)->putJson("/admin/articles/{$article->id}", [
+            'translations' => [
+                ['locale' => 'az', 'slug' => '', 'title' => '', 'short_text' => '', 'content' => ''],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['translations.0.slug', 'translations.0.title', 'translations.0.short_text', 'translations.0.content']);
+        $this->assertDatabaseHas('article_translations', ['article_id' => $article->id, 'locale' => 'az', 'title' => 'AZ Title']);
+    }
+
     public function test_update_replacing_media_syncs_pivot_without_touching_media_table(): void
     {
         $article = Article::factory()->create();

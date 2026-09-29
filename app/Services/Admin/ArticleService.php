@@ -67,18 +67,30 @@ class ArticleService
         $article->delete();
     }
 
+    /**
+     * Mirrors SeoMetadataService::sync: a locale entirely absent from the payload is left untouched (a partial
+     * update that does not mention it at all), but a locale that IS present with every field blank means the
+     * editor cleared it — articles may be AZ-only, so that locale's row is deleted rather than upserted blank.
+     */
     private function syncTranslations(Article $article, array $translations): void
     {
         foreach ($translations as $translation) {
-            $article->translations()->updateOrCreate(
-                ['locale' => $translation['locale']],
-                [
-                    'slug' => $translation['slug'],
-                    'title' => $translation['title'],
-                    'short_text' => $translation['short_text'],
-                    'content' => $translation['content'],
-                ]
-            );
+            $values = [
+                'slug' => $translation['slug'] ?? null,
+                'title' => $translation['title'] ?? null,
+                'short_text' => $translation['short_text'] ?? null,
+                'content' => $translation['content'] ?? null,
+            ];
+
+            $rows = $article->translations()->where('locale', $translation['locale']);
+
+            if (! array_filter($values, fn ($value) => $value !== null && $value !== '')) {
+                $rows->delete();
+
+                continue;
+            }
+
+            $article->translations()->updateOrCreate(['locale' => $translation['locale']], $values);
         }
     }
 

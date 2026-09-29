@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { apiFetch, ApiError } from '../lib/api.js';
 import Button from './Button.jsx';
 import Banner from './Banner.jsx';
@@ -31,6 +31,7 @@ function explainUploadError(message) {
 }
 
 export default function MediaPicker({ value, previewUrl, onChange }) {
+    const titleId = useId();
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -104,9 +105,14 @@ export default function MediaPicker({ value, previewUrl, onChange }) {
 
             {open && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 dark:bg-black/60">
-                    <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg dark:bg-neutral-900">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby={titleId}
+                        className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg dark:bg-neutral-900"
+                    >
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-base font-semibold">Media seçin</h2>
+                            <h2 id={titleId} className="text-base font-semibold">Media seçin</h2>
                             <Button variant="secondary" onClick={() => setOpen(false)}>
                                 Bağla
                             </Button>

@@ -22,7 +22,9 @@ class ArtworkController extends Controller
                 'images' => fn ($q) => $q->orderBy('sort_order'),
                 'images.media.variants',
                 'artist.translations',
+                'genre' => fn ($q) => $q->where('is_active', true),
                 'genre.translations',
+                'medium' => fn ($q) => $q->where('is_active', true),
                 'medium.translations',
             ]);
 
@@ -101,7 +103,9 @@ class ArtworkController extends Controller
             ->where('inventory_code', $inventoryCode)
             ->where('is_active', true)
             ->with([
-                'translations', 'artist.translations', 'genre.translations', 'medium.translations',
+                'translations', 'artist.translations',
+                'genre' => fn ($q) => $q->where('is_active', true), 'genre.translations',
+                'medium' => fn ($q) => $q->where('is_active', true), 'medium.translations',
                 'images' => fn ($q) => $q->orderBy('sort_order'), 'images.media.variants',
                 'seoMetadata.ogImage.variants',
             ])
@@ -115,7 +119,9 @@ class ArtworkController extends Controller
             ->where('is_active', true)
             ->with([
                 'translations', 'images' => fn ($q) => $q->orderBy('sort_order'), 'images.media.variants',
-                'artist.translations', 'genre.translations', 'medium.translations',
+                'artist.translations',
+                'genre' => fn ($q) => $q->where('is_active', true), 'genre.translations',
+                'medium' => fn ($q) => $q->where('is_active', true), 'medium.translations',
             ])
             ->orderBy('sort_order')
             ->limit(4)

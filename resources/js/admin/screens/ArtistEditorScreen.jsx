@@ -208,7 +208,13 @@ export default function ArtistEditorScreen({ artistId, onBack }) {
                 <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                     <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Əsas məlumat</h2>
                     <TextField label="Doğum ili" type="number" value={core.birth_year} onChange={(v) => updateCore('birth_year', v)} error={errors.birth_year?.[0]} />
-                    <TextField label="Sıralama" type="number" value={core.sort_order} onChange={(v) => updateCore('sort_order', v)} />
+                    <TextField
+                        label="Sıralama"
+                        type="number"
+                        value={core.sort_order}
+                        onChange={(v) => updateCore('sort_order', v)}
+                        error={errors.sort_order?.[0]}
+                    />
                     <Toggle checked={core.is_active} onChange={(v) => updateCore('is_active', v)} label="Aktiv (saytda görünsün)" />
                 </section>
 

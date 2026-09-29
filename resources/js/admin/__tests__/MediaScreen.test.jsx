@@ -17,6 +17,7 @@ const mediaItem = {
     id: 1,
     original_filename: 'sekil.jpg',
     alt_text: 'Sekil',
+    translations: { az: 'Sekil', en: 'Picture' },
     variants: [{ variant: 'thumbnail-webp', url: 'https://example.com/sekil.webp' }],
 };
 
@@ -28,6 +29,9 @@ function setupFetch({ items = [mediaItem] } = {}) {
             return Promise.resolve(jsonResponse(200, { data: items, meta: { current_page: 1, last_page: 1, total: items.length } }));
         }
         if (url === '/admin/media' && method === 'POST') {
+            return Promise.resolve(jsonResponse(200, { data: mediaItem }));
+        }
+        if (url.startsWith('/admin/media/') && method === 'PUT') {
             return Promise.resolve(jsonResponse(200, { data: mediaItem }));
         }
 
@@ -101,6 +105,35 @@ describe('MediaScreen', () => {
 
         await waitFor(() => {
             expect(screen.getByText('Şəkil yükləndi')).toBeInTheDocument();
+        });
+    });
+
+    it('edits the English alt text without losing the existing Azerbaijani value', async () => {
+        setupFetch();
+
+        render(
+            <ToastProvider>
+                <MediaScreen />
+            </ToastProvider>
+        );
+
+        await screen.findByText('sekil.jpg');
+        await userEvent.click(screen.getByText('Təsviri redaktə et'));
+
+        expect(screen.getByLabelText('Təsvir (alt text) — AZ')).toHaveValue('Sekil');
+
+        await userEvent.click(screen.getByRole('tab', { name: 'EN' }));
+        const enField = screen.getByLabelText('Təsvir (alt text) — EN');
+        expect(enField).toHaveValue('Picture');
+        await userEvent.clear(enField);
+        await userEvent.type(enField, 'New picture');
+
+        await userEvent.click(screen.getByText('Saxla'));
+
+        await waitFor(() => {
+            const putCall = global.fetch.mock.calls.find(([, options]) => options?.method === 'PUT');
+            expect(putCall).toBeDefined();
+            expect(JSON.parse(putCall[1].body)).toEqual({ alt_text: { az: 'Sekil', en: 'New picture' } });
         });
     });
 });

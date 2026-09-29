@@ -54,6 +54,20 @@ class ArtworkCatalogueApiTest extends TestCase
         $this->assertCount(1, $response->json('data'));
     }
 
+    public function test_deactivated_genre_and_medium_are_null_in_list_cards_but_the_artwork_stays_listed(): void
+    {
+        $genre = Genre::factory()->create(['is_active' => false]);
+        $medium = Medium::factory()->create(['is_active' => false]);
+        $this->makeArtwork(['genre_id' => $genre->id, 'medium_id' => $medium->id]);
+
+        $response = $this->getJson('/api/v1/artworks');
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+        $this->assertNull($response->json('data.0.genre'));
+        $this->assertNull($response->json('data.0.medium'));
+    }
+
     public function test_sold_artwork_remains_visible(): void
     {
         $this->makeArtwork(['availability' => 'sold']);

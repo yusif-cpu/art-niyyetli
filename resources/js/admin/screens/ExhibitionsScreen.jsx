@@ -11,14 +11,14 @@ import ExhibitionEditorScreen from './ExhibitionEditorScreen.jsx';
 const STATUS_LABELS = { current: 'Cari', past: 'Keçmiş', upcoming: 'Gələcək' };
 const TYPE_LABELS = { exhibition: 'Sərgi', news: 'Xəbər', announcement: 'Elan' };
 
-export default function ExhibitionsScreen() {
+export default function ExhibitionsScreen({ openCreate }) {
     const [exhibitions, setExhibitions] = useState(null);
     const [meta, setMeta] = useState(null);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
     const [error, setError] = useState('');
-    const [openId, setOpenId] = useState(null);
+    const [openId, setOpenId] = useState(openCreate ? 'new' : null);
 
     function load() {
         setError('');

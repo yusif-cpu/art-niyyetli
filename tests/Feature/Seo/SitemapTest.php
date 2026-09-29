@@ -130,6 +130,10 @@ class SitemapTest extends TestCase
 
         $this->assertSame([
             'http://localhost:8080/',
+            'http://localhost:8080/artworks',
+            'http://localhost:8080/artists',
+            'http://localhost:8080/exhibitions',
+            'http://localhost:8080/articles',
             'http://localhost:8080/about',
             'http://localhost:8080/artworks/AN-EXACT-1',
             'http://localhost:8080/artists/jane-doe',
@@ -137,7 +141,8 @@ class SitemapTest extends TestCase
             'http://localhost:8080/articles/hello-world',
         ], $locs[1]);
 
-        // <lastmod> is kept for every record (the homepage has none): page, artwork, artist, exhibition, article.
+        // <lastmod> is kept for every record (the homepage and the 4 listing pages have none): page, artwork,
+        // artist, exhibition, article.
         $this->assertSame(5, preg_match_all('#<lastmod>\d{4}-\d{2}-\d{2}T[\d:]+[+-]\d{2}:\d{2}</lastmod>#', $body));
     }
 

@@ -9,11 +9,11 @@ import PageHeader from '../components/PageHeader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import PageEditorScreen from './PageEditorScreen.jsx';
 
-export default function PagesScreen() {
+export default function PagesScreen({ openCreate }) {
     const [pages, setPages] = useState(null);
     const [openPageId, setOpenPageId] = useState(null);
     const [error, setError] = useState('');
-    const [creating, setCreating] = useState(false);
+    const [creating, setCreating] = useState(Boolean(openCreate));
     const [createFields, setCreateFields] = useState({ slug: '', title: '', content: '' });
     const [createErrors, setCreateErrors] = useState({});
     const [saving, setSaving] = useState(false);

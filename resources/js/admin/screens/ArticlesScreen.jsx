@@ -18,14 +18,14 @@ const TYPE_LABELS = {
     announcement: 'Elan',
 };
 
-export default function ArticlesScreen() {
+export default function ArticlesScreen({ openCreate }) {
     const [articles, setArticles] = useState(null);
     const [meta, setMeta] = useState(null);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
     const [error, setError] = useState('');
-    const [openId, setOpenId] = useState(null);
+    const [openId, setOpenId] = useState(openCreate ? 'new' : null);
 
     function load() {
         setError('');

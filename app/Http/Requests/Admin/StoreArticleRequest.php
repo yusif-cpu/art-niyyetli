@@ -27,6 +27,7 @@ class StoreArticleRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->deriveYoutubeVideoId();
+        $this->blankTranslationFieldsToNull();
     }
 
     public function rules(): array
@@ -34,15 +35,15 @@ class StoreArticleRequest extends FormRequest
         return [
             'type' => ['required', Rule::enum(ArticleType::class)],
             'status' => ['required', Rule::enum(ArticleStatus::class)],
-            'published_at' => ['nullable', 'date'],
+            'published_at' => ['nullable', 'date', Rule::requiredIf(fn () => $this->input('status') === ArticleStatus::Published->value)],
             'is_active' => ['required', 'boolean'],
 
             'translations' => ['required', 'array', 'min:1'],
             'translations.*.locale' => ['required', Rule::enum(Locale::class)],
-            'translations.*.slug' => ['required', 'string', new Slug],
-            'translations.*.title' => ['required', 'string', 'max:255'],
-            'translations.*.short_text' => ['required', 'string'],
-            'translations.*.content' => ['required', 'string'],
+            'translations.*.slug' => ['nullable', 'string', new Slug],
+            'translations.*.title' => ['nullable', 'string', 'max:255'],
+            'translations.*.short_text' => ['nullable', 'string'],
+            'translations.*.content' => ['nullable', 'string'],
 
             'media' => ['sometimes', 'array'],
             'media.*.media_id' => ['required', 'integer', Rule::exists('media', 'id')->whereNull('deleted_at')],
@@ -59,6 +60,7 @@ class StoreArticleRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->rejectDuplicateSeoLocales($validator);
+            $this->rejectIncompleteTranslations($validator);
             $this->rejectDuplicateTranslationLocales($validator);
             $this->rejectDuplicateSlugPerLocaleWithinRequest($validator);
             $this->rejectSlugCollisionsWithOtherArticles($validator);

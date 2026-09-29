@@ -9,13 +9,13 @@ import PageHeader from '../components/PageHeader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import ArtistEditorScreen from './ArtistEditorScreen.jsx';
 
-export default function ArtistsScreen() {
+export default function ArtistsScreen({ openCreate }) {
     const [artists, setArtists] = useState(null);
     const [meta, setMeta] = useState(null);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [error, setError] = useState('');
-    const [openId, setOpenId] = useState(null);
+    const [openId, setOpenId] = useState(openCreate ? 'new' : null);
 
     function load() {
         setError('');

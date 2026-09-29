@@ -12,11 +12,11 @@ const LABELS = {
 const ENQUIRY_STATUS_LABELS = { new: 'Yeni', read: 'Oxunub', replied: 'Cavablandırılıb', closed: 'Bağlanıb' };
 
 const QUICK_ACTIONS = [
-    { label: 'Yeni əsər', hash: 'artworks' },
-    { label: 'Yeni rəssam', hash: 'artists' },
-    { label: 'Yeni sərgi', hash: 'exhibitions' },
-    { label: 'Yeni məqalə', hash: 'articles' },
-    { label: 'Yeni səhifə', hash: 'pages' },
+    { label: 'Yeni əsər', hash: 'artworks/new' },
+    { label: 'Yeni rəssam', hash: 'artists/new' },
+    { label: 'Yeni sərgi', hash: 'exhibitions/new' },
+    { label: 'Yeni məqalə', hash: 'articles/new' },
+    { label: 'Yeni səhifə', hash: 'pages/new' },
 ];
 
 function navigateTo(hash) {

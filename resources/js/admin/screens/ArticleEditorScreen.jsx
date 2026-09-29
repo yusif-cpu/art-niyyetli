@@ -91,9 +91,10 @@ export default function ArticleEditorScreen({ articleId, onBack }) {
         setErrors({});
         setBanner('');
 
-        const translations = Object.entries(fields)
-            .filter(([, t]) => t.slug || t.title)
-            .map(([loc, t]) => ({ locale: loc, ...t }));
+        // Both locales are always sent, even one left entirely blank: the server treats a fully blank non-AZ
+        // locale as "clear it" (mirroring how the SEO fields already work), rather than "not mentioned, leave
+        // whatever was already saved". Omitting it here would make an intentional EN clear silently do nothing.
+        const translations = Object.entries(fields).map(([loc, t]) => ({ locale: loc, ...t }));
 
         const payload = {
             ...core,

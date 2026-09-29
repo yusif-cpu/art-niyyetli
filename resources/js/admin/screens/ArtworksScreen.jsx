@@ -10,14 +10,14 @@ import ArtworkEditorScreen from './ArtworkEditorScreen.jsx';
 
 const AVAILABILITY_LABELS = { available: 'Satışda', reserved: 'Rezerv edilib', sold: 'Satılıb' };
 
-export default function ArtworksScreen() {
+export default function ArtworksScreen({ openCreate }) {
     const [artworks, setArtworks] = useState(null);
     const [meta, setMeta] = useState(null);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [availability, setAvailability] = useState('');
     const [error, setError] = useState('');
-    const [openId, setOpenId] = useState(null);
+    const [openId, setOpenId] = useState(openCreate ? 'new' : null);
 
     function load() {
         setError('');

@@ -74,6 +74,37 @@ class ArticleValidationTest extends TestCase
         $this->createArticle($this->validArticlePayload(['published_at' => 'not-a-date']))->assertStatus(422);
     }
 
+    public function test_published_status_without_a_published_at_is_rejected_instead_of_creating_an_invisible_published_article(): void
+    {
+        $response = $this->createArticle($this->validArticlePayload(['status' => 'published', 'published_at' => null]));
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('published_at');
+    }
+
+    public function test_published_status_with_a_published_at_is_accepted(): void
+    {
+        $this->createArticle($this->validArticlePayload(['status' => 'published', 'published_at' => now()->toDateString()]))->assertOk();
+    }
+
+    public function test_draft_status_without_a_published_at_is_still_accepted(): void
+    {
+        $this->createArticle($this->validArticlePayload(['status' => 'draft', 'published_at' => null]))->assertOk();
+    }
+
+    public function test_updating_status_to_published_without_a_published_at_is_also_rejected(): void
+    {
+        $article = \App\Models\Article::factory()->create(['status' => \App\Enums\ArticleStatus::Draft, 'published_at' => null]);
+
+        $response = $this->actingAs($this->admin)->putJson("/admin/articles/{$article->id}", [
+            'status' => 'published',
+            'published_at' => null,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('published_at');
+    }
+
     public function test_duplicate_translation_locale_within_one_payload_is_rejected(): void
     {
         $payload = $this->validArticlePayload([

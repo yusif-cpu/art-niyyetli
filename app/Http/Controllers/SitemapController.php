@@ -38,6 +38,7 @@ class SitemapController extends Controller
         $xml = $this->cache->remember('sitemap', (int) config('public_cache.ttl.sitemap'), function () {
             $urls = array_merge(
                 [['loc' => SeoText::absoluteUrl('/'), 'lastmod' => null]],
+                $this->listingPages(),
                 $this->staticPages(),
                 $this->artworks(),
                 $this->artists(),
@@ -58,6 +59,19 @@ class SitemapController extends Controller
             'page_id',
             null,
         );
+    }
+
+    /**
+     * The four catalogue/listing routes (/artworks, /artists, /exhibitions, /articles): pure client-side SPA
+     * routes with no backing Page record, so translated()/staticPages() never sees them. /catalogue is
+     * deliberately left out — its canonical already points at /artworks (PublicPageSeoResolver), so listing it
+     * too would be a duplicate entry contradicting its own canonical.
+     */
+    private function listingPages(): array
+    {
+        return collect(['artworks', 'artists', 'exhibitions', 'articles'])
+            ->map(fn (string $segment) => ['loc' => $this->url($segment), 'lastmod' => null])
+            ->all();
     }
 
     private function artworks(): array

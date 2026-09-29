@@ -114,15 +114,15 @@ export default function UsersScreen() {
                 <Card>
                     <ul className="-m-4 divide-y divide-neutral-200 dark:divide-neutral-800">
                         {users.map((user) => (
-                            <li key={user.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                                <div>
+                            <li key={user.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
+                                <div className="min-w-0">
                                     <div className="flex items-center gap-2">
                                         <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{user.name}</p>
                                         <StatusBadge active={user.is_active} />
                                     </div>
                                     <p className="text-xs text-neutral-500 dark:text-neutral-400">@{user.username}</p>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <div className="flex gap-1">
                                         {user.roles.map((role) => (
                                             <span

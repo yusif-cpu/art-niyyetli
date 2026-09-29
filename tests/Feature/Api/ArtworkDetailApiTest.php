@@ -53,6 +53,41 @@ class ArtworkDetailApiTest extends TestCase
         $this->getJson("/api/v1/artworks/{$artwork->inventory_code}")->assertStatus(404);
     }
 
+    public function test_genre_is_null_when_it_has_been_deactivated_but_the_artwork_itself_is_unaffected(): void
+    {
+        $genre = Genre::factory()->create(['is_active' => false]);
+        $artwork = $this->makeArtwork(['genre_id' => $genre->id]);
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}")->assertOk();
+
+        $this->assertNull($response->json('data.genre'));
+        $this->assertNotNull($response->json('data.title'));
+    }
+
+    public function test_medium_is_null_when_it_has_been_deactivated_but_the_artwork_itself_is_unaffected(): void
+    {
+        $medium = Medium::factory()->create(['is_active' => false]);
+        $artwork = $this->makeArtwork(['medium_id' => $medium->id]);
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}")->assertOk();
+
+        $this->assertNull($response->json('data.medium'));
+        $this->assertNotNull($response->json('data.title'));
+    }
+
+    public function test_similar_artworks_also_hide_a_deactivated_genre(): void
+    {
+        $genre = Genre::factory()->create();
+        $artwork = $this->makeArtwork(['genre_id' => $genre->id]);
+        $this->makeArtwork(['genre_id' => $genre->id]);
+        $genre->update(['is_active' => false]);
+
+        $response = $this->getJson("/api/v1/artworks/{$artwork->inventory_code}")->assertOk();
+
+        $this->assertNotEmpty($response->json('data.similar'));
+        $this->assertNull($response->json('data.similar.0.genre'));
+    }
+
     public function test_detail_includes_extended_fields(): void
     {
         $artwork = $this->makeArtwork(['certificate' => true, 'frame_condition' => 'Good', 'delivery_note' => 'Ships in 5 days']);

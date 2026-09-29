@@ -42,14 +42,17 @@ const SCREENS = {
 
 function AuthenticatedApp({ session, onLogout }) {
     const [route, navigate] = useHashRoute();
-    const Screen = SCREENS[route] || DashboardScreen;
+    // A route may carry a sub-path, e.g. "artworks/new" from a dashboard quick action, so the
+    // list screen for "artworks" can open its create form immediately instead of the list.
+    const [screenKey, subPath] = route.split('/');
+    const Screen = SCREENS[screenKey] || DashboardScreen;
     const { newCount, totalCount, refreshSignal } = useEnquiryPolling(session.stats?.enquiries_new, session.stats?.enquiries);
     const stats = { ...session.stats, enquiries: totalCount, enquiries_new: newCount };
 
     return (
         <AdminShell
             user={session.user}
-            current={route}
+            current={screenKey}
             onNavigate={navigate}
             onLogout={onLogout}
             badges={{ enquiries: newCount }}
@@ -60,6 +63,7 @@ function AuthenticatedApp({ session, onLogout }) {
                 upcomingExhibitions={session.upcoming_exhibitions}
                 recentArtworks={session.recent_artworks}
                 enquiryRefreshSignal={refreshSignal}
+                openCreate={subPath === 'new'}
             />
         </AdminShell>
     );

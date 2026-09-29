@@ -199,7 +199,7 @@ export default function ExhibitionEditorScreen({ exhibitionId, onBack }) {
                             ))}
                         </select>
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <TextField label="Başlama tarixi" type="date" value={core.start_date} onChange={(v) => updateCore('start_date', v)} error={errors.start_date?.[0]} />
                         <TextField label="Bitmə tarixi" type="date" value={core.end_date} onChange={(v) => updateCore('end_date', v)} error={errors.end_date?.[0]} />
                     </div>

@@ -8,6 +8,9 @@ import Pagination from '../components/Pagination.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import TextField from '../components/TextField.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import LocaleTabs from '../components/LocaleTabs.jsx';
+
+const LOCALE_LABELS = { az: 'AZ', en: 'EN' };
 
 function thumbUrl(item) {
     return item.variants?.find((v) => v.variant === 'thumbnail-webp')?.url || item.variants?.find((v) => v.variant === 'thumbnail-jpeg')?.url || null;
@@ -35,6 +38,8 @@ export default function MediaScreen() {
     const [dragOver, setDragOver] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [editingAlt, setEditingAlt] = useState(null);
+    const [editLocale, setEditLocale] = useState('az');
+    const [editValues, setEditValues] = useState({ az: '', en: '' });
     const fileInputRef = useRef(null);
 
     function load() {
@@ -79,9 +84,18 @@ export default function MediaScreen() {
         if (file) uploadFile(file);
     }
 
-    async function saveAltText(item, text) {
+    function startEditingAlt(item) {
+        setEditingAlt(item.id);
+        setEditLocale('az');
+        setEditValues({ az: item.translations?.az || '', en: item.translations?.en || '' });
+    }
+
+    async function saveAltText(item) {
         try {
-            await apiFetch(`/media/${item.id}`, { method: 'PUT', body: { alt_text: { az: text } } });
+            // Only the two known locale keys are sent, and both are always included: the backend leaves out
+            // any locale not present in the payload rather than clearing it, so sending both — one just edited,
+            // the other unchanged — is what actually preserves the value the editor didn't touch this time.
+            await apiFetch(`/media/${item.id}`, { method: 'PUT', body: { alt_text: editValues } });
             show('Təsvir yeniləndi', 'success');
             setEditingAlt(null);
             load();
@@ -176,13 +190,14 @@ export default function MediaScreen() {
 
                         {editingAlt === item.id ? (
                             <div className="mt-1 space-y-1">
+                                <LocaleTabs active={editLocale} onChange={setEditLocale} />
                                 <TextField
-                                    label="Təsvir (alt text)"
-                                    value={item.alt_text || ''}
-                                    onChange={(v) => setItems(items.map((i) => (i.id === item.id ? { ...i, alt_text: v } : i)))}
+                                    label={`Təsvir (alt text) — ${LOCALE_LABELS[editLocale]}`}
+                                    value={editValues[editLocale]}
+                                    onChange={(v) => setEditValues((current) => ({ ...current, [editLocale]: v }))}
                                 />
                                 <div className="flex gap-1">
-                                    <Button variant="secondary" onClick={() => saveAltText(item, item.alt_text)}>
+                                    <Button variant="secondary" onClick={() => saveAltText(item)}>
                                         Saxla
                                     </Button>
                                     <Button variant="secondary" onClick={() => setEditingAlt(null)}>
@@ -192,7 +207,7 @@ export default function MediaScreen() {
                             </div>
                         ) : (
                             <div className="mt-1 flex justify-between">
-                                <button type="button" onClick={() => setEditingAlt(item.id)} className="text-xs text-neutral-500 hover:underline dark:text-neutral-400">
+                                <button type="button" onClick={() => startEditingAlt(item)} className="text-xs text-neutral-500 hover:underline dark:text-neutral-400">
                                     Təsviri redaktə et
                                 </button>
                                 <button type="button" onClick={() => setDeleteTarget(item)} className="text-xs text-red-600 hover:underline dark:text-red-400">

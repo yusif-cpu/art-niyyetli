@@ -170,6 +170,24 @@ describe('ArtworkDetailPage', () => {
         expect(screen.getByRole('button', { name: 'Şəkil 1: əsas' })).not.toHaveAttribute('aria-current');
     });
 
+    it('loads the thumbnail variant in the image choices (thumbnail_url), the full url only where it is missing', async () => {
+        artwork = {
+            ...detail,
+            images: [
+                { type: 'main', sort_order: 0, is_main: true, url: 'https://example.test/one-full.webp', thumbnail_url: 'https://example.test/one-thumb.webp' },
+                { type: 'detail', sort_order: 1, is_main: false, url: 'https://example.test/two-full.webp', thumbnail_url: null },
+            ],
+        };
+        mockApi();
+        renderPage();
+
+        const choice = async (name) => (await screen.findByRole('button', { name })).querySelector('img');
+        expect(await choice('Şəkil 1: əsas')).toHaveAttribute('src', 'https://example.test/one-thumb.webp');
+        expect(await choice('Şəkil 2: detal')).toHaveAttribute('src', 'https://example.test/two-full.webp');
+        // The main field still shows the full image.
+        expect(within(screen.getByTestId('artwork-main-field')).getByRole('img')).toHaveAttribute('src', 'https://example.test/one-full.webp');
+    });
+
     it('redraws "divarda gör" at a new k for each wall height', async () => {
         renderPage();
         const work = async () => (await screen.findByTestId('wall-work')).style.height;

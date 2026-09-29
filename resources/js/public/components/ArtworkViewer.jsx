@@ -62,7 +62,8 @@ export default function ArtworkViewer({ artwork }) {
                                     onClick={() => setSelected(index)}
                                     className={`block cursor-pointer border p-0.5 transition-colors duration-[120ms] ease-standard ${chosen ? 'border-line-strong' : 'border-line hover:border-line-strong'}`}
                                 >
-                                    <img src={img.url} alt="" loading="lazy" decoding="async" className="h-16 w-16 object-cover" />
+                                    {/* The 64px choice loads the thumbnail variant (S8), not the full image; older data without it falls back to url. */}
+                                    <img src={img.thumbnail_url || img.url} alt="" loading="lazy" decoding="async" className="h-16 w-16 object-cover" />
                                 </button>
                             </li>
                         );

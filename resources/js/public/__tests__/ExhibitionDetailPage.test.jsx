@@ -86,6 +86,19 @@ describe('ExhibitionDetailPage', () => {
         expect(within(section).getAllByTestId('artist-portrait')).toHaveLength(2);
     });
 
+    it('shows a participating artist\'s portrait when portrait_url is sent, the tone field otherwise', async () => {
+        exhibition = { ...detail, artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova', portrait_url: 'https://example.test/aygun.webp' }, { id: 6, slug: 'other', name: 'Other Artist', portrait_url: null }] };
+        mockApi();
+        renderPage();
+
+        const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
+        const [withPortrait, without] = within(section).getAllByTestId('artist-portrait');
+        expect(within(withPortrait).getByRole('img', { name: 'Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/aygun.webp');
+        expect(withPortrait).toHaveClass('bg-surface-field');
+        expect(within(without).queryByRole('img')).not.toBeInTheDocument();
+        expect(without.className).toMatch(/bg-surface-field(-2)?\b/);
+    });
+
     it('shows the photos with a URL in a plain grid, no shadow, and no video when there is none', async () => {
         const { container } = renderPage();
 

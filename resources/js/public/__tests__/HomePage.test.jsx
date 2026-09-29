@@ -547,6 +547,15 @@ describe('HomePage', () => {
         expect(within(card).getByText('Modern')).toHaveClass('text-meta', 'text-ink-muted');
     });
 
+    it('shows the number of works on the home artist cards too (artworks_count is sent on /homepage)', async () => {
+        homepage = { ...homepageData, artists: [{ ...homepageData.artists[0], artworks_count: 3 }] };
+        mockApi();
+        renderHome();
+
+        const card = within(await screen.findByTestId('home-artists')).getByRole('link', { name: /A B/ });
+        expect(within(card).getByTestId('artist-works-count')).toHaveTextContent('3 əsər');
+    });
+
     it('leaves out empty blocks: artists, exhibitions, journal, FAQ', async () => {
         homepage = { ...homepageData, artists: [], exhibition: null, exhibitions: { current: [], upcoming: [] }, faqs: [] };
         articles = [];

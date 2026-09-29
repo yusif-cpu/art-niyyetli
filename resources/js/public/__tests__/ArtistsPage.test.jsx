@@ -65,6 +65,17 @@ describe('ArtistsPage', () => {
         screen.getAllByTestId('artist-portrait').forEach((p) => expect(p).toHaveClass('aspect-[4/5]', 'border', 'border-line'));
     });
 
+    it('shows the number of works ("12 əsər", text-caption, ink-muted) from artworks_count; none for 0 or a missing count', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [{ ...KAMRAN, artworks_count: 12 }, { ...AYGUN, artworks_count: 0 }, { ...AYGUN, id: 9, slug: 'no-count', first_name: 'No' }] }));
+        renderPage();
+
+        const kamran = await screen.findByRole('link', { name: /Kamran Səfərli/ });
+        expect(within(kamran).getByTestId('artist-works-count')).toHaveTextContent('12 əsər');
+        expect(within(kamran).getByTestId('artist-works-count')).toHaveClass('text-caption', 'text-ink-muted');
+        expect(within(screen.getByRole('link', { name: /Aygün Məmmədova/ })).queryByTestId('artist-works-count')).not.toBeInTheDocument();
+        expect(within(screen.getByRole('link', { name: /No Məmmədova/ })).queryByTestId('artist-works-count')).not.toBeInTheDocument();
+    });
+
     it('shows a short muted text when there are no artists', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [] }));
         renderPage();

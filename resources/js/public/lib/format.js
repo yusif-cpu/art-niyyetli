@@ -18,21 +18,36 @@ export function formatPrice(price, currency) {
     return currency ? `${text}${NBSP}${currency}` : text;
 }
 
+// A whole Azerbaijani number in the international form: +994 and nine digits.
+const AZ_NUMBER = /^\+994\d{9}$/;
+
+function internationalForm(digits) {
+    if (digits.startsWith('+')) return digits;
+    if (digits.startsWith('00')) return `+${digits.slice(2)}`;
+    if (digits.startsWith('994')) return `+${digits}`;
+    if (digits.startsWith('0')) return `+994${digits.slice(1)}`;
+
+    return digits;
+}
+
 /**
- * The tel: link for a phone number as the admin wrote it, always in the international form: the gallery also takes
- * calls from abroad, and a local "070 353 05 12" does not dial from there. Spaces and punctuation go; a leading 0
- * (the Azerbaijani trunk prefix) becomes +994, "00" becomes "+", and a bare "994…" gets its "+". The visible text is
- * the caller's to keep as written. null for an empty number.
+ * The tel: link for a phone number as the admin wrote it, in the international form: the gallery also takes calls
+ * from abroad, and a local "070 353 05 12" does not dial from there. Spaces and punctuation go; a leading 0 (the
+ * Azerbaijani trunk prefix) becomes +994, "00" becomes "+", and a bare "994…" gets its "+". The visible text is the
+ * caller's to keep as written. null for an empty number.
+ *
+ * Guard: the converted value is used only when it is a whole Azerbaijani number (AZ_NUMBER). Anything else (a digit
+ * too many or too few, a foreign number) goes into the link as the admin wrote it, with only the whitespace removed:
+ * a +994 put in front of a wrong-length number makes a link that dials nothing, while the original may still work on
+ * a local phone.
  */
 export function phoneHref(phone) {
-    const digits = String(phone ?? '').replace(/[^\d+]/g, '');
+    const written = String(phone ?? '').replace(/\s/g, '');
+    const digits = written.replace(/[^\d+]/g, '');
     if (!digits) return null;
-    if (digits.startsWith('+')) return `tel:${digits}`;
-    if (digits.startsWith('00')) return `tel:+${digits.slice(2)}`;
-    if (digits.startsWith('994')) return `tel:+${digits}`;
-    if (digits.startsWith('0')) return `tel:+994${digits.slice(1)}`;
+    const converted = internationalForm(digits);
 
-    return `tel:${digits}`;
+    return `tel:${AZ_NUMBER.test(converted) ? converted : written}`;
 }
 
 function formatCm(value, locale) {

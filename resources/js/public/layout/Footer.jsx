@@ -2,6 +2,7 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useSiteData } from './SiteDataContext.jsx';
 import BrandLogo from '../components/BrandLogo.jsx';
+import { phoneHref } from '../lib/format.js';
 import SocialLinks, { visibleSocialLinks } from '../components/SocialLinks.jsx';
 
 function itemLabel(locale, item) {
@@ -39,7 +40,7 @@ export default function Footer() {
     const headerItems = Array.isArray(navigation.data?.header) ? navigation.data.header : [];
     const footerItems = Array.isArray(navigation.data?.footer) ? navigation.data.footer : [];
     const site = settings.data || {};
-    const phoneHref = site.phone ? `tel:${site.phone.replace(/[^\d+]/g, '')}` : null;
+    const phoneLink = phoneHref(site.phone);
     // No address, hours, e-mail, phone or social link: no contact column at all. An empty grid item still takes a row
     // on phones, and the row gap above it left a blank band at the bottom of the footer.
     const hasContact = Boolean(site.address || site.opening_hours || site.contact_email || site.phone || visibleSocialLinks(socialLinks.data).length);
@@ -75,7 +76,7 @@ export default function Footer() {
                                     </a>
                                 )}
                                 {site.phone && (
-                                    <a href={phoneHref} className="figures hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
+                                    <a href={phoneLink} className="figures hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
                                         {site.phone}
                                     </a>
                                 )}

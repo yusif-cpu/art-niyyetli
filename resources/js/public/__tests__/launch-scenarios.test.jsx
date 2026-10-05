@@ -204,7 +204,8 @@ describe('launch scenarios', () => {
     });
 
     describe('phone "070 353 05 12"', () => {
-        it('dials the digits only and shows the number as written, on the contact page and in the footer', async () => {
+        // (was: tel:0703530512) — the gallery takes calls from abroad: the link is international, the text stays local.
+        it('dials +994 70 353 05 12 and shows the number as written, on the contact page and in the footer', async () => {
             mockApi();
             window.history.pushState(null, '', '/contact');
             render(<App />);
@@ -213,7 +214,7 @@ describe('launch scenarios', () => {
 
             for (const scope of [within(details), within(footer())]) {
                 const link = scope.getByRole('link', { name: '070 353 05 12' });
-                expect(link).toHaveAttribute('href', 'tel:0703530512');
+                expect(link).toHaveAttribute('href', 'tel:+994703530512');
                 expect(link.textContent).toBe('070 353 05 12');
             }
         });

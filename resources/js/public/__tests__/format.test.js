@@ -1,9 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, formatDateRange, formatDimensions, formatPrice } from '../lib/format.js';
+import { formatDate, formatDateRange, formatDimensions, formatPrice, phoneHref } from '../lib/format.js';
 
 const NBSP = ' ';
 
 describe('format', () => {
+    it('makes every tel: link international, whatever form the admin wrote the number in', () => {
+        expect(phoneHref('070 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('(070) 353-05-12')).toBe('tel:+994703530512');
+        expect(phoneHref('+994 70 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('00994 70 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('994 70 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('')).toBeNull();
+        expect(phoneHref(null)).toBeNull();
+    });
+
     it('groups thousands with non-breaking spaces and never shows .00', () => {
         expect(formatPrice(6400, 'AZN')).toBe(`6${NBSP}400${NBSP}AZN`);
         expect(formatPrice(900, 'AZN')).toBe(`900${NBSP}AZN`);

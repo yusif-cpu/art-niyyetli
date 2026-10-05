@@ -18,6 +18,23 @@ export function formatPrice(price, currency) {
     return currency ? `${text}${NBSP}${currency}` : text;
 }
 
+/**
+ * The tel: link for a phone number as the admin wrote it, always in the international form: the gallery also takes
+ * calls from abroad, and a local "070 353 05 12" does not dial from there. Spaces and punctuation go; a leading 0
+ * (the Azerbaijani trunk prefix) becomes +994, "00" becomes "+", and a bare "994…" gets its "+". The visible text is
+ * the caller's to keep as written. null for an empty number.
+ */
+export function phoneHref(phone) {
+    const digits = String(phone ?? '').replace(/[^\d+]/g, '');
+    if (!digits) return null;
+    if (digits.startsWith('+')) return `tel:${digits}`;
+    if (digits.startsWith('00')) return `tel:+${digits.slice(2)}`;
+    if (digits.startsWith('994')) return `tel:+${digits}`;
+    if (digits.startsWith('0')) return `tel:+994${digits.slice(1)}`;
+
+    return `tel:${digits}`;
+}
+
 function formatCm(value, locale) {
     const text = String(Math.round(value * 10) / 10); // 120 → "120", 120.5 → "120.5", never "120.00"
 

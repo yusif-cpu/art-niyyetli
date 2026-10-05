@@ -64,7 +64,9 @@ describe('Site chrome (header + footer)', () => {
         const [lockup, mark] = within(brand).getAllByRole('img', { name: 'ArtNiyyətli' });
         expect(lockup.tagName.toLowerCase()).toBe('svg');
         expect(lockup).toHaveAttribute('data-logo', 'lockup');
-        expect(lockup).toHaveClass('hidden', 'min-[400px]:block', 'h-7');
+        // (was: h-7) — the lockup is 32px; the mark below 400px stays 28px.
+        expect(lockup).toHaveClass('hidden', 'min-[400px]:block', 'h-8');
+        expect(lockup).not.toHaveClass('h-7');
         expect(mark).toHaveAttribute('data-logo', 'mark');
         expect(mark).toHaveClass('min-[400px]:hidden', 'h-7');
         expect(header.querySelector('img')).toBeNull();

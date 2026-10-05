@@ -68,9 +68,11 @@ export default function Header() {
             */}
             <div className="flex flex-wrap items-center gap-x-step-6 gap-y-step-4 px-page py-step-5 lg:flex-nowrap">
                 {/* The logo in brand red (a brand colour, not Signal): the lockup, and below 400px the mark alone.
-                    Its colour never changes on hover or focus; focus shows only the outline. */}
+                    Its colour never changes on hover or focus; focus shows only the outline. The lockup is 32px tall,
+                    the mark 28px: the link's 44px box with -my-2 keeps the row at 28px either way, so the 32px lockup
+                    takes 2px of the bar's padding above and below and the bar's height does not change. */}
                 <a href="/" className="-my-2 inline-flex min-h-11 min-w-11 shrink-0 items-center text-brand" data-testid="header-brand">
-                    <BrandLogo variant="lockup" className="hidden h-7 min-[400px]:block" />
+                    <BrandLogo variant="lockup" className="hidden h-8 min-[400px]:block" />
                     <BrandLogo variant="mark" className="h-7 min-[400px]:hidden" />
                 </a>
 

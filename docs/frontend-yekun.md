@@ -83,6 +83,7 @@ Bütün hesablama bir yerdədir: `lib/wall.js`, testləri ilə.
 | `ink-muted` | #6B625C | köməkçi mətn (5,2:1) |
 | `line` / `line-strong` | #DDD6CA / #908A82 | bəzək xətti / interaktiv kənar (3,0:1) |
 | `signal` / `signal-ink` | #F51000 / #DA0F02 | aktiv menyu, fokus halqası / kiçik qırmızı mətn, xəta (4,56:1) |
+| `brand` | #FC0203 | yalnız loqo, header və footer (açıq fonda 3,59:1, bordoda 4,10:1); müştərinin raster faylından ölçülüb, kitabçanın rəsmi dəyəri gələndə yenilənir |
 | `wine` / `wine-ink` / `wine-ink-muted` | #3E0B0A / #F4F0E8 / #B9A9A4 | footer, bordo zolaq, dolu düymə (14,7:1 və 7,4:1) |
 
 **Şriftlər:** Montserrat (interfeys və başlıqlar), Spectral (oxunan mətn, əsər adları kursivlə). İkisi də saytın öz serverindən yüklənir, latin-ext alt dəstləri ilə.
@@ -110,7 +111,7 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 
 - bölmə başlığının üstündə kiçik etiket (`SectionHeading`);
 - siyahı səhifələrində başlıq zolağı (`PageHeader`);
-- loqo inline SVG-dir: açıq fonda `wine`, bordo fonda `wine-ink`;
+- loqo inline SVG-dir, `currentColor` ilə, həm header-də, həm bordo footer-də marka qırmızısı (`text-brand`). Header-də nişan və yanında iki sətirli yazı, footer-də eyni lockup böyük ölçüdə, tək nişan yalnız 400 pikseldən dar header-də (və favicon-da);
 - telefonda bütün kliklənən elementlər ən azı 44 × 44 pikseldir.
 
 **Qadağalar:**
@@ -120,7 +121,7 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 - yumru künc yoxdur (`--radius-input: 0`);
 - təkrarlanan animasiya yoxdur;
 - böyük hərfli etiket yoxdur;
-- Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil. Bu büdcə səhifənin sakit vəziyyətinə aiddir: xəta görünəndə (API xətası, forma və ya aralıq doğrulaması) ekranda üçdən çox qırmızı element ola bilər, çünki xəta görünməlidir; bu halda aktiv filtr sayı kimi məlumat elementləri Signal-ı itirir;
+- Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil. Bu büdcə səhifənin sakit vəziyyətinə aiddir: xəta görünəndə (API xətası, forma və ya aralıq doğrulaması) ekranda üçdən çox qırmızı element ola bilər, çünki xəta görünməlidir; bu halda aktiv filtr sayı kimi məlumat elementləri Signal-ı itirir. Marka qırmızısı loqoda işlənir və üç Signal büdcəsinə daxil deyil: `--color-signal` və `--color-brand` rəngləri yaxın olsa da, rolları ayrı olduğu üçün ayrı tokenlərdir;
 - CSP: inline skript və `<style>` yoxdur, `100vh` işlənmir, xarici şrift və xəritə çərçivəsi yoxdur.
 
 ## 4. Backend-dən gözlənilən açıq maddələr

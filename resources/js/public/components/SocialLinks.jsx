@@ -12,8 +12,13 @@ function isWebUrl(url) {
     }
 }
 
+/** The links that will actually render: a caller can leave out its whole block when none would. */
+export function visibleSocialLinks(links) {
+    return Array.isArray(links) ? links.filter((link) => isWebUrl(link?.url)) : [];
+}
+
 export default function SocialLinks({ links, className = '', imgClassName = 'h-5 w-5 object-contain', textClassName = 'capitalize underline' }) {
-    const visibleLinks = Array.isArray(links) ? links.filter((link) => isWebUrl(link?.url)) : [];
+    const visibleLinks = visibleSocialLinks(links);
 
     if (visibleLinks.length === 0) return null;
 

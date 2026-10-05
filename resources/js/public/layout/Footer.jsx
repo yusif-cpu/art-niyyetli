@@ -2,7 +2,7 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useSiteData } from './SiteDataContext.jsx';
 import BrandLogo from '../components/BrandLogo.jsx';
-import SocialLinks from '../components/SocialLinks.jsx';
+import SocialLinks, { visibleSocialLinks } from '../components/SocialLinks.jsx';
 
 function itemLabel(locale, item) {
     return item.type === 'page' ? item.title : t(locale, `nav.${item.route_key}`);
@@ -40,6 +40,9 @@ export default function Footer() {
     const footerItems = Array.isArray(navigation.data?.footer) ? navigation.data.footer : [];
     const site = settings.data || {};
     const phoneHref = site.phone ? `tel:${site.phone.replace(/[^\d+]/g, '')}` : null;
+    // No address, hours, e-mail, phone or social link: no contact column at all. An empty grid item still takes a row
+    // on phones, and the row gap above it left a blank band at the bottom of the footer.
+    const hasContact = Boolean(site.address || site.opening_hours || site.contact_email || site.phone || visibleSocialLinks(socialLinks.data).length);
 
     return (
         <footer data-surface="wine" className="bg-wine px-page pt-step-8 pb-step-7 font-ui text-wine-ink">
@@ -56,34 +59,36 @@ export default function Footer() {
                 <LinkColumn label={t(locale, 'nav.footerSite')} items={headerItems} locale={locale} testId="footer-nav" />
                 <LinkColumn label={t(locale, 'nav.footerLegal')} items={footerItems} locale={locale} testId="footer-legal" />
 
-                <div className="flex flex-col items-start gap-step-4 text-meta" data-testid="footer-contact">
-                    {(site.address || site.opening_hours) && (
-                        <div className="leading-relaxed text-wine-ink-muted">
-                            {site.address && <p>{site.address}</p>}
-                            {site.opening_hours && <p className="figures">{site.opening_hours}</p>}
-                        </div>
-                    )}
-                    {(site.contact_email || site.phone) && (
-                        <div className="flex flex-col gap-step-1">
-                            {site.contact_email && (
-                                <a href={`mailto:${site.contact_email}`} className="hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
-                                    {site.contact_email}
-                                </a>
-                            )}
-                            {site.phone && (
-                                <a href={phoneHref} className="figures hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
-                                    {site.phone}
-                                </a>
-                            )}
-                        </div>
-                    )}
-                    <SocialLinks
-                        links={socialLinks.data}
-                        className="gap-x-step-4 gap-y-step-2"
-                        imgClassName="h-5 w-5 object-contain"
-                        textClassName="text-label text-wine-ink hover:underline"
-                    />
-                </div>
+                {hasContact && (
+                    <div className="flex flex-col items-start gap-step-4 text-meta" data-testid="footer-contact">
+                        {(site.address || site.opening_hours) && (
+                            <div className="leading-relaxed text-wine-ink-muted">
+                                {site.address && <p>{site.address}</p>}
+                                {site.opening_hours && <p className="figures">{site.opening_hours}</p>}
+                            </div>
+                        )}
+                        {(site.contact_email || site.phone) && (
+                            <div className="flex flex-col gap-step-1">
+                                {site.contact_email && (
+                                    <a href={`mailto:${site.contact_email}`} className="hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
+                                        {site.contact_email}
+                                    </a>
+                                )}
+                                {site.phone && (
+                                    <a href={phoneHref} className="figures hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
+                                        {site.phone}
+                                    </a>
+                                )}
+                            </div>
+                        )}
+                        <SocialLinks
+                            links={socialLinks.data}
+                            className="gap-x-step-4 gap-y-step-2"
+                            imgClassName="h-5 w-5 object-contain"
+                            textClassName="text-label text-wine-ink hover:underline"
+                        />
+                    </div>
+                )}
             </div>
         </footer>
     );

@@ -3,6 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{-- The brand mark alone, in brand red: SVG first, a 32px PNG for browsers without SVG icons, and the 180px
+         apple-touch-icon on the surface colour (iOS fills transparency with black). favicon.ico stays Laravel's. --}}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#3E0B0A">
     <title>{{ $seo->title }}</title>
     @if ($seo->description)
         <meta name="description" content="{{ $seo->description }}">

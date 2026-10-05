@@ -1,6 +1,6 @@
 import { LocaleProvider } from './i18n/LocaleContext.jsx';
 import { useRouter } from './lib/useRouter.js';
-import { SiteDataProvider } from './layout/SiteDataContext.jsx';
+import { SiteDataProvider, useJournalOpen } from './layout/SiteDataContext.jsx';
 import SiteShell from './layout/SiteShell.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import HomePage from './pages/HomePage.jsx';
@@ -30,13 +30,20 @@ const PAGES = {
     'not-found': NotFoundPage,
 };
 
+// The journal's routes exist only while the journal is open (see useJournalOpen).
+const JOURNAL_PAGES = ['articles', 'article-detail'];
+
 function RoutedApp() {
     const { page, params } = useRouter();
-    const Page = PAGES[page] || NotFoundPage;
+    const journalOpen = useJournalOpen();
+    const journalPage = JOURNAL_PAGES.includes(page);
+    // A closed journal is "not found", not an empty list. Until the navigation answers, the journal routes render
+    // nothing inside the shell rather than the journal for a moment.
+    const Page = journalPage && journalOpen === false ? NotFoundPage : PAGES[page] || NotFoundPage;
 
     return (
         <SiteShell>
-            <Page params={params} />
+            {!(journalPage && journalOpen === null) && <Page params={params} />}
         </SiteShell>
     );
 }

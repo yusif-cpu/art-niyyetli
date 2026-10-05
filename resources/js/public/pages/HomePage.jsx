@@ -6,6 +6,7 @@ import { usePageMeta } from '../lib/usePageMeta.js';
 import { formatDate, formatDateRange, formatMonthYear } from '../lib/format.js';
 import { getHomepage } from '../services/homepage.js';
 import { listArticles } from '../services/articles.js';
+import { useJournalOpen } from '../layout/SiteDataContext.jsx';
 import HomeWall from '../components/HomeWall.jsx';
 import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import ErrorState from '../components/ErrorState.jsx';
@@ -114,6 +115,7 @@ export default function HomePage() {
     const [retryToken, setRetryToken] = useState(0);
     const { data, loading, error } = useApiData(() => getHomepage(locale), [locale, retryToken]);
     const articles = useApiData(() => listArticles(locale, { per_page: LATEST_ARTICLES }), [locale]);
+    const journalOpen = useJournalOpen();
 
     const hero = findSection(data?.page, 'hero');
     const steps = findSection(data?.page, 'steps');
@@ -158,7 +160,8 @@ export default function HomePage() {
     const featured = Array.isArray(data.featured) ? data.featured : [];
     const artists = Array.isArray(data.artists) ? data.artists : [];
     const faqs = Array.isArray(data.faqs) ? data.faqs : [];
-    const latest = Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
+    // A closed journal (no "articles" menu item) shows no articles block, even with published articles.
+    const latest = journalOpen === true && Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
     const statsParts = heroStats(data, locale);
 
     return (

@@ -317,6 +317,74 @@
     }
 }
 
+/* The mascot snake (MascotSnake.jsx). Only stroke-dashoffset and the head's opacity change: nothing turns or moves as
+   a whole. pathLength="1" on the body makes 1 its full length, so no length is measured in JS. Plain ease-out, no
+   bounce. The classes are only put on when motion is allowed; the reduced-motion block below is a second guard. */
+.mascot-draw .ilan-govde {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: mascot-draw 1300ms ease-out forwards;
+}
+
+.mascot-draw .ilan-bas {
+    opacity: 0;
+    animation: mascot-head 180ms linear 1300ms forwards; /* the head appears once the body is drawn */
+}
+
+.mascot-draw.mascot-quick .ilan-govde {
+    animation-duration: 1100ms;
+}
+
+.mascot-draw.mascot-quick .ilan-bas {
+    animation-delay: 1100ms;
+}
+
+/* Held undrawn until the caller starts it (the home seal, until it is on screen). */
+.mascot-paused .ilan-govde,
+.mascot-paused .ilan-bas {
+    animation-play-state: paused;
+}
+
+/* The loading indicator: a 0.18 piece runs from the tail to the head, 1200 ms a lap. */
+.mascot-travel .ilan-govde {
+    stroke-dasharray: 0.18 0.82;
+    animation: mascot-travel 1200ms linear infinite;
+}
+
+@keyframes mascot-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes mascot-head {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes mascot-travel {
+    from {
+        stroke-dashoffset: 0.18;
+    }
+    to {
+        stroke-dashoffset: -0.82;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mascot .ilan-govde {
+        animation: none;
+        stroke-dasharray: none;
+        stroke-dashoffset: 0;
+    }
+
+    .mascot .ilan-bas {
+        animation: none;
+        opacity: 1;
+    }
+}
+
 /* Reduced motion: turn transitions and animations off globally; later stages inherit this. */
 @media (prefers-reduced-motion: reduce) {
     *,

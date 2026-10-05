@@ -141,14 +141,21 @@
     --color-line-strong: #908a82;
 
     /* Signal. Two tokens, counted TOGETHER for the "at most three Signals on one screen" limit.
-       --color-signal:     non-text and large type — logo, focus ring, active underline, large headings.
+       --color-signal:     non-text and large type — focus ring, active underline, large headings.
        --color-signal-ink: small red text — active nav text, the "Satılıb" badge, links, active filter.
        Rule: red text smaller than 18px OR lighter than weight 600 is always signal-ink; everything else signal.
        Never use either on a wine section (signal on wine is 3.94). */
     --color-signal: #f51000;
     --color-signal-ink: #da0f02;
 
-    /* Wine (bordo) sections: exhibition act, footer. Only wine-ink and wine-ink-muted are used on them. */
+    /* Brand red: the logo only, in the header and on the wine footer. NOT Signal — it is outside the three-Signal
+       budget, and stays a separate token even though the two reds are close (different roles).
+       The value is measured from the client's raster logo files; update this line when the brand book's official
+       value arrives. Logo contrast (non-text, 3:1): 3.59 on surface, 4.10 on wine. */
+    --color-brand: #fc0203;
+
+    /* Wine (bordo) sections: exhibition act, footer. Only wine-ink and wine-ink-muted are used on them — and the
+       brand-red logo in the footer. */
     --color-wine: #3e0b0a;
     --color-wine-ink: #f4f0e8;
     --color-wine-ink-muted: #b9a9a4;

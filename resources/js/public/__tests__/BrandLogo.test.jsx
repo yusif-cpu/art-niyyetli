@@ -25,8 +25,8 @@ describe('BrandLogo', () => {
     });
 
     it('takes its height and colour from className (the width follows the viewBox)', () => {
-        render(<BrandLogo className="h-7 text-wine" />);
+        render(<BrandLogo className="h-7 text-brand" />);
 
-        expect(screen.getByRole('img')).toHaveClass('h-7', 'text-wine', 'w-auto');
+        expect(screen.getByRole('img')).toHaveClass('h-7', 'text-brand', 'w-auto');
     });
 });

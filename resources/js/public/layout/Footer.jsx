@@ -45,8 +45,9 @@ export default function Footer() {
         <footer data-surface="wine" className="bg-wine px-page pt-step-8 pb-step-7 font-ui text-wine-ink">
             <div className="grid gap-step-7 md:grid-cols-4 md:gap-step-6" data-testid="footer-columns">
                 <div className="flex flex-col items-start gap-step-4">
-                    <a href="/" className="inline-flex min-h-11 items-center text-wine-ink" data-testid="footer-brand">
-                        <BrandLogo variant="lockup" className="h-6" />
+                    {/* The same lockup as the header, larger, in brand red on wine (4.10:1). */}
+                    <a href="/" className="inline-flex min-h-11 items-center text-brand" data-testid="footer-brand">
+                        <BrandLogo variant="lockup" className="h-10" />
                     </a>
                     {site.footer_text && <p className="max-w-xs text-meta text-wine-ink-muted">{site.footer_text}</p>}
                 </div>

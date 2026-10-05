@@ -50,7 +50,8 @@ describe('Site chrome (header + footer)', () => {
     });
 
     // (was: brand text when there is no logo image) — the brand is now the inline SVG logo, whatever the settings say.
-    it('shows the inline SVG logo in wine in the header: the lockup, and the mark alone below 375px', async () => {
+    // (was: wine, mark below 375px) — the logo is brand red, and the mark alone is shown below 400px.
+    it('shows the inline SVG logo in brand red in the header: the lockup, and the mark alone below 400px', async () => {
         mockShell();
         renderShell();
 
@@ -58,14 +59,42 @@ describe('Site chrome (header + footer)', () => {
         await within(header).findByRole('link', { name: 'Əsərlər' });
         const brand = within(header).getByTestId('header-brand');
         expect(brand).toHaveAttribute('href', '/');
-        expect(brand).toHaveClass('text-wine');
+        expect(brand).toHaveClass('text-brand');
+        expect(brand).not.toHaveClass('text-wine');
         const [lockup, mark] = within(brand).getAllByRole('img', { name: 'ArtNiyyətli' });
         expect(lockup.tagName.toLowerCase()).toBe('svg');
         expect(lockup).toHaveAttribute('data-logo', 'lockup');
-        expect(lockup).toHaveClass('hidden', 'min-[375px]:block', 'h-7');
+        expect(lockup).toHaveClass('hidden', 'min-[400px]:block', 'h-7');
         expect(mark).toHaveAttribute('data-logo', 'mark');
-        expect(mark).toHaveClass('min-[375px]:hidden', 'h-7');
+        expect(mark).toHaveClass('min-[400px]:hidden', 'h-7');
         expect(header.querySelector('img')).toBeNull();
+    });
+
+    it('draws the logo in the brand token, never Signal, with no colour change on hover or focus', async () => {
+        mockShell();
+        renderShell();
+        await within(screen.getByRole('banner')).findByRole('link', { name: 'Əsərlər' });
+
+        for (const brand of [screen.getByTestId('header-brand'), screen.getByTestId('footer-brand')]) {
+            expect(brand).toHaveClass('text-brand');
+            expect(brand.className).not.toMatch(/signal|wine/);
+            expect(brand.className).not.toMatch(/(hover|focus|focus-visible|active):text-/);
+            brand.querySelectorAll('svg[data-logo]').forEach((svg) => expect(svg.getAttribute('class')).not.toMatch(/text-|hover:|focus:/));
+        }
+    });
+
+    it('keeps inline style attributes out of the logo SVG (CSP style-src self)', async () => {
+        mockShell();
+        const { container } = renderShell();
+        await within(screen.getByRole('banner')).findByRole('link', { name: 'Əsərlər' });
+
+        const logos = container.querySelectorAll('svg[data-logo]');
+        expect(logos.length).toBeGreaterThan(0);
+        logos.forEach((svg) => {
+            expect(svg.hasAttribute('style')).toBe(false);
+            expect(svg.querySelectorAll('[style]')).toHaveLength(0);
+            expect(svg.querySelectorAll('[stroke], [fill]:not([fill="currentColor"])')).toHaveLength(0);
+        });
     });
 
     it('draws the logo with currentColor, so the parent colour sets it; no red brand text anywhere', async () => {
@@ -74,8 +103,10 @@ describe('Site chrome (header + footer)', () => {
         await within(screen.getByRole('banner')).findByRole('link', { name: 'Əsərlər' });
 
         container.querySelectorAll('svg[data-logo]').forEach((svg) => expect(svg).toHaveAttribute('fill', 'currentColor'));
-        expect(within(screen.getByRole('contentinfo')).getByTestId('footer-brand')).toHaveClass('text-wine-ink');
-        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' })).toHaveClass('h-6');
+        // (was: wine-ink, h-6) — brand red on the wine footer, the header's lockup at a larger size.
+        expect(within(screen.getByRole('contentinfo')).getByTestId('footer-brand')).toHaveClass('text-brand');
+        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' })).toHaveClass('h-10');
+        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' })).toHaveAttribute('data-logo', 'lockup');
         expect(screen.queryByText('ArtNiyyətli')).not.toBeInTheDocument();
         [...container.querySelectorAll('.text-signal')].forEach((el) => expect(el.closest('[data-testid$="-brand"]')).toBeNull());
     });

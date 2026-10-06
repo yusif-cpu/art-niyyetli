@@ -23,18 +23,43 @@ async function parseJsonSafely(response) {
     return isJson ? response.json().catch(() => null) : null;
 }
 
+// How many GET requests are in flight, for the page loading indicator (PageLoadingIndicator). A plain counter with
+// subscribers, read through useSyncExternalStore. Form posts are not counted: the form shows its own sending state.
+let inFlight = 0;
+const listeners = new Set();
+
+function setInFlight(next) {
+    inFlight = next;
+    listeners.forEach((listener) => listener());
+}
+
+export function subscribeRequests(listener) {
+    listeners.add(listener);
+
+    return () => listeners.delete(listener);
+}
+
+export function requestsInFlight() {
+    return inFlight;
+}
+
 export async function publicApiFetch(path, params = {}) {
     const qs = buildQueryString(params);
     const url = `/api/v1${path}${qs ? `?${qs}` : ''}`;
 
-    const response = await fetch(url, { headers: { Accept: 'application/json' } });
-    const body = await parseJsonSafely(response);
+    setInFlight(inFlight + 1);
+    try {
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        const body = await parseJsonSafely(response);
 
-    if (!response.ok) {
-        throw new PublicApiError(response.status, body?.message || 'Request failed.', body?.errors);
+        if (!response.ok) {
+            throw new PublicApiError(response.status, body?.message || 'Request failed.', body?.errors);
+        }
+
+        return body;
+    } finally {
+        setInFlight(inFlight - 1);
     }
-
-    return body;
 }
 
 export async function publicApiPost(path, payload) {

@@ -345,9 +345,10 @@
     animation-play-state: paused;
 }
 
-/* The loading indicator: a 0.18 piece runs from the tail to the head, 1200 ms a lap. */
+/* The loading indicator: a 0.18 piece runs from the tail to the head, 1200 ms a lap. The gap is longer than the
+   whole path, so only one piece is ever on it (with a 0.18 + 0.82 pattern the next piece showed at the tail). */
 .mascot-travel .ilan-govde {
-    stroke-dasharray: 0.18 0.82;
+    stroke-dasharray: 0.18 1;
     animation: mascot-travel 1200ms linear infinite;
 }
 
@@ -368,7 +369,7 @@
         stroke-dashoffset: 0.18;
     }
     to {
-        stroke-dashoffset: -0.82;
+        stroke-dashoffset: -1;
     }
 }
 

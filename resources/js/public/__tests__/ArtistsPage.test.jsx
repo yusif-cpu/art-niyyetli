@@ -73,6 +73,17 @@ describe('ArtistsPage', () => {
         expect(container.querySelectorAll('[class*="rounded"]')).toHaveLength(portraits.length);
     });
 
+    it('centres the name, the direction and the number of works under the round portrait', async () => {
+        global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [{ ...KAMRAN, artworks_count: 12 }] }));
+        renderPage();
+
+        const card = await screen.findByRole('link', { name: /Kamran Səfərli/ });
+        expect(card).toHaveClass('text-center');
+        // Nothing inside sets its own alignment back.
+        expect(card.innerHTML).not.toMatch(/text-left|text-start|text-right|text-end/);
+        expect(within(card).getByTestId('artist-works-count')).toHaveTextContent('12 əsər');
+    });
+
     it('draws the loading skeleton with the same round portraits, so the page does not jump', () => {
         global.fetch = vi.fn(() => new Promise(() => {}));
         renderPage();

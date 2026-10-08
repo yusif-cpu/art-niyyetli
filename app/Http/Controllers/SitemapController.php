@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Enums\ArticleStatus;
 use App\Enums\Locale;
+use App\Enums\NavRouteKey;
 use App\Enums\PageType;
 use App\Models\Article;
 use App\Models\Artist;
 use App\Models\Artwork;
 use App\Models\Exhibition;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Support\Cache\PublicContentCache;
 use App\Support\Seo\SeoText;
@@ -36,14 +38,17 @@ class SitemapController extends Controller
     {
         // The same document for every visitor, so it is cached as a string; an admin write invalidates it.
         $xml = $this->cache->remember('sitemap', (int) config('public_cache.ttl.sitemap'), function () {
+            // A closed journal's routes answer 404 (PublicPageSeoResolver), so none of its URLs belong in the sitemap.
+            $journalOpen = NavigationItem::routeIsOpen(NavRouteKey::Articles);
+
             $urls = array_merge(
                 [['loc' => SeoText::absoluteUrl('/'), 'lastmod' => null]],
-                $this->listingPages(),
+                $this->listingPages($journalOpen),
                 $this->staticPages(),
                 $this->artworks(),
                 $this->artists(),
                 $this->exhibitions(),
-                $this->articles(),
+                $journalOpen ? $this->articles() : [],
             );
 
             return $this->render($urls);
@@ -67,9 +72,10 @@ class SitemapController extends Controller
      * deliberately left out — its canonical already points at /artworks (PublicPageSeoResolver), so listing it
      * too would be a duplicate entry contradicting its own canonical.
      */
-    private function listingPages(): array
+    private function listingPages(bool $journalOpen): array
     {
         return collect(['artworks', 'artists', 'exhibitions', 'articles'])
+            ->reject(fn (string $segment) => $segment === 'articles' && ! $journalOpen)
             ->map(fn (string $segment) => ['loc' => $this->url($segment), 'lastmod' => null])
             ->all();
     }

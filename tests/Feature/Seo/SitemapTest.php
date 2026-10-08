@@ -9,7 +9,11 @@ use App\Models\Artwork;
 use App\Models\Exhibition;
 use App\Models\Genre;
 use App\Models\Medium;
+use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\CountsQueries;
@@ -226,6 +230,48 @@ class SitemapTest extends TestCase
             'genre_id' => Genre::firstOrCreate(['slug' => 'painting'])->id, 'year_created' => 2023,
             'width_cm' => 10, 'height_cm' => 10, 'price' => 100, 'inventory_code' => $code, 'is_active' => $active,
         ]);
+    }
+
+    public function test_a_closed_journal_removes_the_articles_listing_and_every_article_from_the_sitemap(): void
+    {
+        $this->publishedArticle('hidden-with-journal');
+        NavigationItem::where('route_key', 'articles')->update(['is_visible' => false]);
+
+        $body = $this->get('/sitemap.xml')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('<loc>http://localhost:8080/articles</loc>', $body);
+        $this->assertStringNotContainsString('/articles/', $body);
+        // The other catalogue routes are untouched.
+        foreach (['artworks', 'artists', 'exhibitions'] as $segment) {
+            $this->assertStringContainsString("<loc>http://localhost:8080/{$segment}</loc>", $body);
+        }
+    }
+
+    public function test_an_open_journal_keeps_the_articles_listing_and_its_articles_in_the_sitemap(): void
+    {
+        $this->publishedArticle('visible-with-journal');
+
+        $body = $this->get('/sitemap.xml')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<loc>http://localhost:8080/articles</loc>', $body);
+        $this->assertStringContainsString('<loc>http://localhost:8080/articles/visible-with-journal</loc>', $body);
+    }
+
+    public function test_the_sitemap_follows_the_journal_when_an_admin_closes_and_reopens_it(): void
+    {
+        // Through the admin API, so the cached sitemap is invalidated by the real write path rather than by the test.
+        $this->withoutMiddleware(PreventRequestForgery::class);
+        $admin = User::factory()->create();
+        $admin->roles()->attach(Role::query()->firstOrCreate(['name' => 'administrator']));
+        $item = NavigationItem::where('route_key', 'articles')->firstOrFail();
+        $this->publishedArticle('toggled-article');
+        $this->assertStringContainsString('/articles/toggled-article', $this->get('/sitemap.xml')->getContent());
+
+        $this->actingAs($admin)->putJson("/admin/navigation/{$item->id}", ['is_visible' => false])->assertOk();
+        $this->assertStringNotContainsString('/articles', $this->get('/sitemap.xml')->getContent());
+
+        $this->actingAs($admin)->putJson("/admin/navigation/{$item->id}", ['is_visible' => true])->assertOk();
+        $this->assertStringContainsString('/articles/toggled-article', $this->get('/sitemap.xml')->getContent());
     }
 
     /** @param  array<string, mixed>  $overrides */

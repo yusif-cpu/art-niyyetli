@@ -41,6 +41,34 @@ class SeoText
         return self::absoluteUrl('/'.implode('/', array_map('rawurlencode', $segments)));
     }
 
+    /**
+     * A phone number as the admin wrote it, in the international form structured data should carry
+     * ("070 353 05 12" -> "+994703530512"). Mirrors the public frontend's tel: links (lib/format.js phoneHref): a
+     * leading 0 (the Azerbaijani trunk prefix) becomes +994, "00" becomes "+", a bare "994..." gets its "+". The
+     * converted value is used only when it is a whole Azerbaijani number (+994 and nine digits); anything else is
+     * passed on as written with just the whitespace removed, since a wrongly prefixed number dials nothing.
+     * Presentation only: the stored setting is never changed. Null for an empty value.
+     */
+    public static function internationalPhone(?string $phone): ?string
+    {
+        $written = preg_replace('/\s+/u', '', (string) $phone);
+        $digits = preg_replace('/[^\d+]/', '', $written);
+
+        if ($digits === '') {
+            return null;
+        }
+
+        $converted = match (true) {
+            str_starts_with($digits, '+') => $digits,
+            str_starts_with($digits, '00') => '+'.substr($digits, 2),
+            str_starts_with($digits, '994') => '+'.$digits,
+            str_starts_with($digits, '0') => '+994'.substr($digits, 1),
+            default => $digits,
+        };
+
+        return preg_match('/^\+994\d{9}$/', $converted) === 1 ? $converted : $written;
+    }
+
     public static function ogLocale(Locale $locale): string
     {
         return match ($locale) {

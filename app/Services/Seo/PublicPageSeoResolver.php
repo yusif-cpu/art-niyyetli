@@ -4,6 +4,7 @@ namespace App\Services\Seo;
 
 use App\Enums\ArticleStatus;
 use App\Enums\Locale;
+use App\Enums\NavRouteKey;
 use App\Enums\PageType;
 use App\Http\Resources\Api\Concerns\ResolvesMediaUrl;
 use App\Models\Article;
@@ -13,6 +14,7 @@ use App\Models\ArtistTranslation;
 use App\Models\Artwork;
 use App\Models\Exhibition;
 use App\Models\ExhibitionTranslation;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Services\Admin\SiteSettingService;
@@ -37,6 +39,8 @@ class PublicPageSeoResolver
             count($segments) === 2 && $segments[0] === 'artists' => $this->artistDetail($segments[1], $locale),
             $segments === ['exhibitions'] => $this->exhibitions($locale),
             count($segments) === 2 && $segments[0] === 'exhibitions' => $this->exhibitionDetail($segments[1], $locale),
+            // A closed journal (its navigation item hidden or removed) is not found: a real 404, not an empty listing.
+            ($segments[0] ?? null) === 'articles' && ! NavigationItem::routeIsOpen(NavRouteKey::Articles) => $this->notFound($locale),
             $segments === ['articles'] => $this->articles($locale),
             count($segments) === 2 && $segments[0] === 'articles' => $this->articleDetail($segments[1], $locale),
             count($segments) === 1 => $this->staticPage($segments[0], $locale),
@@ -84,7 +88,7 @@ class PublicPageSeoResolver
                         'name' => SeoText::SITE_NAME,
                         'url' => $canonical,
                         'email' => $settings['contact_email'] ?? null,
-                        'telephone' => $settings['phone'] ?? null,
+                        'telephone' => SeoText::internationalPhone($settings['phone'] ?? null),
                     ]),
                 ])),
             ],

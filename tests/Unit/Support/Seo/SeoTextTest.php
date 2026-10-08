@@ -4,6 +4,7 @@ namespace Tests\Unit\Support\Seo;
 
 use App\Enums\Locale;
 use App\Support\Seo\SeoText;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class SeoTextTest extends TestCase
@@ -70,6 +71,39 @@ class SeoTextTest extends TestCase
         config(['app.url' => 'http://localhost:8080/']);
 
         $this->assertSame('http://localhost:8080/artists', SeoText::absoluteUrl('/artists'));
+    }
+
+    /** @return array<string, array{0: string, 1: string}> */
+    public static function azNumbers(): array
+    {
+        return [
+            'local with trunk 0 and spaces' => ['070 353 05 12', '+994703530512'],
+            'already international' => ['+994703530512', '+994703530512'],
+            'international with spaces and dashes' => ['+994 70 353-05-12', '+994703530512'],
+            '00 prefix' => ['00994703530512', '+994703530512'],
+            'bare 994 prefix' => ['994703530512', '+994703530512'],
+            'parentheses' => ['(070) 353 05 12', '+994703530512'],
+            'non-breaking spaces' => ["070\u{00A0}353\u{00A0}05\u{00A0}12", '+994703530512'],
+        ];
+    }
+
+    #[DataProvider('azNumbers')]
+    public function test_international_phone_converts_an_azerbaijani_number_to_e164(string $written, string $expected): void
+    {
+        $this->assertSame($expected, SeoText::internationalPhone($written));
+    }
+
+    public function test_international_phone_leaves_a_number_that_is_not_a_whole_azerbaijani_one_as_written(): void
+    {
+        // A digit too few: a +994 in front would make a number that dials nothing.
+        $this->assertSame('070353051', SeoText::internationalPhone('070 353 05 1'));
+        $this->assertSame('+441234567890', SeoText::internationalPhone('+44 1234 567 890'));
+    }
+
+    public function test_international_phone_is_null_for_an_empty_value(): void
+    {
+        $this->assertNull(SeoText::internationalPhone(null));
+        $this->assertNull(SeoText::internationalPhone('  '));
     }
 
     public function test_og_locale_maps_to_the_standard_underscore_region_format(): void

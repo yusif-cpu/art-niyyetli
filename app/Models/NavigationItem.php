@@ -47,4 +47,18 @@ class NavigationItem extends Model
     {
         return $this->belongsTo(Page::class);
     }
+
+    /**
+     * Whether the public site currently offers a route (e.g. the journal's /articles): a visible navigation item for
+     * it exists, in either placement. The public SPA decides the same way from the navigation payload
+     * (useJournalOpen), so the server's HTTP status and sitemap agree with what the visitor is shown.
+     */
+    public static function routeIsOpen(NavRouteKey $routeKey): bool
+    {
+        return static::query()
+            ->where('nav_type', NavType::Route->value)
+            ->where('route_key', $routeKey->value)
+            ->where('is_visible', true)
+            ->exists();
+    }
 }

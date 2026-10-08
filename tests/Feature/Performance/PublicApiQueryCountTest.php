@@ -60,7 +60,7 @@ class PublicApiQueryCountTest extends TestCase
         'ssr static page' => 4,
         'ssr artwork detail' => 8,
         'ssr artist detail' => 6,
-        'sitemap.xml' => 9,
+        'sitemap.xml' => 10, // 9 + the one navigation_items lookup that decides whether the journal's URLs are listed
         'robots.txt' => 0,
     ];
 

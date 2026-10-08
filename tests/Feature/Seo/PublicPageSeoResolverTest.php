@@ -13,6 +13,7 @@ use App\Models\Media;
 use App\Models\MediaVariant;
 use App\Models\Medium;
 use App\Models\Page;
+use App\Models\SiteSetting;
 use App\Services\Seo\PublicPageSeoResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -365,6 +366,25 @@ class PublicPageSeoResolverTest extends TestCase
         ]);
 
         return $article;
+    }
+
+    public function test_home_organization_telephone_is_international_while_the_stored_phone_is_unchanged(): void
+    {
+        SiteSetting::create(['key' => 'phone', 'value' => '070 353 05 12', 'type' => 'string']);
+
+        $seo = $this->resolver()->resolve([], Locale::Az);
+
+        $organization = collect($seo->jsonLd['@graph'])->firstWhere('@type', 'Organization');
+        $this->assertSame('+994703530512', $organization['telephone']);
+        $this->assertSame('070 353 05 12', SiteSetting::where('key', 'phone')->value('value'));
+    }
+
+    public function test_home_organization_omits_telephone_when_no_phone_is_set(): void
+    {
+        $seo = $this->resolver()->resolve([], Locale::Az);
+
+        $organization = collect($seo->jsonLd['@graph'])->firstWhere('@type', 'Organization');
+        $this->assertArrayNotHasKey('telephone', $organization);
     }
 
     public function test_articles_list_uses_a_live_published_count(): void

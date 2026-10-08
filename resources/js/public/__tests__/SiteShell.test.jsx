@@ -106,8 +106,8 @@ describe('SiteShell', () => {
         );
 
         await screen.findByText('ArtNiyyətli qalereyası'); // settings have arrived
-        expect(within(screen.getByRole('banner')).getAllByRole('img', { name: 'ArtNiyyətli' }).length).toBeGreaterThan(0);
-        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' }).tagName.toLowerCase()).toBe('svg');
+        expect(within(screen.getByRole('banner')).getAllByRole('img', { name: 'Art Niyyätli' }).length).toBeGreaterThan(0);
+        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'Art Niyyätli' }).tagName.toLowerCase()).toBe('svg');
         expect(document.querySelector('img[src="https://example.test/logo.webp"]')).toBeNull();
     });
 

@@ -148,7 +148,7 @@ describe('SiteDataProvider', () => {
 
         expect(screen.getByText('Page content')).toBeInTheDocument();
         // The logo does not wait for settings (inline SVG), and there is no navigation, contact info or social links yet.
-        expect(screen.getAllByRole('img', { name: 'ArtNiyyətli' }).length).toBeGreaterThanOrEqual(2);
+        expect(screen.getAllByRole('img', { name: 'Art Niyyätli' }).length).toBeGreaterThanOrEqual(2);
         expect(screen.queryByRole('link', { name: 'instagram' })).not.toBeInTheDocument();
         expect(screen.queryByText('hello@artniyyetli.az')).not.toBeInTheDocument();
     });
@@ -186,7 +186,7 @@ describe('SiteDataProvider', () => {
         expect(await within(screen.getByRole('banner')).findByRole('link', { name: 'Ana səhifə' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Məxfilik siyasəti' })).toBeInTheDocument();
         expect(screen.getAllByRole('link', { name: 'instagram' })).toHaveLength(1);
-        expect(screen.getAllByRole('img', { name: 'ArtNiyyətli' }).length).toBeGreaterThanOrEqual(2);
+        expect(screen.getAllByRole('img', { name: 'Art Niyyätli' }).length).toBeGreaterThanOrEqual(2);
         expect(screen.queryByText('hello@artniyyetli.az')).not.toBeInTheDocument();
     });
 

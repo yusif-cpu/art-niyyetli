@@ -61,12 +61,15 @@ describe('Site chrome (header + footer)', () => {
         expect(brand).toHaveAttribute('href', '/');
         expect(brand).toHaveClass('text-brand');
         expect(brand).not.toHaveClass('text-wine');
-        const [lockup, mark] = within(brand).getAllByRole('img', { name: 'ArtNiyyətli' });
+        const [lockup, mark] = within(brand).getAllByRole('img', { name: 'Art Niyyätli' });
         expect(lockup.tagName.toLowerCase()).toBe('svg');
         expect(lockup).toHaveAttribute('data-logo', 'lockup');
-        // (was: h-7) — the lockup is 32px; the mark below 400px stays 28px.
-        expect(lockup).toHaveClass('hidden', 'min-[400px]:block', 'h-8');
+        // (was: h-8, 32px) — the client's narrower 2.46 : 1 lockup is 36px; the mark below 400px stays 28px.
+        expect(lockup).toHaveClass('hidden', 'min-[400px]:block', 'h-9');
         expect(lockup).not.toHaveClass('h-7');
+        expect(lockup).not.toHaveClass('h-8');
+        // The link names the logo as it is spelled on it.
+        expect(brand).toHaveAccessibleName(/^Art Niyyätli/);
         expect(mark).toHaveAttribute('data-logo', 'mark');
         expect(mark).toHaveClass('min-[400px]:hidden', 'h-7');
         expect(header.querySelector('img')).toBeNull();
@@ -105,10 +108,11 @@ describe('Site chrome (header + footer)', () => {
         await within(screen.getByRole('banner')).findByRole('link', { name: 'Əsərlər' });
 
         container.querySelectorAll('svg[data-logo]').forEach((svg) => expect(svg).toHaveAttribute('fill', 'currentColor'));
-        // (was: wine-ink, h-6) — brand red on the wine footer, the header's lockup at a larger size.
+        // (was: wine-ink, h-6; then h-10 for the 3 : 1 lockup) — brand red on the wine footer, the header's lockup at a
+        // larger size: 48px keeps about the old 121px width at the new 2.46 : 1.
         expect(within(screen.getByRole('contentinfo')).getByTestId('footer-brand')).toHaveClass('text-brand');
-        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' })).toHaveClass('h-10');
-        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'ArtNiyyətli' })).toHaveAttribute('data-logo', 'lockup');
+        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'Art Niyyätli' })).toHaveClass('h-12');
+        expect(within(screen.getByRole('contentinfo')).getByRole('img', { name: 'Art Niyyätli' })).toHaveAttribute('data-logo', 'lockup');
         expect(screen.queryByText('ArtNiyyətli')).not.toBeInTheDocument();
         [...container.querySelectorAll('.text-signal')].forEach((el) => expect(el.closest('[data-testid$="-brand"]')).toBeNull());
     });
@@ -118,7 +122,7 @@ describe('Site chrome (header + footer)', () => {
         renderShell();
 
         const header = screen.getByRole('banner');
-        expect((await within(header).findAllByRole('img', { name: 'ArtNiyyətli' })).length).toBeGreaterThan(0);
+        expect((await within(header).findAllByRole('img', { name: 'Art Niyyätli' })).length).toBeGreaterThan(0);
         expect(within(header).queryByRole('navigation')).not.toBeInTheDocument();
         expect(within(header).getByRole('group', { name: 'Language' })).toBeInTheDocument();
         // Nothing to open, so no menu toggle either.

@@ -20,9 +20,15 @@ describe('favicon set', () => {
         const svg = read('public/favicon.svg').toString();
         expect(svg).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
         expect(svg).not.toMatch(/style|currentColor|<rect|<text/i);
-        // Every filled shape is the brand red; the mark's three paths, nothing else.
-        expect([...svg.matchAll(/fill="([^"]+)"/g)].map((m) => m[1].toLowerCase())).toEqual(Array(4).fill('#fc0203'));
-        expect(svg.match(/<path/g)).toHaveLength(3);
+        // Every fill is the brand red. (was: the old mark's three paths) — the paths are the brand mark's own, whatever
+        // their number: the favicon is brand/artniyyetli-mark.svg with currentColor fixed to #fc0203.
+        const fills = [...svg.matchAll(/fill="([^"]+)"/g)].map((m) => m[1].toLowerCase());
+        expect(fills.length).toBeGreaterThan(0);
+        expect(fills.every((fill) => fill === '#fc0203')).toBe(true);
+        const paths = (text) => [...text.matchAll(/<path\b[^>]*\sd="([^"]+)"/g)].map((m) => m[1]);
+        const mark = read('brand/artniyyetli-mark.svg').toString();
+        expect(paths(svg)).toEqual(paths(mark));
+        expect(/viewBox="([^"]+)"/.exec(svg)[1]).toBe(/viewBox="([^"]+)"/.exec(mark)[1]);
     });
 
     it('ships a transparent 32px PNG and a 180px apple-touch-icon on a solid background', () => {

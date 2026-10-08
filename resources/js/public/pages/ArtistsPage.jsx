@@ -32,7 +32,8 @@ export default function ArtistsPage() {
                     <div className={GRID} aria-busy="true" data-testid="artists-skeleton">
                         {Array.from({ length: 4 }, (_, i) => (
                             <div key={i} aria-hidden="true">
-                                <div className="aspect-[4/5] w-full border border-line bg-surface-field" />
+                                {/* The cards' round portrait, so the page does not jump when they load. */}
+                                <div className="aspect-square w-full rounded-full border border-line bg-surface-field" />
                                 <div className="mt-step-3 h-4 w-2/3 bg-surface-field" />
                             </div>
                         ))}

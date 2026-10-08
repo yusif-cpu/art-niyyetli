@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
@@ -6,12 +6,15 @@ import { usePageMeta } from '../lib/usePageMeta.js';
 import { formatDate, formatDateRange, formatMonthYear } from '../lib/format.js';
 import { getHomepage } from '../services/homepage.js';
 import { listArticles } from '../services/articles.js';
+import { useJournalOpen } from '../layout/SiteDataContext.jsx';
 import HomeWall from '../components/HomeWall.jsx';
 import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import ExhibitionRow from '../components/ExhibitionRow.jsx';
 import SectionHeading from '../components/SectionHeading.jsx';
 import ArtistCard from '../components/ArtistCard.jsx';
+import BrandLogo from '../components/BrandLogo.jsx';
+import MascotSnake from '../components/MascotSnake.jsx';
 
 const LATEST_ARTICLES = 3;
 
@@ -86,6 +89,44 @@ function CurrentShowBlock({ exhibition, locale }) {
     );
 }
 
+/**
+ * The seal at the end of the page: the lockup in brand red over the mascot, centred on the surface. Decorative (no
+ * text of its own; hidden from screen readers, the logo is already named in the header). The snake is drawn once, when
+ * 40% of the block is on screen; the observer is then disconnected, so scrolling back does not replay it (the brief
+ * allows no repeating scroll animation). Without IntersectionObserver it is drawn at once.
+ */
+function SealBlock() {
+    const ref = useRef(null);
+    const [seen, setSeen] = useState(false);
+
+    useEffect(() => {
+        const node = ref.current;
+        if (!node || typeof IntersectionObserver === 'undefined') {
+            setSeen(true);
+            return undefined;
+        }
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (!entries.some((entry) => entry.isIntersecting)) return;
+                setSeen(true);
+                observer.disconnect();
+            },
+            { threshold: 0.4 },
+        );
+        observer.observe(node);
+
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div ref={ref} aria-hidden="true" data-testid="home-seal" className="flex flex-col items-center text-brand">
+            <BrandLogo variant="lockup" className="h-14" />
+            {/* 420px, or the content width (the page gutters are already outside it) when that is narrower. */}
+            <MascotSnake mode="draw" paused={!seen} className="mt-step-5" />
+        </div>
+    );
+}
+
 function Skeleton() {
     return (
         <div className="px-page pt-step-8 pb-step-9" aria-busy="true" data-testid="home-skeleton">
@@ -105,15 +146,17 @@ function Skeleton() {
 /**
  * The home page: the hero (text only, text-hero), the wall of works at true size (on the first screen), the featured
  * works, the current exhibition as a wine band, the artists, the other exhibitions, the latest journal articles, the
- * "how it works" copy and the FAQs, and the contact block. Sections are step-9 apart, each with a small label over its
- * heading. Blocks without data are left out entirely. All copy comes from the API. Signal on this screen: the active
- * "Ana səhifə" only (the logo is wine) — none in the blocks, so room stays for an error.
+ * "how it works" copy and the FAQs, the contact block, and the seal (the lockup over the mascot). Sections are step-9
+ * apart, each with a small label over its heading. Blocks without data are left out entirely. All copy comes from the
+ * API. Signal on this screen: the active "Ana səhifə" only (the logo and the seal are brand red, not Signal) — none in
+ * the blocks, so room stays for an error.
  */
 export default function HomePage() {
     const { locale } = useLocale();
     const [retryToken, setRetryToken] = useState(0);
     const { data, loading, error } = useApiData(() => getHomepage(locale), [locale, retryToken]);
     const articles = useApiData(() => listArticles(locale, { per_page: LATEST_ARTICLES }), [locale]);
+    const journalOpen = useJournalOpen();
 
     const hero = findSection(data?.page, 'hero');
     const steps = findSection(data?.page, 'steps');
@@ -158,7 +201,8 @@ export default function HomePage() {
     const featured = Array.isArray(data.featured) ? data.featured : [];
     const artists = Array.isArray(data.artists) ? data.artists : [];
     const faqs = Array.isArray(data.faqs) ? data.faqs : [];
-    const latest = Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
+    // A closed journal (no "articles" menu item) shows no articles block, even with published articles.
+    const latest = journalOpen === true && Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
     const statsParts = heroStats(data, locale);
 
     return (
@@ -281,6 +325,8 @@ export default function HomePage() {
                     {t(locale, 'home.contact')}
                 </a>
             </section>
+
+            <SealBlock />
         </div>
     );
 }

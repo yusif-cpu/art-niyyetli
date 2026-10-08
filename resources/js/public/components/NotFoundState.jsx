@@ -1,4 +1,5 @@
 import { usePageMeta } from '../lib/usePageMeta.js';
+import MascotSnake from './MascotSnake.jsx';
 
 /**
  * A "not found" screen for a missing page or record: the title, a short text and plain links back (`links` =
@@ -9,6 +10,8 @@ export default function NotFoundState({ title, body, links = [] }) {
 
     return (
         <div className="px-page pt-step-8 pb-step-9 font-ui">
+            {/* The mascot, drawn once (1100 ms) when the page opens, then still. Decorative: hidden from screen readers. */}
+            <MascotSnake mode="draw" drawMs={1100} className="mb-step-6 text-brand" />
             <h1 className="text-display">{title}</h1>
             {body && <p className="mt-step-4 max-w-prose text-ui text-ink-muted">{body}</p>}
             {links.length > 0 && (

@@ -1,6 +1,8 @@
 // The brand's two vector marks, from brand/artniyyetli-lockup.svg and brand/artniyyetli-mark.svg (the brand book's
-// vectors). Inline, not <img src>: `currentColor` only reaches an inline SVG, so one drawing is wine on light surfaces
-// and wine-ink on wine, set by the parent's text colour. The API's raster `logo_url` is not used for this reason.
+// vectors). Inline, not <img src>: `currentColor` only reaches an inline SVG. The colour is not fixed here on purpose:
+// the call site sets it with a text colour (today `text-brand`, the brand red, in the header and on the wine footer),
+// so a change of brand colour or surface is one class at the call site, never a redrawn logo. No fill, stroke or
+// style attributes are kept in the paths (the CSP blocks inline style). The API's raster `logo_url` is not used.
 
 // Lockup: the mark, then "ART" over "NİYYƏTLİ". viewBox 239.42 × 79.33 (≈ 3 : 1).
 const LOCKUP = {

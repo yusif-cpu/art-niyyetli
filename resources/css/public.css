@@ -141,14 +141,21 @@
     --color-line-strong: #908a82;
 
     /* Signal. Two tokens, counted TOGETHER for the "at most three Signals on one screen" limit.
-       --color-signal:     non-text and large type — logo, focus ring, active underline, large headings.
+       --color-signal:     non-text and large type — focus ring, active underline, large headings.
        --color-signal-ink: small red text — active nav text, the "Satılıb" badge, links, active filter.
        Rule: red text smaller than 18px OR lighter than weight 600 is always signal-ink; everything else signal.
        Never use either on a wine section (signal on wine is 3.94). */
     --color-signal: #f51000;
     --color-signal-ink: #da0f02;
 
-    /* Wine (bordo) sections: exhibition act, footer. Only wine-ink and wine-ink-muted are used on them. */
+    /* Brand red: the logo only, in the header and on the wine footer. NOT Signal — it is outside the three-Signal
+       budget, and stays a separate token even though the two reds are close (different roles).
+       The value is measured from the client's raster logo files; update this line when the brand book's official
+       value arrives. Logo contrast (non-text, 3:1): 3.59 on surface, 4.10 on wine. */
+    --color-brand: #fc0203;
+
+    /* Wine (bordo) sections: exhibition act, footer. Only wine-ink and wine-ink-muted are used on them — and the
+       brand-red logo in the footer. */
     --color-wine: #3e0b0a;
     --color-wine-ink: #f4f0e8;
     --color-wine-ink-muted: #b9a9a4;
@@ -307,6 +314,75 @@
     .bg-wine :focus-visible,
     [data-surface='wine'] :focus-visible {
         outline-color: var(--color-wine-ink);
+    }
+}
+
+/* The mascot snake (MascotSnake.jsx). Only stroke-dashoffset and the head's opacity change: nothing turns or moves as
+   a whole. pathLength="1" on the body makes 1 its full length, so no length is measured in JS. Plain ease-out, no
+   bounce. The classes are only put on when motion is allowed; the reduced-motion block below is a second guard. */
+.mascot-draw .ilan-govde {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: mascot-draw 1300ms ease-out forwards;
+}
+
+.mascot-draw .ilan-bas {
+    opacity: 0;
+    animation: mascot-head 180ms linear 1300ms forwards; /* the head appears once the body is drawn */
+}
+
+.mascot-draw.mascot-quick .ilan-govde {
+    animation-duration: 1100ms;
+}
+
+.mascot-draw.mascot-quick .ilan-bas {
+    animation-delay: 1100ms;
+}
+
+/* Held undrawn until the caller starts it (the home seal, until it is on screen). */
+.mascot-paused .ilan-govde,
+.mascot-paused .ilan-bas {
+    animation-play-state: paused;
+}
+
+/* The loading indicator: a 0.18 piece runs from the tail to the head, 1200 ms a lap. The gap is longer than the
+   whole path, so only one piece is ever on it (with a 0.18 + 0.82 pattern the next piece showed at the tail). */
+.mascot-travel .ilan-govde {
+    stroke-dasharray: 0.18 1;
+    animation: mascot-travel 1200ms linear infinite;
+}
+
+@keyframes mascot-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes mascot-head {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes mascot-travel {
+    from {
+        stroke-dashoffset: 0.18;
+    }
+    to {
+        stroke-dashoffset: -1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mascot .ilan-govde {
+        animation: none;
+        stroke-dasharray: none;
+        stroke-dashoffset: 0;
+    }
+
+    .mascot .ilan-bas {
+        animation: none;
+        opacity: 1;
     }
 }
 

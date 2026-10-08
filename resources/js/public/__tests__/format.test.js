@@ -1,9 +1,32 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, formatDateRange, formatDimensions, formatPrice } from '../lib/format.js';
+import { formatDate, formatDateRange, formatDimensions, formatPrice, phoneHref } from '../lib/format.js';
 
 const NBSP = ' ';
 
 describe('format', () => {
+    it('makes every tel: link international, whatever form the admin wrote the number in', () => {
+        expect(phoneHref('070 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('(070) 353-05-12')).toBe('tel:+994703530512');
+        expect(phoneHref('+994 70 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('00994 70 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('994 70 353 05 12')).toBe('tel:+994703530512');
+        expect(phoneHref('')).toBeNull();
+        expect(phoneHref(null)).toBeNull();
+    });
+
+    it('keeps the admin\'s value (whitespace removed only) when the result is not +994 and nine digits', () => {
+        // One digit too few, one too many: a +994 in front would make a link that dials nothing.
+        expect(phoneHref('070 353 05 1')).toBe('tel:070353051');
+        expect(phoneHref('070 353 05 123')).toBe('tel:07035305123');
+        expect(phoneHref('+994 70 353 05 1')).toBe('tel:+99470353051');
+        // Punctuation stays as written; only whitespace (tabs and non-breaking spaces too) goes.
+        expect(phoneHref('(070) 353-05-1')).toBe('tel:(070)353-05-1');
+        expect(phoneHref('070 353\t05 1')).toBe('tel:070353051');
+        // A short local number and a foreign number are not Azerbaijani mobile numbers either.
+        expect(phoneHref('12 34')).toBe('tel:1234');
+        expect(phoneHref('+44 20 7946 0958')).toBe('tel:+442079460958');
+    });
+
     it('groups thousands with non-breaking spaces and never shows .00', () => {
         expect(formatPrice(6400, 'AZN')).toBe(`6${NBSP}400${NBSP}AZN`);
         expect(formatPrice(900, 'AZN')).toBe(`900${NBSP}AZN`);

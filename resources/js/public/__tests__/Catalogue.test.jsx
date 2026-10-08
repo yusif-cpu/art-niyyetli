@@ -171,6 +171,28 @@ describe('Catalogue', () => {
         expect(badge).toHaveClass('text-ink-muted');
     });
 
+    it('gives the Signal to a range validation error too: the filter count drops to ink-muted while it shows, and gets it back after', async () => {
+        window.history.replaceState(null, '', '/artworks?genre=abstraksiya');
+        renderPage();
+        await screen.findByText('Uzun divar');
+        const badge = screen.getByTestId('active-filter-count');
+        expect(badge).toHaveClass('text-signal-ink');
+
+        const [, priceMin] = screen.getAllByLabelText('ən azı');
+        const [, priceMax] = screen.getAllByLabelText('ən çoxu');
+        fireEvent.change(priceMin, { target: { value: '500' } });
+        fireEvent.change(priceMax, { target: { value: '100' } });
+        fireEvent.blur(priceMax);
+
+        await screen.findByText('"ən çoxu" "ən azı"-dan kiçik ola bilməz.');
+        await waitFor(() => expect(screen.getByTestId('active-filter-count')).not.toHaveClass('text-signal-ink'));
+        expect(screen.getByTestId('active-filter-count')).toHaveClass('text-ink-muted');
+
+        // Correcting the range clears the error, and the count takes the Signal back.
+        fireEvent.change(priceMax, { target: { value: '900' } });
+        await waitFor(() => expect(screen.getByTestId('active-filter-count')).toHaveClass('text-signal-ink'));
+    });
+
     it('puts a one-metre ScaleRule above the grid, at the current k', async () => {
         renderPage();
         await screen.findByText('Uzun divar', {}, { timeout: 3000 });

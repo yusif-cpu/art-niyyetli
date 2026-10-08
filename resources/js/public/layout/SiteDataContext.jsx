@@ -39,6 +39,22 @@ export function useSiteSettings() {
 }
 
 /**
+ * Whether the journal is open: the admin closes it by taking the "articles" item out of both menus, so the menus are
+ * the switch (there is no separate setting). true / false once the navigation has loaded; null while it loads, so a
+ * caller can wait instead of flashing the journal and then taking it away. A failed navigation request, or no provider
+ * (a page rendered on its own), leaves it open: a menu error must not hide published articles.
+ */
+export function useJournalOpen() {
+    const navigation = useContext(SiteDataContext)?.navigation;
+    if (!navigation || navigation.error) return true;
+    if (!navigation.data) return null;
+
+    const items = [navigation.data.header, navigation.data.footer].flatMap((list) => (Array.isArray(list) ? list : []));
+
+    return items.some((item) => item.route_key === 'articles');
+}
+
+/**
  * The profile link of an artwork's artist, from the `artist.slug` the API sends (S3, resolved). No slug (an inactive
  * artist, or one without an AZ slug) means no link: the caller renders the name as plain text. No extra request.
  */

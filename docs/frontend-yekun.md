@@ -83,6 +83,7 @@ Bütün hesablama bir yerdədir: `lib/wall.js`, testləri ilə.
 | `ink-muted` | #6B625C | köməkçi mətn (5,2:1) |
 | `line` / `line-strong` | #DDD6CA / #908A82 | bəzək xətti / interaktiv kənar (3,0:1) |
 | `signal` / `signal-ink` | #F51000 / #DA0F02 | aktiv menyu, fokus halqası / kiçik qırmızı mətn, xəta (4,56:1) |
+| `brand` | #FC0203 | yalnız loqo, header və footer (açıq fonda 3,59:1, bordoda 4,10:1); müştərinin raster faylından ölçülüb, kitabçanın rəsmi dəyəri gələndə yenilənir |
 | `wine` / `wine-ink` / `wine-ink-muted` | #3E0B0A / #F4F0E8 / #B9A9A4 | footer, bordo zolaq, dolu düymə (14,7:1 və 7,4:1) |
 
 **Şriftlər:** Montserrat (interfeys və başlıqlar), Spectral (oxunan mətn, əsər adları kursivlə). İkisi də saytın öz serverindən yüklənir, latin-ext alt dəstləri ilə.
@@ -110,7 +111,7 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 
 - bölmə başlığının üstündə kiçik etiket (`SectionHeading`);
 - siyahı səhifələrində başlıq zolağı (`PageHeader`);
-- loqo inline SVG-dir: açıq fonda `wine`, bordo fonda `wine-ink`;
+- loqo inline SVG-dir, `currentColor` ilə, həm header-də, həm bordo footer-də marka qırmızısı (`text-brand`). Header-də nişan və yanında iki sətirli yazı, footer-də eyni lockup böyük ölçüdə, tək nişan yalnız 400 pikseldən dar header-də (və favicon-da);
 - telefonda bütün kliklənən elementlər ən azı 44 × 44 pikseldir.
 
 **Qadağalar:**
@@ -118,10 +119,31 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 - qradiyent yoxdur;
 - kölgə yalnız divara asılmış əsərdədir (`shadow-hang`);
 - yumru künc yoxdur (`--radius-input: 0`);
-- təkrarlanan animasiya yoxdur;
+- təkrarlanan animasiya yoxdur (tək istisna: yüklənmə göstəricisi, aşağıda "Maskot");
 - böyük hərfli etiket yoxdur;
-- Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil;
+- Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil. Bu büdcə səhifənin sakit vəziyyətinə aiddir: xəta görünəndə (API xətası, forma və ya aralıq doğrulaması) ekranda üçdən çox qırmızı element ola bilər, çünki xəta görünməlidir; bu halda aktiv filtr sayı kimi məlumat elementləri Signal-ı itirir. Marka qırmızısı loqoda işlənir və üç Signal büdcəsinə daxil deyil: `--color-signal` və `--color-brand` rəngləri yaxın olsa da, rolları ayrı olduğu üçün ayrı tokenlərdir;
 - CSP: inline skript və `<style>` yoxdur, `100vh` işlənmir, xarici şrift və xəritə çərçivəsi yoxdur.
+
+### Maskot (ilan)
+
+`MascotSnake` komponenti, rəngi `currentColor` ilə çağırış yerindən gəlir. Hər üç yerdə `text-brand`. Marka qırmızısıdır, Signal büdcəsinə daxil deyil. Gözü deşikdir (`evenodd`), altdakı fonun rəngini göstərir.
+
+**Üç istifadə yeri (dördüncü əlavə olunmur):**
+
+1. **Ana səhifənin möhür bloku:** son bölmə ilə footer arasında, mərkəzdə. Yuxarıda lockup, altında ilan (`draw`, 1300 ms, eni 420 piksel və ya məzmun eni). Blok ekranın 40%-ə qədər görünəndə bir dəfə cızılır, sonra observer ayrılır, scroll ilə təkrarlanmır. Dekorativdir, ekran oxuyucudan gizlidir.
+2. **Yüklənmə göstəricisi:** hər hansı API sorğusu gedərkən ekranın üst kənarında, mərkəzdə, 240 piksel (`travel`: gövdənin 0.18 uzunluğunda parçası quyruqdan başa doğru sürünür, bir dövr 1200 ms, başı yoxdur). Sorğular bitəndə DOM-dan çıxır. Ekran oxuyucu üçün `role="status"` ilə "Yüklənir..." mətni. Səhifələrin statik skeletonları qalır.
+3. **404 və "tapılmadı" ekranları:** başlığın üstündə, səhifə açılanda bir dəfə cızılır (`draw`, 1100 ms), sonra sakit qalır.
+
+**Hərəkət qaydaları:**
+
+- yalnız `stroke-dashoffset` və başın şəffaflığı dəyişir, element dönmür və yerini dəyişmir;
+- baş gövdə bitəndən sonra 180 ms ərzində görünür;
+- sadə `ease-out`, sıçrayış yoxdur;
+- keyframe-lər `public.css`-dədir, sinif adları ilə; inline `style` və React `style={{}}` yoxdur;
+- `prefers-reduced-motion: reduce` olanda animasiya sinfi qoşulmur: `draw` dərhal tam cızılmış (başı ilə), `travel` sakit tam xətt kimi görünür;
+- dövri hərəkət yalnız yüklənmə göstəricisində var, çünki o dekorasiya deyil, vəziyyət göstəricisidir.
+
+**Mənbə fayl müvəqqətidir.** `brand/maskot-ilan.svg` bizim çəkdiyimiz variantdır. Komponent bu faylı build zamanı mətn kimi oxuyur (`?raw`) və yalnız həndəsəni götürür, path məlumatı başqa yerdə təkrarlanmır. Müştərinin maskot vektoru gələndə yalnız bu fayl dəyişir. Şərt: yeni faylda eyni quruluş qalmalıdır: `stroke` ilə çəkilmiş `.ilan-govde` (`pathLength="1"`), doldurulmuş `.ilan-bas` qrupu, göz `evenodd` ilə deşik.
 
 ## 4. Backend-dən gözlənilən açıq maddələr
 

@@ -5,6 +5,7 @@ import { usePageMeta } from '../lib/usePageMeta.js';
 import { useApiData } from '../lib/useApiData.js';
 import { seoMeta } from '../lib/seoMeta.js';
 import { excerpt } from '../lib/text.js';
+import { phoneHref } from '../lib/format.js';
 import { useSiteSettings } from '../layout/SiteDataContext.jsx';
 import { getEnquirySubjects } from '../services/enquiries.js';
 import { getPage } from '../services/pages.js';
@@ -33,7 +34,7 @@ function Details({ settings, locale }) {
                 </>
             ),
         },
-        settings?.phone && { key: 'phone', label: t(locale, 'contact.phone'), value: <a href={`tel:${settings.phone.replace(/[^\d+]/g, '')}`} className="figures text-ink">{settings.phone}</a> },
+        settings?.phone && { key: 'phone', label: t(locale, 'contact.phone'), value: <a href={phoneHref(settings.phone)} className="figures text-ink">{settings.phone}</a> },
         settings?.contact_email && { key: 'email', label: t(locale, 'contact.email'), value: <a href={`mailto:${settings.contact_email}`} className="text-ink">{settings.contact_email}</a> },
         settings?.opening_hours && { key: 'hours', label: t(locale, 'contact.hours'), value: <span className="figures whitespace-pre-line">{settings.opening_hours}</span> },
     ].filter(Boolean);

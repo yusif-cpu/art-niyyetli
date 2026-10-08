@@ -18,6 +18,9 @@ import MascotSnake from '../components/MascotSnake.jsx';
 
 const LATEST_ARTICLES = 3;
 
+// The site's name in both spellings, lower case: the page titles' "ArtNiyyətli" and the logo's "Art Niyyätli".
+const SITE_NAMES = ['artniyyətli', 'art niyyätli'];
+
 // Section keys are free-form admin data, not a fixed backend enum: look known sections up by key (never by
 // position — the hero can be deactivated, renamed or reordered) and ignore every other key.
 function findSection(page, key) {
@@ -162,9 +165,11 @@ export default function HomePage() {
     const steps = findSection(data?.page, 'steps');
     const cta = findSection(data?.page, 'cta');
     // A hero heading that already IS the site name (a legitimate admin choice) would otherwise double up as
-    // "ArtNiyyətli | ArtNiyyətli"; every other case keeps the "Page Title | ArtNiyyətli" convention.
+    // "ArtNiyyətli | ArtNiyyətli"; every other case keeps the "Page Title | ArtNiyyətli" convention. The name as the
+    // logo spells it ("Art Niyyätli") counts as the site name too, so that heading leaves the title as it was.
     const heroTitle = hero?.heading?.trim();
-    const homeTitle = heroTitle && heroTitle.toLocaleLowerCase('az') !== 'artniyyətli' ? `${heroTitle} | ArtNiyyətli` : 'ArtNiyyətli';
+    const isSiteName = (text) => SITE_NAMES.includes(text.toLocaleLowerCase('az').replace(/\s+/g, ' '));
+    const homeTitle = heroTitle && !isSiteName(heroTitle) ? `${heroTitle} | ArtNiyyətli` : 'ArtNiyyətli';
 
     usePageMeta({
         title: data ? homeTitle : undefined,

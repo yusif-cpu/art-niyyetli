@@ -161,6 +161,19 @@ describe('HomePage', () => {
         await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
     });
 
+    it('treats the logo spelling "Art Niyyätli" as the site name too: the h1 shows it, the title stays "ArtNiyyətli"', async () => {
+        homepage = {
+            page: { sections: [{ key: 'hero', heading: 'Art Niyyätli', body: 'Discover Azerbaijani art.', sort_order: 0, image_url: null }] },
+            stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [],
+        };
+        mockApi();
+        renderHome();
+
+        expect(await screen.findByRole('heading', { level: 1, name: 'Art Niyyätli' })).toBeInTheDocument();
+        await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
+        expect(document.title).not.toMatch(/\|/);
+    });
+
     it('does not crash when the locale changes after the page has already loaded', async () => {
         renderHome(<LocaleSwitcher />);
         await screen.findByText('Wall Piece');

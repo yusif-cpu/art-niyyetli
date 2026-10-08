@@ -155,7 +155,13 @@ describe('the home seal', () => {
         const seal = await screen.findByTestId('home-seal');
         const mascot = () => seal.querySelector('svg[data-mascot]');
 
-        const observer = observers.find((o) => o.observe.mock.calls.some(([node]) => node === seal));
+        // The observer is made in an effect, which can run after the element is already in the DOM (under load the
+        // full suite caught it before): wait for it rather than look once.
+        const observer = await waitFor(() => {
+            const found = observers.find((o) => o.observe.mock.calls.some(([node]) => node === seal));
+            expect(found).toBeDefined();
+            return found;
+        });
         expect(observer.options).toEqual({ threshold: 0.4 });
         expect(mascot()).toHaveClass('mascot-draw', 'mascot-paused');
 

@@ -19,7 +19,7 @@ Yekun vəziyyət:
 | `/` | Ana səhifə | Mətn hero, əsərlər həqiqi ölçüdə divarda (ilk ekranda), seçilmiş əsərlər, cari sərgi bordo zolaqda, rəssamlar, digər sərgilər, son məqalələr, "necə işləyir", suallar, əlaqə bloku |
 | `/artworks` | Kataloq | Başlıq zolağı və əsər sayı, filtrlər (janr, texnika, rəssam, ölçü, qiymət, status, sıralama, ünvanda saxlanılır), əsərlər bir k ilə həqiqi ölçüdə, miqyas xətti, səhifələmə |
 | `/artworks/:kod` | Əsər | Əsas şəkil (ən çoxu 6 px/sm), kiçik şəkillər, göstəricilər cədvəli, "divarda gör" (240 / 270 / 320 sm divar, 170 sm fiqur), video, sorğu forması, WhatsApp, bənzər əsərlər |
-| `/artists` | Rəssamlar | 4:5 portret kartları: 4, 3 və 1 sütun |
+| `/artists` | Rəssamlar | Dairəvi portretli kartlar, ad, istiqamət və əsər sayı ortada: 4, 3 və 1 sütun |
 | `/artists/:slug` | Rəssam | Yığcam başlıq, əsərləri divarda, tərcümeyi-hal və yaradıcılıq yanaşması iki sütunda, sərgi tarixçəsi, mükafatlar, sorğu keçidi |
 | `/exhibitions` | Sərgilər | Cari, gələcək və arxiv qrupları; arxiv səhifələnir |
 | `/exhibitions/:slug` | Sərgi | Başlıq, tarix, məkan, status və mətn bir blokda; sərgidəki əsərlər divarda; iştirakçı rəssamlar; fotolar və video; sorğu keçidi |

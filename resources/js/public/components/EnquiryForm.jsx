@@ -36,16 +36,26 @@ const EMPTY_FIELDS = { name: '', email: '', phone: '', message: '', website: '' 
  * line, no Signal, no green, no icon. It shows only after the API has answered with success; then every field is
  * emptied, the errors are cleared, `onSuccess` tells the page (the contact page resets its own subject), and the
  * focus moves to the message. The button stays disabled until the visitor types in any field, which also clears the
- * message (no timer). On a failure nothing is reset. A 429 keeps its message and a disabled button. The submit button
- * is the only filled one: wine with wine-ink.
+ * message (no timer). On a failure nothing is reset and the button stays open, a 429 included: the server enforces
+ * its rate limit, the form does not lock the visitor out. The focus goes to the first invalid field when the server
+ * names one (422), otherwise to the error message (500, network error, 429, a 422 without a known field). The submit
+ * button is the only filled one: wine with wine-ink.
  */
 export default function EnquiryForm({ subject, artworkCode, onSuccess }) {
     const { locale } = useLocale();
     const [fields, setFields] = useState(EMPTY_FIELDS);
     const [errors, setErrors] = useState({});
-    const [status, setStatus] = useState('idle'); // idle | submitting | success | rate-limited
+    const [status, setStatus] = useState('idle'); // idle | submitting | success
     const [banner, setBanner] = useState(''); // the error / rate-limit text (role="alert")
     const successRef = useRef(null);
+    const alertRef = useRef(null);
+    // Set by a failure that names no field: the error message takes the focus once it is on the page. The disabled
+    // button has dropped the focus to <body> by then, so without this a keyboard user would be left nowhere.
+    const [focusAlert, setFocusAlert] = useState(0);
+
+    useEffect(() => {
+        if (focusAlert) alertRef.current?.focus();
+    }, [focusAlert]);
 
     // The focus goes to the message in the commit that shows it (not a frame later: a click into a field in between
     // would lose its typing to the message). Success is only reached by a send, so this runs once per send.
@@ -72,14 +82,18 @@ export default function EnquiryForm({ subject, artworkCode, onSuccess }) {
     // Tab order, so focus lands on whichever invalid field the visitor would reach first — client-side required
     // checks and server-side field errors (422) both resolve through the same map.
     const fieldRefs = { artwork_code: useRef(null), name: useRef(null), email: useRef(null), phone: useRef(null), message: useRef(null) };
+    // true when a field took the focus.
     function focusFirstError(errorsByField) {
         const firstKey = Object.keys(fieldRefs).find((key) => errorsByField[key]?.length);
-        fieldRefs[firstKey]?.current?.focus();
+        const field = fieldRefs[firstKey]?.current;
+        field?.focus();
+
+        return Boolean(field);
     }
 
     async function handleSubmit(e) {
         e.preventDefault();
-        if (sending.current || status === 'submitting' || status === 'success' || status === 'rate-limited') return;
+        if (sending.current || status === 'submitting' || status === 'success') return;
 
         const required = { name: fields.name, email: fields.email, message: fields.message };
         const validationErrors = Object.fromEntries(
@@ -104,24 +118,24 @@ export default function EnquiryForm({ subject, artworkCode, onSuccess }) {
             setStatus('success');
             onSuccess?.();
         } catch (err) {
+            setStatus('idle');
             if (err instanceof PublicApiError && err.isRateLimited) {
-                setStatus('rate-limited');
                 setBanner(t(locale, 'enquiryForm.rateLimited'));
+                setFocusAlert((n) => n + 1);
             } else if (err instanceof PublicApiError) {
-                setStatus('idle');
                 setErrors(err.errors || {});
                 setBanner(err.message);
-                focusFirstError(err.errors || {});
+                if (!focusFirstError(err.errors || {})) setFocusAlert((n) => n + 1);
             } else {
-                setStatus('idle');
                 setBanner(t(locale, 'common.error'));
+                setFocusAlert((n) => n + 1);
             }
         } finally {
             sending.current = false;
         }
     }
 
-    const disabled = status === 'submitting' || status === 'rate-limited' || status === 'success';
+    const disabled = status === 'submitting' || status === 'success';
     const errorOf = (key) => errors[key]?.[0];
     // Typing in any field after a success clears the message and opens the button again: one action, two results.
     const set = (key) => (e) => {
@@ -146,7 +160,7 @@ export default function EnquiryForm({ subject, artworkCode, onSuccess }) {
                 {success ? t(locale, 'enquiryForm.success') : ''}
             </div>
             {banner && (
-                <p role="alert" className="mb-step-4 text-ui text-signal-ink">
+                <p ref={alertRef} role="alert" tabIndex={-1} data-testid="enquiry-error" className="mb-step-4 text-ui text-signal-ink outline-none">
                     {banner}
                 </p>
             )}

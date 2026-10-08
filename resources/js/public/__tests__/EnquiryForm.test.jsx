@@ -222,8 +222,11 @@ describe('EnquiryForm', () => {
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('shows a friendly rate-limit message on 429 and keeps the button disabled', async () => {
-        global.fetch = vi.fn().mockResolvedValue(jsonResponse(429, { message: 'Too Many Attempts.' }));
+    // (was: the button stayed disabled after a 429) — the server enforces the rate limit; the form does not lock.
+    it('shows a friendly rate-limit message on 429 and leaves the button open, so the visitor can try again', async () => {
+        global.fetch = vi.fn()
+            .mockResolvedValueOnce(jsonResponse(429, { message: 'Too Many Attempts.' }))
+            .mockResolvedValueOnce(jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' }));
 
         render(<LocaleProvider><EnquiryForm subject="buy" artworkCode="AN-1" /></LocaleProvider>);
 
@@ -232,8 +235,59 @@ describe('EnquiryForm', () => {
         await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
         await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
 
-        expect(await screen.findByText('Həddindən çox sorğu göndərildi. Zəhmət olmasa bir az sonra yenidən cəhd edin.')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Göndər' })).toBeDisabled();
+        expect(await screen.findByRole('alert')).toHaveTextContent('Həddindən çox sorğu göndərildi. Zəhmət olmasa bir az sonra yenidən cəhd edin.');
+        const button = screen.getByRole('button', { name: 'Göndər' });
+        expect(button).not.toBeDisabled();
+        expect(screen.getByLabelText('Ad')).toHaveValue('Aysel');
+
+        // A second try goes through to the server.
+        await userEvent.click(button);
+        await waitFor(() => expect(screen.getByTestId('enquiry-success')).toHaveTextContent(SUCCESS));
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    describe('focus after a failed send', () => {
+        it.each([
+            ['a 500', () => vi.fn().mockResolvedValue(jsonResponse(500, { message: 'Server Error' })), 'Server Error'],
+            ['a network error', () => vi.fn().mockRejectedValue(new TypeError('Failed to fetch')), 'Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.'],
+            ['a 429', () => vi.fn().mockResolvedValue(jsonResponse(429, { message: 'Too Many Attempts.' })), 'Həddindən çox sorğu göndərildi. Zəhmət olmasa bir az sonra yenidən cəhd edin.'],
+            ['a 422 that names no known field', () => vi.fn().mockResolvedValue(jsonResponse(422, { message: 'The given data was invalid.', errors: { subject: ['Invalid subject.'] } })), 'The given data was invalid.'],
+        ])('moves the focus to the error message on %s', async (_, makeFetch, text) => {
+            global.fetch = makeFetch();
+            render(<LocaleProvider><EnquiryForm subject="general_contact" /></LocaleProvider>);
+            await fillAll();
+            await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+
+            const alert = await screen.findByRole('alert');
+            expect(alert).toHaveTextContent(text);
+            await waitFor(() => expect(alert).toHaveFocus());
+            expect(alert).toHaveAttribute('tabindex', '-1');
+            expect(screen.getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
+            expectFilled();
+        });
+
+        it('still moves the focus to the first invalid field on a 422 that names one', async () => {
+            global.fetch = vi.fn().mockResolvedValue(jsonResponse(422, { message: 'The given data was invalid.', errors: { email: ['The email must be a valid email address.'], message: ['Too short.'] } }));
+            render(<LocaleProvider><EnquiryForm subject="general_contact" /></LocaleProvider>);
+            await fillAll();
+            await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+
+            await screen.findByText('The email must be a valid email address.');
+            await waitFor(() => expect(screen.getByLabelText('E-poçt')).toHaveFocus());
+            expect(screen.getByRole('alert')).not.toHaveFocus();
+        });
+
+        it('takes the focus again on a repeated failure with the same message', async () => {
+            global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+            render(<LocaleProvider><EnquiryForm subject="general_contact" /></LocaleProvider>);
+            await fillAll();
+            await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+            await waitFor(() => expect(screen.getByRole('alert')).toHaveFocus());
+
+            await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+            await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+            await waitFor(() => expect(screen.getByRole('alert')).toHaveFocus());
+        });
     });
 
     it('shows field-level errors on a 422 and leaves the button enabled', async () => {

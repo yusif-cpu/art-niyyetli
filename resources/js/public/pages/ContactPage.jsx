@@ -114,7 +114,9 @@ export default function ContactPage() {
                                     </select>
                                 </label>
                             )}
-                            <EnquiryForm subject={subject} />
+                            {/* After a successful send the form empties itself; the subject is this page's state, so
+                                it goes back to the first subject here. */}
+                            <EnquiryForm subject={subject} onSuccess={() => setSelectedSubject('')} />
                         </div>
                     )}
                 </div>

@@ -117,12 +117,62 @@ describe('ContactPage', () => {
         await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
         await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
 
-        await screen.findByText('Sorğunuz qeydə alındı.');
+        await screen.findByText('Mesajınız uğurla göndərildi.');
 
         const submitCall = global.fetch.mock.calls.find(([url]) => url === '/api/v1/enquiries');
         const body = JSON.parse(submitCall[1].body);
         expect(body.subject).toBe('media');
         expect(body).not.toHaveProperty('artwork_code');
+    });
+
+    it('after a successful send, resets the subject with the fields, and keeps the chosen language', async () => {
+        global.fetch = vi.fn((url, options) => {
+            if (url.startsWith('/api/v1/enquiry-subjects')) return Promise.resolve(jsonResponse(200, { data: url.includes('locale=en') ? SUBJECTS_EN : SUBJECTS }));
+            if (options?.method === 'POST') return Promise.resolve(jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' }));
+            return Promise.resolve(jsonResponse(200, { data: [] }));
+        });
+        render(<LocaleProvider><LocaleSwitcher /><ContactPage /></LocaleProvider>);
+
+        await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+        await screen.findByRole('option', { name: 'Media enquiry' });
+        await userEvent.selectOptions(screen.getByLabelText('Subject'), 'media');
+        await userEvent.type(screen.getByLabelText('Name'), 'John');
+        await userEvent.type(screen.getByLabelText('Email'), 'john@example.com');
+        await userEvent.type(screen.getByLabelText('Message'), 'Hello');
+        await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+        const success = screen.getByTestId('enquiry-success');
+        await waitFor(() => expect(success).toHaveTextContent('Your message has been sent.'));
+        expect(screen.getByLabelText('Subject')).toHaveValue('general_contact'); // back to the first subject
+        for (const label of ['Name', 'Email', 'Phone (optional)', 'Message']) expect(screen.getByLabelText(label)).toHaveValue('');
+        expect(screen.getByRole('button', { name: 'EN' })).toHaveAttribute('aria-current', 'true');
+        expect(localStorage.getItem('public-locale')).toBe('en');
+    });
+
+    it('treats a new subject choice after a success as touching the form: the message goes, the button opens', async () => {
+        global.fetch = vi.fn((url, options) => {
+            if (url.startsWith('/api/v1/enquiry-subjects')) return Promise.resolve(jsonResponse(200, { data: SUBJECTS }));
+            if (options?.method === 'POST') return Promise.resolve(jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' }));
+            return Promise.resolve(jsonResponse(200, { data: [] }));
+        });
+        render(<LocaleProvider><ContactPage /></LocaleProvider>);
+
+        await screen.findByLabelText('Mövzu');
+        await userEvent.selectOptions(screen.getByLabelText('Mövzu'), 'media');
+        await userEvent.type(screen.getByLabelText('Ad'), 'Aysel');
+        await userEvent.type(screen.getByLabelText('E-poçt'), 'aysel@example.com');
+        await userEvent.type(screen.getByLabelText('Mesaj'), 'Salam');
+        await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
+
+        const success = screen.getByTestId('enquiry-success');
+        await waitFor(() => expect(success).toHaveTextContent('Mesajınız uğurla göndərildi.'));
+        // The page's own reset (back to the first subject) does not count as the visitor touching it.
+        expect(screen.getByLabelText('Mövzu')).toHaveValue('general_contact');
+        expect(screen.getByRole('button', { name: 'Göndər' })).toBeDisabled();
+
+        await userEvent.selectOptions(screen.getByLabelText('Mövzu'), 'collaboration');
+        expect(success).toBeEmptyDOMElement();
+        expect(screen.getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
     });
 
     it('never renders a blank option when a subject is missing its translated label', async () => {
@@ -187,7 +237,7 @@ describe('ContactPage', () => {
         await userEvent.type(screen.getByLabelText('Message'), 'Hello');
         await userEvent.click(submitButton);
 
-        await screen.findByText('Your enquiry has been recorded.');
+        await screen.findByText('Your message has been sent.');
     });
 
     it('sets the meta and og/twitter descriptions from the CMS contact page once it loads (the server resolves the same record for its SSR head)', async () => {

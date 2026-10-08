@@ -317,6 +317,13 @@
     }
 }
 
+/* The enquiry form's honeypot (EnquiryForm.jsx): a real field moved off-screen, never display:none (some bots skip
+   hidden fields, and the trap would catch nothing). A class, not a style attribute: the CSP allows no inline style. */
+.honeypot {
+    position: absolute;
+    left: -9999px;
+}
+
 /* The mascot snake (MascotSnake.jsx). Only stroke-dashoffset and the head's opacity change: nothing turns or moves as
    a whole. pathLength="1" on the body makes 1 its full length, so no length is measured in JS. Plain ease-out, no
    bounce. The classes are only put on when motion is allowed; the reduced-motion block below is a second guard. */

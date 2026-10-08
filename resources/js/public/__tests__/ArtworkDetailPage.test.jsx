@@ -333,7 +333,8 @@ describe('ArtworkDetailPage', () => {
         enquiryResponse = () => jsonResponse(201, { message: 'Sorğunuz qeydə alındı.' });
     });
 
-    it('shows success in plain ink, with no Signal and no green', async () => {
+    // (was: the message with the fields still filled) — the shared form empties itself here too; the code stays.
+    it('shows success in plain ink, with no Signal and no green, and empties the form but keeps the artwork code', async () => {
         renderPage();
 
         const form = (await screen.findByLabelText('Əsərin kodu')).closest('form');
@@ -342,10 +343,18 @@ describe('ArtworkDetailPage', () => {
         await userEvent.type(within(form).getByLabelText('Mesaj'), 'Salam');
         await userEvent.click(within(form).getByRole('button', { name: 'Göndər' }));
 
-        const success = await within(form).findByRole('status');
-        expect(success).toHaveTextContent('Sorğunuz qeydə alındı.');
-        expect(success).toHaveClass('text-ink');
+        const success = within(form).getByRole('status');
+        await waitFor(() => expect(success).toHaveTextContent('Mesajınız uğurla göndərildi.'));
+        expect(success).toHaveClass('text-ink', 'border-line');
         expect(form.innerHTML).not.toMatch(/signal|green/);
+        expect(within(form).getByLabelText('Ad')).toHaveValue('');
+        expect(within(form).getByLabelText('E-poçt')).toHaveValue('');
+        expect(within(form).getByLabelText('Mesaj')).toHaveValue('');
+        expect(within(form).getByLabelText('Əsərin kodu')).toHaveValue('AN-2026-014');
+        // The subject is fixed on this page ("buy"): the next send carries it again.
+        await userEvent.type(within(form).getByLabelText('Ad'), 'Kamran');
+        expect(success).toBeEmptyDOMElement();
+        expect(within(form).getByRole('button', { name: 'Göndər' })).not.toBeDisabled();
     });
 
     it('does not crash when the locale changes after the page has loaded', async () => {

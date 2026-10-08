@@ -56,13 +56,32 @@ describe('ArtistsPage', () => {
         expect(list.className).not.toMatch(/md:grid-cols-2|lg:grid-cols/);
     });
 
-    it('draws portraits as upright rectangles: no rounded class anywhere', async () => {
+    // (was: upright 4:5 rectangles, no rounded class anywhere) — the client chose round portraits for the artist
+    // cards: the one exception to "no radius", and only the portrait is rounded.
+    it('draws the card portraits as circles (a square crop), with the 1px line; nothing else on the page is rounded', async () => {
         global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: [KAMRAN, AYGUN] }));
         const { container } = renderPage();
         await screen.findByText('Kamran Səfərli');
 
-        expect(container.innerHTML).not.toMatch(/rounded/);
-        screen.getAllByTestId('artist-portrait').forEach((p) => expect(p).toHaveClass('aspect-[4/5]', 'border', 'border-line'));
+        const portraits = screen.getAllByTestId('artist-portrait');
+        portraits.forEach((p) => {
+            expect(p).toHaveClass('aspect-square', 'rounded-full', 'overflow-hidden', 'border', 'border-line');
+            expect(p).toHaveAttribute('data-shape', 'circle');
+            expect(p).not.toHaveClass('aspect-[4/5]');
+            expect(p.className).not.toMatch(/shadow/);
+        });
+        expect(container.querySelectorAll('[class*="rounded"]')).toHaveLength(portraits.length);
+    });
+
+    it('draws the loading skeleton with the same round portraits, so the page does not jump', () => {
+        global.fetch = vi.fn(() => new Promise(() => {}));
+        renderPage();
+
+        const skeleton = screen.getByTestId('artists-skeleton');
+        const fields = skeleton.querySelectorAll('.rounded-full');
+        expect(fields).toHaveLength(4);
+        fields.forEach((field) => expect(field).toHaveClass('aspect-square', 'border-line'));
+        expect(skeleton.innerHTML).not.toMatch(/aspect-\[4\/5\]/);
     });
 
     it('shows the number of works ("12 əsər", text-caption, ink-muted) from artworks_count; none for 0 or a missing count', async () => {

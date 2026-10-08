@@ -118,7 +118,7 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 
 - qradiyent yoxdur;
 - kölgə yalnız divara asılmış əsərdədir (`shadow-hang`);
-- yumru künc yoxdur (`--radius-input: 0`);
+- yumru künc yoxdur (`--radius-input: 0`). Tək istisna müştərinin qərarıdır: rəssam kartlarındakı portret (rəssamlar siyahısı və ana səhifənin rəssamlar bloku) tam dairədir, şəkil kvadrat kəsilir. Rəssamın öz səhifəsində və sərgi səhifəsində portret 4:5 düzbucaqlı qalır;
 - təkrarlanan animasiya yoxdur (tək istisna: yüklənmə göstəricisi, aşağıda "Maskot");
 - böyük hərfli etiket yoxdur;
 - Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil. Bu büdcə səhifənin sakit vəziyyətinə aiddir: xəta görünəndə (API xətası, forma və ya aralıq doğrulaması) ekranda üçdən çox qırmızı element ola bilər, çünki xəta görünməlidir; bu halda aktiv filtr sayı kimi məlumat elementləri Signal-ı itirir. Marka qırmızısı loqoda işlənir və üç Signal büdcəsinə daxil deyil: `--color-signal` və `--color-brand` rəngləri yaxın olsa da, rolları ayrı olduğu üçün ayrı tokenlərdir;

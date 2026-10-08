@@ -166,7 +166,9 @@ describe('launch scenarios', () => {
 
             expect(await screen.findByRole('heading', { level: 1, name: t('az', 'notFound.title') })).toBeInTheDocument();
             expect(screen.queryByText(ARTICLE.title)).not.toBeInTheDocument();
-            expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toMatch(/noindex/);
+            // The meta tag is set in an effect, which can run after the heading is on screen (under the full suite's
+            // load it once had not yet): wait for it.
+            await waitFor(() => expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toMatch(/noindex/));
         });
 
         it('opens /articles normally while the journal is open', async () => {

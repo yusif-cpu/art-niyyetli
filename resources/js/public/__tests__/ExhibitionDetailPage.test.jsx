@@ -78,26 +78,33 @@ describe('ExhibitionDetailPage', () => {
         expect(screen.getByRole('link', { name: /^A Piece, Aygün Məmmədova/ })).toHaveAttribute('href', '/artworks/AN-1');
     });
 
-    it('lists the participating artists with links; an artist without a slug is plain text', async () => {
+    it('lists the participating artists with the artists list card; an artist without a slug is plain text', async () => {
         renderPage();
 
         const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
-        expect(within(section).getByRole('link', { name: 'Aygün Məmmədova' })).toHaveAttribute('href', '/artists/aygun-mammadova');
+        expect(within(section).getByRole('link', { name: /Aygün Məmmədova/ })).toHaveAttribute('href', '/artists/aygun-mammadova');
         expect(within(section).getByText('No Slug').closest('a')).toBeNull();
-        expect(within(section).getAllByTestId('artist-portrait')).toHaveLength(2);
+        expect(within(section).getAllByTestId('artist-card-work')).toHaveLength(2);
+        expect(within(section).getByRole('list')).toHaveClass('grid-cols-2', 'md:grid-cols-4');
+        expect(within(section).queryByTestId('artist-portrait')).not.toBeInTheDocument();
     });
 
-    it('shows a participating artist\'s portrait when portrait_url is sent, the tone field otherwise', async () => {
-        exhibition = { ...detail, artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova', portrait_url: 'https://example.test/aygun.webp' }, { id: 6, slug: 'other', name: 'Other Artist', portrait_url: null }] };
+    it('shows a participating artist\'s work from this show, the monogram otherwise (never the portrait)', async () => {
+        const withImage = { ...work('AN-1', 'A Piece', 180, 140), image_url: 'https://example.test/an1.webp' };
+        exhibition = {
+            ...detail,
+            artworks: [withImage, work('AN-2', 'Small Piece', 40, 30)],
+            artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova', portrait_url: 'https://example.test/aygun.webp' }, { id: 6, slug: 'other', name: 'Other Artist', portrait_url: null }],
+        };
         mockApi();
         renderPage();
 
         const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
-        const [withPortrait, without] = within(section).getAllByTestId('artist-portrait');
-        expect(within(withPortrait).getByRole('img', { name: 'Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/aygun.webp');
-        expect(withPortrait).toHaveClass('bg-surface-field');
-        expect(within(without).queryByRole('img')).not.toBeInTheDocument();
-        expect(without.className).toMatch(/bg-surface-field(-2)?\b/);
+        const [aygun, other] = within(section).getAllByTestId('artist-card-work');
+        expect(aygun.querySelector('img')).toHaveAttribute('src', 'https://example.test/an1.webp');
+        expect(other.querySelector('img')).toBeNull();
+        expect(within(other).getByTestId('artist-monogram')).toHaveTextContent('OA');
+        expect(section.innerHTML).not.toMatch(/aygun\.webp/);
     });
 
     it('shows the photos with a URL in a plain grid, no shadow, and no video when there is none', async () => {

@@ -7,7 +7,8 @@ import { seoMeta } from '../lib/seoMeta.js';
 import { excerpt } from '../lib/text.js';
 import { formatDateRange } from '../lib/format.js';
 import { getExhibition } from '../services/exhibitions.js';
-import ArtistPortrait from '../components/ArtistPortrait.jsx';
+import ArtistCard from '../components/ArtistCard.jsx';
+import { artworkFor } from '../lib/artists.js';
 import HomeWall from '../components/HomeWall.jsx';
 import YoutubeEmbed from '../components/YoutubeEmbed.jsx';
 import ErrorState from '../components/ErrorState.jsx';
@@ -77,27 +78,14 @@ export default function ExhibitionDetailPage({ params }) {
             {artists.length > 0 && (
                 <section aria-labelledby="exhibition-artists">
                     <h2 id="exhibition-artists" className="mb-step-4 text-subheading">{t(locale, 'exhibitions.participatingArtists')}</h2>
-                    <ul className="grid grid-cols-1 gap-step-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {artists.map((artist) => {
-                            const body = (
-                                <>
-                                    {/* E10 artists carry no portrait yet: the field keeps the slug's tone until one comes. */}
-                                    <ArtistPortrait artist={{ slug: artist.slug ?? String(artist.id), first_name: artist.name, portrait_url: artist.portrait_url }} className="w-12 shrink-0" hover={Boolean(artist.slug)} />
-                                    <span className="text-byline-lg decoration-1 underline-offset-2 group-hover:underline">{artist.name}</span>
-                                </>
-                            );
-
-                            return (
-                                <li key={artist.id}>
-                                    {/* A slug can be null here (E10 is not filtered): then the name is plain text. */}
-                                    {artist.slug ? (
-                                        <a href={`/artists/${encodeURIComponent(artist.slug)}`} className="group flex items-center gap-step-3 text-ink">{body}</a>
-                                    ) : (
-                                        <span className="flex items-center gap-step-3 text-ink">{body}</span>
-                                    )}
-                                </li>
-                            );
-                        })}
+                    {/* The artists list's own card: one of the artist's works in this show, else the monogram. A slug
+                        can be null here (E10 is not filtered): then the card is plain, not a link. */}
+                    <ul className="grid grid-cols-2 gap-x-step-4 gap-y-step-7 md:grid-cols-4 md:gap-x-step-6">
+                        {artists.map((artist) => (
+                            <li key={artist.id}>
+                                <ArtistCard artist={artist} artwork={artworkFor(artist, artworks)} />
+                            </li>
+                        ))}
                     </ul>
                 </section>
             )}

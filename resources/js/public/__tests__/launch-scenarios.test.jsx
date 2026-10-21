@@ -143,10 +143,11 @@ describe('launch scenarios', () => {
             mockApi({ navigation: NAV_CLOSED });
             render(<App />);
             await footerReady();
-            await screen.findByRole('heading', { name: t('az', 'home.contact') });
+            // (was: the contact block's heading) — the home page has no contact block now; the artists block shows it has rendered.
+            await screen.findByRole('heading', { name: t('az', 'home.artists') });
             await waitFor(() => expect(global.fetch.mock.calls.some(([url]) => url.includes('/articles'))).toBe(true));
 
-            expect(screen.queryByRole('heading', { name: t('az', 'home.articles') })).not.toBeInTheDocument();
+            expect(screen.queryByRole('heading', { name: t('az', 'home.notes') })).not.toBeInTheDocument();
             expect(screen.queryByText(ARTICLE.title)).not.toBeInTheDocument();
             expect(within(footer()).queryByRole('link', { name: t('az', 'nav.articles') })).not.toBeInTheDocument();
         });
@@ -193,14 +194,14 @@ describe('launch scenarios', () => {
             const list = page.closest('ul');
             expect(list.children).toHaveLength(n);
             // The column count stays the page's own (cards keep their width; a short row stays left-aligned).
-            expect(list).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-3', 'xl:grid-cols-4');
+            expect(list).toHaveClass('grid', 'grid-cols-2', 'md:grid-cols-4');
             [...list.children].forEach((li) => expect(li.className).not.toMatch(/span|stretch|w-full/));
             unmount();
 
             renderInSite(<HomePage />);
             const home = await screen.findByTestId('home-artists');
             expect(home.children).toHaveLength(n);
-            expect(home).toHaveClass('grid', 'grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4');
+            expect(home).toHaveClass('grid', 'grid-cols-2', 'md:grid-cols-4');
             [...home.children].forEach((li) => expect(li.className).not.toMatch(/span|stretch/));
         });
     });

@@ -13,11 +13,12 @@ export function fieldToneFor(code) {
     return FIELD_TONES[hash % FIELD_TONES.length];
 }
 
-function lowerFirst(text, locale) {
+export function lowerFirst(text, locale) {
     return text ? text.charAt(0).toLocaleLowerCase(locale) + text.slice(1) : text;
 }
 
-function priceLine(artwork, locale) {
+/** The card's price line: the price, or "Satılıb" / "Rezerv edilib" / "Qiymət sorğu ilə" (muted). */
+export function priceLine(artwork, locale) {
     if (artwork.availability === 'sold') return { text: t(locale, 'artwork.sold'), muted: true };
     if (artwork.availability === 'reserved') return { text: t(locale, 'artwork.reserved'), muted: true };
     const price = formatPrice(artwork.price, artwork.currency);

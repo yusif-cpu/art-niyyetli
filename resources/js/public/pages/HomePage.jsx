@@ -3,21 +3,23 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
-import { formatDate, formatDateRange, formatMonthYear } from '../lib/format.js';
+import { formatDate, formatDateRange } from '../lib/format.js';
+import { artworkFor } from '../lib/artists.js';
 import { getHomepage } from '../services/homepage.js';
 import { listArticles } from '../services/articles.js';
 import { useJournalOpen } from '../layout/SiteDataContext.jsx';
-import HomeWall from '../components/HomeWall.jsx';
-import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import ErrorState from '../components/ErrorState.jsx';
-import ExhibitionRow from '../components/ExhibitionRow.jsx';
 import SectionHeading from '../components/SectionHeading.jsx';
 import ArtistCard from '../components/ArtistCard.jsx';
+import FeaturedRow from '../components/FeaturedRow.jsx';
 
 const LATEST_ARTICLES = 3;
 
 // The site's name in both spellings, lower case: the page titles' "ArtNiyyətli" and the logo's "Art Niyyätli".
 const SITE_NAMES = ['artniyyətli', 'art niyyätli'];
+
+// The space between the home page's sections: 180px at 1440, 96px at 375 (12.5vw in between).
+const SECTION_GAP = 'gap-[clamp(96px,12.5vw,180px)]';
 
 // Section keys are free-form admin data, not a fixed backend enum: look known sections up by key (never by
 // position — the hero can be deactivated, renamed or reordered) and ignore every other key.
@@ -25,42 +27,37 @@ function findSection(page, key) {
     return page?.sections?.find((section) => section.key === key);
 }
 
-function SectionCopy({ section, headingClassName, as: Heading }) {
-    return (
-        <div>
-            {section.heading && <Heading className={headingClassName}>{section.heading}</Heading>}
-            {section.body && <p className="mt-step-3 max-w-prose font-editorial text-reading text-ink-muted">{section.body}</p>}
-        </div>
-    );
-}
-
 /**
- * The parts of the hero's stats line from `homepage.stats` ("8 əsər kataloqda", "4 rəssam təmsil olunur",
- * "aprel 2027 sərgi"), shown middle-dot separated. The exhibition part is the month of the first current (else
- * upcoming) exhibition and drops when there is none. Without stats (missing, or no positive count): null, no line.
+ * The parts of the statement's meta line from `homepage.stats`: "12 əsər", "4 rəssam", shown middle-dot separated.
+ * A missing or zero count is left out; with neither: null, no line.
  */
-export function heroStats(data, locale) {
+export function statementMeta(data, locale) {
     const stats = data?.stats;
     const count = (n) => (typeof n === 'number' && n > 0 ? n : null);
     const parts = [
-        count(stats?.artworks) && t(locale, 'home.statsArtworks').replace('{n}', stats.artworks),
-        count(stats?.artists) && t(locale, 'home.statsArtists').replace('{n}', stats.artists),
+        count(stats?.artworks) && t(locale, 'home.metaArtworks').replace('{n}', stats.artworks),
+        count(stats?.artists) && t(locale, 'home.metaArtists').replace('{n}', stats.artists),
     ].filter(Boolean);
-    if (parts.length === 0) return null;
 
-    const show = data.exhibitions?.current?.[0] ?? data.exhibitions?.upcoming?.[0] ?? (data.exhibitions ? null : data.exhibition);
-    const month = show ? formatMonthYear(show.start_date, locale) : null;
-    if (month) parts.push(t(locale, 'home.statsExhibition').replace('{date}', month));
-
-    return parts;
+    return parts.length > 0 ? parts : null;
 }
 
-// Sections are set apart by the step-9 rhythm and their labels, not by rules between them.
-function Block({ id, label, title, children }) {
+/** A plain text link with the line under it, on a 44px touch box. */
+function LineLink({ href, children, className = '' }) {
+    return (
+        <a href={href} className={`inline-flex min-h-11 shrink-0 items-center text-meta text-ink ${className}`}>
+            <span className="link-line">{children}</span>
+        </a>
+    );
+}
+
+/** A section: the small label over its light h2 on the left, a "Bütün …" link on the label's line on the right. */
+function Block({ id, label, title, link, children }) {
     return (
         <section aria-labelledby={id}>
-            <div className="mb-step-6">
+            <div className="mb-step-7 flex items-baseline justify-between gap-step-5">
                 <SectionHeading id={id} label={label}>{title}</SectionHeading>
+                {link && <LineLink href={link.href}>{link.label}</LineLink>}
             </div>
             {children}
         </section>
@@ -68,51 +65,121 @@ function Block({ id, label, title, children }) {
 }
 
 /**
- * The current exhibition as a wine band across the full width (out of the page gutter), filled from inside with
- * step-8. It keeps the page's step-9 gaps above and below: flush, the featured works' prices sat on its top edge and
- * the next label on its bottom edge. Wine is a brand surface, not Signal: only wine-ink and wine-ink-muted on it.
+ * The hero: the section's photograph across the full width, as it is — no overlay, no text on it — min(78vh, 760px)
+ * tall (60vh on phones), cover-cropped. Under it, on the page gutter, one line: the current exhibition's title
+ * (Spectral italic 22px) over its artists, dates and city (12px, ink-muted), and "Sərgiyə bax" on the right (below it
+ * on phones). Without a current exhibition the line holds the hero's heading and subheading. The page's h1 is the
+ * hero heading: visible in that fallback, for screen readers only when the exhibition takes the line.
  */
-function CurrentShowBlock({ exhibition, locale }) {
-    const dates = formatDateRange(exhibition.start_date, exhibition.end_date, locale);
+function Hero({ hero, show, locale }) {
+    const image = hero?.image_url;
+    const heading = hero?.heading;
+    const dates = show ? formatDateRange(show.start_date, show.end_date, locale) : null;
+    const names = show && Array.isArray(show.artists) ? show.artists.map((artist) => artist.name).filter(Boolean).join(', ') : '';
+    const showMeta = show ? [names, dates, show.venue].filter(Boolean).join(' · ') : '';
+
+    if (!image && !show && !heading && !hero?.body) return null;
 
     return (
-        <section aria-labelledby="home-current-show" data-surface="wine" data-testid="home-current-show" className="-mx-page bg-wine px-page py-step-8 text-wine-ink">
-            <p className="mb-step-2 text-label text-wine-ink-muted">{t(locale, 'home.currentExhibition')}</p>
-            <h2 id="home-current-show" className="text-section">{exhibition.title}</h2>
-            {(dates || exhibition.venue) && (
-                <p className="figures mt-step-3 text-meta text-wine-ink-muted">{[dates, exhibition.venue].filter(Boolean).join(' · ')}</p>
+        <section aria-label={heading || show?.title || undefined} data-testid="home-hero" className={image ? undefined : 'pt-step-8'}>
+            {image && (
+                <div className="-mx-page">
+                    <img
+                        src={image}
+                        alt=""
+                        aria-hidden="true"
+                        loading="eager"
+                        fetchPriority="high"
+                        decoding="async"
+                        data-testid="home-hero-image"
+                        className="block h-[60vh] w-full object-cover md:h-[min(78vh,760px)]"
+                    />
+                </div>
             )}
-            {exhibition.short_text && <p className="mt-step-5 max-w-prose font-editorial text-reading">{exhibition.short_text}</p>}
-            <a href={`/exhibitions/${encodeURIComponent(exhibition.slug)}`} className="mt-step-5 inline-flex min-h-11 items-center text-ui text-wine-ink underline decoration-1 underline-offset-4">
-                {t(locale, 'home.aboutExhibition')}
-            </a>
+            <div className="mt-step-5 flex flex-col items-start gap-step-2 md:flex-row md:items-end md:justify-between md:gap-step-6" data-testid="home-hero-line">
+                {show ? (
+                    <div className="min-w-0">
+                        {heading && <h1 className="sr-only">{heading}</h1>}
+                        <p className="font-editorial text-[22px] leading-[1.3] italic">{show.title}</p>
+                        {showMeta && <p className="figures mt-step-1 text-label text-ink-muted">{showMeta}</p>}
+                    </div>
+                ) : (
+                    <div className="min-w-0">
+                        {heading && <h1 className="font-editorial text-[22px] leading-[1.3] italic">{heading}</h1>}
+                        {hero?.body && <p className="mt-step-1 text-label text-ink-muted">{hero.body}</p>}
+                    </div>
+                )}
+                {show && <LineLink href={`/exhibitions/${encodeURIComponent(show.slug)}`}>{t(locale, 'home.viewExhibition')}</LineLink>}
+            </div>
+        </section>
+    );
+}
+
+/** The statement: the hero's subheading as one large light sentence, then "12 əsər · 4 rəssam" in 12px ink-muted. */
+function Statement({ text, meta }) {
+    if (!text && !meta) return null;
+
+    return (
+        <section data-testid="home-statement">
+            {text && <p className="max-w-[900px] font-editorial text-[clamp(30px,3.2vw,46px)] leading-[1.22] font-light">{text}</p>}
+            {meta && (
+                <p className={`figures text-label text-ink-muted ${text ? 'mt-step-5' : ''}`} data-testid="home-stats">
+                    {meta.map((part, index) => (
+                        <Fragment key={part}>
+                            {index > 0 && ' · '}
+                            <span className="whitespace-nowrap">{part}</span>
+                        </Fragment>
+                    ))}
+                </p>
+            )}
+        </section>
+    );
+}
+
+/**
+ * The current exhibition: its cover (the first photo) on the left, 1.55 : 1 against the text, 72px apart and
+ * bottom-aligned; on phones the cover above the text. The text: the label, the title (h2), the dates and city, the
+ * short text (Spectral 300, 17px) and "Sərgi haqqında". No wine band. Without a cover, the text alone.
+ */
+function CurrentShow({ show, locale }) {
+    const cover = Array.isArray(show.media) ? show.media.find((item) => item.type === 'photo' && item.url)?.url : null;
+    const dates = formatDateRange(show.start_date, show.end_date, locale);
+
+    return (
+        <section
+            aria-labelledby="home-current-show"
+            data-testid="home-current-show"
+            className={cover ? 'grid grid-cols-1 gap-step-6 md:grid-cols-[1.55fr_1fr] md:items-end md:gap-[72px]' : undefined}
+        >
+            {cover && <img src={cover} alt={show.title} loading="lazy" decoding="async" className="block h-auto w-full" data-testid="home-current-show-cover" />}
+            <div className="min-w-0">
+                <SectionHeading id="home-current-show" label={t(locale, 'home.currentExhibition')}>{show.title}</SectionHeading>
+                {(dates || show.venue) && <p className="figures mt-step-3 text-label text-ink-muted">{[dates, show.venue].filter(Boolean).join(' · ')}</p>}
+                {show.short_text && <p className="mt-step-5 max-w-prose font-editorial text-reading font-light">{show.short_text}</p>}
+                <LineLink href={`/exhibitions/${encodeURIComponent(show.slug)}`} className="mt-step-4">{t(locale, 'home.aboutExhibition')}</LineLink>
+            </div>
         </section>
     );
 }
 
 function Skeleton() {
     return (
-        <div className="px-page pt-step-8 pb-step-9" aria-busy="true" data-testid="home-skeleton">
+        <div className="px-page pb-step-9" aria-busy="true" data-testid="home-skeleton">
             <div aria-hidden="true" className="flex flex-col gap-step-4">
-                <div className="h-12 w-2/3 bg-surface-field" />
-                <div className="h-4 w-1/2 bg-surface-field" />
-                <div className="mt-step-6 flex items-end gap-step-7">
-                    {[[220, 170], [180, 130], [120, 150], [90, 70]].map(([w, h], i) => (
-                        <div key={i} className="border border-line bg-surface-field" style={{ width: w, height: h }} />
-                    ))}
-                </div>
+                <div className="-mx-page h-[60vh] bg-surface-field md:h-[min(78vh,760px)]" />
+                <div className="h-5 w-1/3 bg-surface-field" />
+                <div className="h-3 w-1/2 bg-surface-field" />
             </div>
         </div>
     );
 }
 
 /**
- * The home page: the hero (text only, text-hero), the wall of works at true size (on the first screen), the featured
- * works, the current exhibition as a wine band, the artists, the other exhibitions, the latest journal articles, the
- * "how it works" copy and the FAQs, and the contact block. Sections are step-9
- * apart, each with a small label over its heading. Blocks without data are left out entirely. All copy comes from the
- * API. Signal on this screen: the active "Ana səhifə" only (the logo is brand red, not Signal) — none in
- * the blocks, so room stays for an error.
+ * The home page, gallery-style: large space, colour only in the works. Top to bottom: the hero photograph with the
+ * current exhibition's line under it, the statement, the current exhibition, the featured works in one true-size row,
+ * the artists (each card one of their works), and the journal ("Qeydlər"). Sections are 180px apart at 1440 (96px on
+ * phones). Blocks without data are left out entirely; a closed journal shows no journal block. All copy comes from the
+ * API. No Signal on this screen, so room stays for an error.
  */
 export default function HomePage() {
     const { locale } = useLocale();
@@ -122,8 +189,6 @@ export default function HomePage() {
     const journalOpen = useJournalOpen();
 
     const hero = findSection(data?.page, 'hero');
-    const steps = findSection(data?.page, 'steps');
-    const cta = findSection(data?.page, 'cta');
     // A hero heading that already IS the site name (a legitimate admin choice) would otherwise double up as
     // "ArtNiyyətli | ArtNiyyətli"; every other case keeps the "Page Title | ArtNiyyətli" convention. The name as the
     // logo spells it ("Art Niyyätli") counts as the site name too, so that heading leaves the title as it was.
@@ -136,160 +201,65 @@ export default function HomePage() {
         description: data ? hero?.body : undefined,
     });
 
-    // The current exhibition gets the wine block; the first current one, or the single legacy `exhibition` when it is
-    // current. It is then left out of the list below, so it is not shown twice.
-    const currentShow = data
-        ? (data.exhibitions?.current?.[0] ?? (!data.exhibitions && data.exhibition?.status === 'current' ? data.exhibition : null))
-        : null;
-    const notFeaturedShow = (exhibition) => exhibition.slug !== currentShow?.slug;
-
-    // `exhibitions` ({current, upcoming}) is the homepage list; the single `exhibition` is only the fallback for a
-    // response that predates it (e.g. one still cached from before the API change).
-    const exhibitionGroups = (data
-        ? data.exhibitions
-            ? [
-                  { key: 'current', heading: t(locale, 'home.currentExhibitions'), items: data.exhibitions.current ?? [] },
-                  { key: 'upcoming', heading: t(locale, 'home.upcomingExhibitions'), items: data.exhibitions.upcoming ?? [] },
-              ]
-            : data.exhibition
-              ? [{ key: 'single', heading: null, items: [data.exhibition] }]
-              : []
-        : []
-    )
-        .map((group) => ({ ...group, items: group.items.filter(notFeaturedShow) }))
-        .filter((group) => group.items.length > 0);
-
     if (loading && !data) return <Skeleton />;
     if (error) return <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />;
 
-    const wall = Array.isArray(data.wall) ? data.wall : [];
+    // The first current exhibition, or the single legacy `exhibition` when it is current (a response that predates the
+    // `exhibitions` lists).
+    const currentShow = data.exhibitions?.current?.[0] ?? (!data.exhibitions && data.exhibition?.status === 'current' ? data.exhibition : null);
     const featured = Array.isArray(data.featured) ? data.featured : [];
     const artists = Array.isArray(data.artists) ? data.artists : [];
-    const faqs = Array.isArray(data.faqs) ? data.faqs : [];
+    // The works this response already carries, for the artist cards: featured first, then the wall and the shows.
+    const loadedWorks = [
+        ...featured,
+        ...(Array.isArray(data.wall) ? data.wall : []),
+        ...[...(data.exhibitions?.current ?? []), ...(data.exhibitions?.upcoming ?? [])].flatMap((show) => (Array.isArray(show.artworks) ? show.artworks : [])),
+    ];
     // A closed journal (no "articles" menu item) shows no articles block, even with published articles.
     const latest = journalOpen === true && Array.isArray(articles.data) ? articles.data.slice(0, LATEST_ARTICLES) : [];
-    const statsParts = heroStats(data, locale);
 
     return (
-        <div className="flex flex-col gap-step-9 px-page pt-step-8 pb-step-9 font-ui">
-            {/* Text on the plain surface; with the section's image, a second column from 1024px. The image's height
-                follows the viewport (17%, about the text block's own height), so the wall stays on the first screen. Below 1024px
-                there is no second column and a full-width 4:3 image would push the wall off the first screen, so the
-                image is not shown there. */}
-            {hero && (
-                <section
-                    aria-label={hero.heading || undefined}
-                    data-testid="home-hero"
-                    className={hero.image_url ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-step-8' : ''}
-                >
-                    <div>
-                        {hero.heading && <h1 className="text-hero">{hero.heading}</h1>}
-                        {hero.body && <p className="mt-step-4 max-w-prose font-editorial text-lead text-ink-muted">{hero.body}</p>}
-                        {/* Each part keeps together; a narrow screen breaks the line only at the middle dots. */}
-                        {statsParts && (
-                            <p className="figures mt-step-3 text-meta text-ink-muted" data-testid="home-stats">
-                                {statsParts.map((part, index) => (
-                                    <Fragment key={part}>
-                                        {index > 0 && ' · '}
-                                        <span className="whitespace-nowrap">{part}</span>
-                                    </Fragment>
-                                ))}
-                            </p>
-                        )}
-                    </div>
-                    {hero.image_url && (
-                        <div className="hidden aspect-[4/3] h-[clamp(140px,17vh,200px)] w-auto overflow-hidden border border-line bg-surface-field lg:block" data-testid="home-hero-image">
-                            <img src={hero.image_url} alt={hero.heading || ''} loading="eager" fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
-                        </div>
-                    )}
-                </section>
-            )}
+        <div className={`flex flex-col ${SECTION_GAP} px-page pb-[clamp(96px,12.5vw,180px)] font-ui`}>
+            <Hero hero={hero} show={currentShow} locale={locale} />
 
-            {wall.length > 0 && (
-                <section aria-labelledby="home-wall-title" className="-mt-step-5">
-                    {/* The wall needs no big title: its label is its heading. */}
-                    <h2 id="home-wall-title" className="mb-step-2 text-label text-ink-muted" data-testid="section-label">{t(locale, 'labels.wall')}</h2>
-                    <HomeWall artworks={wall} />
-                </section>
-            )}
+            <Statement text={hero?.body} meta={statementMeta(data, locale)} />
 
-            {/* The admin's "featured" flag must show somewhere: a true-size grid, at its own k (its scale rule says so). */}
+            {currentShow && <CurrentShow show={currentShow} locale={locale} />}
+
+            {/* The old wall and the featured grid are one section now: the featured works, one row, one k. */}
             {featured.length > 0 && (
-                <Block id="home-featured" label={t(locale, 'labels.collection')} title={t(locale, 'home.featured')}>
-                    <ScaledArtworkGrid artworks={featured} />
+                <Block id="home-featured" label={t(locale, 'labels.collection')} title={t(locale, 'home.featured')} link={{ href: '/artworks', label: t(locale, 'home.allArtworks') }}>
+                    <FeaturedRow artworks={featured} />
                 </Block>
             )}
 
-            {currentShow && <CurrentShowBlock exhibition={currentShow} locale={locale} />}
-
             {artists.length > 0 && (
-                <Block id="home-artists" label={t(locale, 'labels.representation')} title={t(locale, 'home.artists')}>
-                    {/* The artists list's own card: 4:5 portrait, name, direction. 4 / 3 / 3 columns, and two below
-                        640px: here the portraits are a summary (on the artists page, one column: they are the content). */}
-                    <ul className="grid grid-cols-2 gap-x-step-4 gap-y-step-6 sm:gap-x-step-6 sm:gap-y-step-7 md:grid-cols-3 xl:grid-cols-4" data-testid="home-artists">
+                <Block id="home-artists-title" label={t(locale, 'labels.representation')} title={t(locale, 'home.artists')} link={{ href: '/artists', label: t(locale, 'home.allArtists') }}>
+                    <ul className="grid grid-cols-2 gap-x-step-4 gap-y-step-7 md:grid-cols-4 md:gap-x-step-6" data-testid="home-artists">
                         {artists.map((artist) => (
                             <li key={artist.slug}>
-                                <ArtistCard artist={artist} />
+                                <ArtistCard artist={artist} artwork={artworkFor(artist, loadedWorks)} />
                             </li>
                         ))}
                     </ul>
                 </Block>
             )}
 
-            {exhibitionGroups.length > 0 && (
-                <Block id="home-exhibitions" label={t(locale, 'labels.calendar')} title={t(locale, 'nav.exhibitions')}>
-                    <div className="flex flex-col gap-step-7">
-                        {exhibitionGroups.map(({ key, heading, items }) => (
-                            <div key={key}>
-                                {heading && <h3 className="mb-step-3 text-subheading">{heading}</h3>}
-                                <ul className="border-t border-line">
-                                    {items.map((exhibition) => <ExhibitionRow key={exhibition.slug} exhibition={exhibition} />)}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-                </Block>
-            )}
-
             {latest.length > 0 && (
-                <Block id="home-articles" label={t(locale, 'labels.journal')} title={t(locale, 'home.articles')}>
-                    <ul className="grid grid-cols-1 gap-step-6 md:grid-cols-3">
+                <Block id="home-articles" label={t(locale, 'labels.journal')} title={t(locale, 'home.notes')} link={{ href: '/articles', label: t(locale, 'home.allArticles') }}>
+                    <ul className="grid grid-cols-1 gap-step-7 border-t border-line pt-step-6 md:grid-cols-3 md:gap-step-6" data-testid="home-articles-list">
                         {latest.map((article) => (
                             <li key={article.slug}>
-                                <a href={`/articles/${encodeURIComponent(article.slug)}`} className="group flex flex-col gap-step-2 text-ink">
-                                    <span className="figures text-caption text-ink-muted">{formatDate(article.published_at, locale)}</span>
-                                    <span className="text-subheading decoration-1 underline-offset-2 group-hover:underline">{article.title}</span>
-                                    {article.short_text && <span className="font-editorial text-reading-sm text-ink-muted">{article.short_text}</span>}
+                                <a href={`/articles/${encodeURIComponent(article.slug)}`} className="group block text-ink">
+                                    <span className="figures block text-label text-ink-muted">{formatDate(article.published_at, locale)}</span>
+                                    <span className="mt-step-3 block font-editorial text-[24px] leading-[1.25] font-light decoration-1 underline-offset-4 group-hover:underline">{article.title}</span>
+                                    {article.short_text && <span className="mt-step-3 block text-meta text-ink-muted">{article.short_text}</span>}
                                 </a>
                             </li>
                         ))}
                     </ul>
                 </Block>
             )}
-
-            {/* The admin's "how it works" copy, next to the questions it answers. */}
-            {steps && <SectionCopy section={steps} as="h2" headingClassName="text-section" />}
-
-            {faqs.length > 0 && (
-                <Block id="home-faqs" title={t(locale, 'home.faqs')}>
-                    <dl className="flex max-w-prose flex-col gap-step-5">
-                        {faqs.map((faq) => (
-                            <div key={faq.id}>
-                                <dt className="text-byline-lg">{faq.question}</dt>
-                                <dd className="mt-step-1 font-editorial text-reading-sm text-ink-muted">{faq.answer}</dd>
-                            </div>
-                        ))}
-                    </dl>
-                </Block>
-            )}
-
-            <section aria-labelledby="home-contact">
-                <SectionHeading id="home-contact" label={t(locale, 'labels.contact')}>{cta?.heading || t(locale, 'home.contact')}</SectionHeading>
-                {cta?.body && <p className="mt-step-3 max-w-prose font-editorial text-reading text-ink-muted">{cta.body}</p>}
-                <a href="/contact" className="mt-step-5 inline-block bg-wine px-step-5 py-step-3 text-ui text-wine-ink">
-                    {t(locale, 'home.contact')}
-                </a>
-            </section>
         </div>
     );
 }

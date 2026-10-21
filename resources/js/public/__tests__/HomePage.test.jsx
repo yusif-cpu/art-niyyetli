@@ -1,26 +1,34 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LocaleProvider } from '../i18n/LocaleContext.jsx';
 import LocaleSwitcher from '../components/LocaleSwitcher.jsx';
-import HomePage from '../pages/HomePage.jsx';
+import HomePage, { statementMeta } from '../pages/HomePage.jsx';
 
 function jsonResponse(body) {
     return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => body };
 }
 
 const card = (code, title, w, h, extra = {}) => ({
-    inventory_code: code, title, artist: { id: 1, name: 'Kamran Səfərli' }, image_url: null, genre: { slug: 'painting', name: 'Painting' },
+    inventory_code: code, title, artist: { id: 1, slug: 'a', name: 'Kamran Səfərli' }, image_url: null, genre: { slug: 'painting', name: 'Painting' },
     medium: { slug: 'oil', name: 'Oil' }, price: 9800, currency: 'AZN', availability: 'available', width_cm: w, height_cm: h, ...extra,
 });
 
+const SHOW = {
+    slug: 'ilk-satis', title: 'İlk satış sərgisi', status: 'current', start_date: '2026-10-15', end_date: '2026-11-30', venue: 'Bakı',
+    short_text: 'Dörd rəssam, on iki əsər.', full_text: '…',
+    artists: [{ id: 1, slug: 'a', name: 'Kamran Səfərli' }, { id: 2, slug: 'b', name: 'Nərmin Qasımova' }],
+    artworks: [], media: [{ type: 'photo', url: 'https://example.test/cover.webp' }],
+};
+
 const homepageData = {
-    page: { title: 'Ana səhifə', sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Müasir Azərbaycan sənətini kəşf edin.', sort_order: 0, image_url: null }] },
+    page: { title: 'Ana səhifə', sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Müasir Azərbaycan sənəti, həqiqi ölçüsündə.', sort_order: 0, image_url: 'https://example.test/hero.webp' }] },
     stats: { artists: 5, artworks: 12, exhibitions: 2 },
-    wall: [card('AN-1', 'Wall Piece', 180, 140), card('AN-2', 'Small Piece', 40, 30)],
-    featured: [card('AN-3', 'Featured Piece', 20, 20, { price: null, currency: null })],
+    wall: [card('AN-1', 'Wall Piece', 180, 140)],
+    featured: [card('AN-3', 'Featured Piece', 180, 140), card('AN-4', 'Small Piece', 40, 30, { price: null, currency: null })],
     artists: [{ id: 1, slug: 'a', first_name: 'A', last_name: 'B', direction: 'Modern', portrait_url: null }],
-    exhibition: { slug: 'winter-show', title: 'Winter Show', status: 'current', start_date: '2026-01-10', end_date: '2026-02-10', venue: 'Main Gallery', short_text: '...', full_text: '...', artists: [], artworks: [], media: [] },
+    exhibitions: { current: [SHOW], upcoming: [{ ...SHOW, slug: 'soon', title: 'Soon Show', status: 'upcoming', media: [] }] },
+    exhibition: SHOW,
     faqs: [{ id: 1, question: 'Necə sifariş verə bilərəm?', answer: 'Sorğu göndərin.', sort_order: 0 }],
     social_links: [],
 };
@@ -35,6 +43,7 @@ function mockApi() {
     });
 }
 const homepageCalls = () => global.fetch.mock.calls.filter(([url]) => url.startsWith('/api/v1/homepage'));
+const following = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 function renderHome(extra = null) {
     return render(<LocaleProvider>{extra}<HomePage /></LocaleProvider>);
@@ -48,8 +57,8 @@ describe('HomePage', () => {
         homepage = homepageData;
         articles = ARTICLES;
         mockApi();
-        // jsdom has no layout: the wall container is 1296px wide; window.innerWidth (1024) keeps it horizontal,
-        // window.innerHeight (768) gives a 445px wall area → k = (445 − 64) / 270.
+        // jsdom has no layout: the content is 1296px wide; window.innerWidth (1024) keeps the featured works in one
+        // row, window.innerHeight (768) caps the tallest at min(420, 768 × 0.5) = 384px.
         global.ResizeObserver = class {
             constructor(cb) { this.cb = cb; }
             observe() { this.cb([{ contentRect: { width: 1296 } }]); }
@@ -61,81 +70,16 @@ describe('HomePage', () => {
         global.ResizeObserver = originalRO;
     });
 
-    const K = (445 - 64) / 270;
-    const wallFields = () => screen.getAllByTestId('wall-field');
+    // ── loading, errors, titles ───────────────────────────────────────────────────────────────────────────────────
 
-    // ── existing behaviour, adapted to the rebuilt page ──────────────────────────────────────────────────────────
-
-    it('shows a static skeleton, then the hero, the wall, artists, exhibition and FAQs', async () => {
+    it('shows a static skeleton, then the page', async () => {
         renderHome();
 
-        // (was: the "Yüklənir..." text) — a static skeleton with aria-busy, no shimmer
         expect(screen.getByTestId('home-skeleton')).toHaveAttribute('aria-busy', 'true');
-
         expect(await screen.findByRole('heading', { level: 1, name: 'ArtNiyyətli' })).toBeInTheDocument();
-        expect(screen.getByText('Wall Piece')).toBeInTheDocument();
-        expect(screen.getByText('A B')).toBeInTheDocument();
-        expect(screen.getByText('Winter Show')).toBeInTheDocument();
-        expect(screen.getByText('Necə sifariş verə bilərəm?')).toBeInTheDocument();
         expect(screen.getByText('Featured Piece')).toBeInTheDocument();
-    });
-
-    it('renders both current and upcoming exhibitions from the single homepage response', async () => {
-        const ex = (slug, title, status) => ({ ...homepageData.exhibition, slug, title, status });
-        homepage = {
-            ...homepageData,
-            exhibition: ex('now', 'Now Show', 'current'),
-            // (was: one current show) — the first current show now gets the wine block, so a second one keeps the list's
-            // "Cari sərgilər" group.
-            exhibitions: { current: [ex('now', 'Now Show', 'current'), ex('also', 'Also Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming'), ex('later', 'Later Show', 'upcoming')] },
-        };
-        mockApi();
-        renderHome();
-
-        expect(await screen.findByText('Now Show')).toBeInTheDocument();
-        expect(screen.getByText('Also Show')).toBeInTheDocument();
-        expect(screen.getByText('Soon Show')).toBeInTheDocument();
-        expect(screen.getByText('Later Show')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Cari sərgilər' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Gələcək sərgilər' })).toBeInTheDocument();
-        // (was: fetch called once) — one homepage request; the journal block adds its own /articles request
+        expect(screen.getByText('A B')).toBeInTheDocument();
         expect(homepageCalls()).toHaveLength(1);
-    });
-
-    it('omits the heading of an empty exhibitions group', async () => {
-        homepage = { ...homepageData, exhibitions: { current: [], upcoming: [{ ...homepageData.exhibition, slug: 'soon', title: 'Soon Show', status: 'upcoming' }] } };
-        mockApi();
-        renderHome();
-
-        expect(await screen.findByText('Soon Show')).toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Gələcək sərgilər' })).toBeInTheDocument();
-    });
-
-    it('falls back to the single exhibition for a response without the exhibitions lists', async () => {
-        renderHome();
-
-        expect(await screen.findByText('Winter Show')).toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
-    });
-
-    it('renders no exhibition section when both lists are empty', async () => {
-        homepage = { ...homepageData, exhibition: null, exhibitions: { current: [], upcoming: [] } };
-        mockApi();
-        renderHome();
-
-        await screen.findByText('Wall Piece');
-        expect(screen.queryByText('Winter Show')).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Sərgilər' })).not.toBeInTheDocument();
-    });
-
-    it('renders without crashing when page and exhibition are null', async () => {
-        homepage = { ...homepageData, page: null, exhibition: null };
-        mockApi();
-        renderHome();
-
-        expect(await screen.findByText('Wall Piece')).toBeInTheDocument();
-        expect(screen.queryByText('Winter Show')).not.toBeInTheDocument();
     });
 
     it('shows an error with a retry button that re-fetches', async () => {
@@ -147,25 +91,17 @@ describe('HomePage', () => {
         const alert = await screen.findByRole('alert');
         expect(within(alert).getByText('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')).toHaveClass('text-signal-ink');
         await userEvent.click(within(alert).getByRole('button', { name: 'Yenidən cəhd et' }));
-        expect(await screen.findByText('Wall Piece')).toBeInTheDocument();
+        expect(await screen.findByText('Featured Piece')).toBeInTheDocument();
     });
 
     it('collapses the title to just the site name when the hero heading IS the site name, instead of doubling it', async () => {
-        homepage = {
-            page: { sections: [{ key: 'hero', heading: 'ArtNiyyətli', body: 'Discover Azerbaijani art.', sort_order: 0, image_url: null }] },
-            stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [],
-        };
-        mockApi();
         renderHome();
 
         await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
     });
 
     it('treats the logo spelling "Art Niyyätli" as the site name too: the h1 shows it, the title stays "ArtNiyyətli"', async () => {
-        homepage = {
-            page: { sections: [{ key: 'hero', heading: 'Art Niyyätli', body: 'Discover Azerbaijani art.', sort_order: 0, image_url: null }] },
-            stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [],
-        };
+        homepage = { ...homepageData, page: { sections: [{ key: 'hero', heading: 'Art Niyyätli', body: 'Discover.', sort_order: 0, image_url: null }] } };
         mockApi();
         renderHome();
 
@@ -176,310 +112,210 @@ describe('HomePage', () => {
 
     it('does not crash when the locale changes after the page has already loaded', async () => {
         renderHome(<LocaleSwitcher />);
-        await screen.findByText('Wall Piece');
+        await screen.findByText('Featured Piece');
 
         await userEvent.click(screen.getByRole('button', { name: 'EN' }));
 
-        await waitFor(() => expect(screen.getAllByText('ArtNiyyətli').length).toBeGreaterThan(0));
+        expect(await screen.findByRole('heading', { level: 1, name: 'ArtNiyyətli' })).toBeInTheDocument();
     });
 
     describe('page sections are resolved by key', () => {
-        const empty = { stats: { artists: 0, artworks: 0, exhibitions: 0 }, wall: [], featured: [], artists: [], exhibition: null, faqs: [], social_links: [] };
         const section = (key, heading, sort_order = 0) => ({ key, heading, body: `${heading} body`, sort_order, image_url: null });
-
         function renderWith(sections) {
-            homepage = { ...empty, page: { title: 'Ana səhifə', sections } };
-            articles = [];
+            homepage = { ...homepageData, exhibitions: { current: [], upcoming: [] }, exhibition: null, page: { title: 'Ana səhifə', sections } };
             mockApi();
             renderHome();
         }
 
-        it('uses the hero even when it is not the first section, for the h1, title and description', async () => {
+        it('uses the hero even when it is not the first section, for the h1, title and statement', async () => {
             renderWith([section('steps', 'How it works'), section('hero', 'Real Hero', 1)]);
 
             expect(await screen.findByRole('heading', { level: 1, name: 'Real Hero' })).toBeInTheDocument();
-            expect(screen.getByRole('heading', { level: 2, name: 'How it works' })).toBeInTheDocument();
+            expect(screen.getByTestId('home-statement')).toHaveTextContent('Real Hero body');
             await waitFor(() => expect(document.title).toBe('Real Hero | ArtNiyyətli'));
         });
 
-        it('renders steps and cta by key and ignores unknown keys', async () => {
-            renderWith([section('mystery', 'Unknown Block'), section('hero', 'Hero'), section('cta', 'Get in touch', 2), section('steps', 'Steps', 1), section('test', 'Another Unknown', 3)]);
+        it('shows no "how it works" or contact copy, whatever sections the admin keeps', async () => {
+            renderWith([section('hero', 'Hero'), section('steps', 'Steps', 1), section('cta', 'Get in touch', 2), section('mystery', 'Unknown Block', 3)]);
+            await screen.findByRole('heading', { level: 1, name: 'Hero' });
 
-            expect(await screen.findByRole('heading', { level: 2, name: 'Get in touch' })).toBeInTheDocument();
-            expect(screen.getByRole('heading', { level: 2, name: 'Steps' })).toBeInTheDocument();
-            expect(screen.queryByText('Unknown Block')).not.toBeInTheDocument();
-            expect(screen.queryByText('Another Unknown')).not.toBeInTheDocument();
+            for (const text of ['Steps', 'Get in touch', 'Unknown Block']) expect(screen.queryByText(text)).not.toBeInTheDocument();
         });
 
         it('falls back to the default title and renders no hero when the hero is missing', async () => {
-            renderWith([section('mystery', 'Unknown Block'), section('cta', 'Get in touch', 1)]);
+            renderWith([section('cta', 'Get in touch', 1)]);
 
-            expect(await screen.findByText('Get in touch')).toBeInTheDocument();
+            await screen.findByText('Featured Piece');
+            expect(screen.queryByTestId('home-hero')).not.toBeInTheDocument();
             expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
-            expect(screen.queryByText('Unknown Block')).not.toBeInTheDocument();
-            await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
-        });
-
-        it('renders without crashing when sections are empty or absent', async () => {
-            renderWith([]);
-            await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
-
-            homepage = { ...empty, page: { title: 'Ana səhifə' } };
-            mockApi();
-            renderHome();
             await waitFor(() => expect(document.title).toBe('ArtNiyyətli'));
         });
     });
 
-    // ── the wall ─────────────────────────────────────────────────────────────────────────────────────────────────
+    // ── the hero ──────────────────────────────────────────────────────────────────────────────────────────────────
 
-    it('builds the wall from the API works, all at one k', async () => {
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const [big, small] = wallFields();
-        expect(big.style.width).toBe(`${Math.round(180 * K)}px`);
-        expect(big.style.height).toBe(`${Math.round(140 * K)}px`);
-        expect(small.style.width).toBe(`${Math.round(40 * K)}px`);
-        expect(parseFloat(big.style.width) / parseFloat(small.style.width)).toBeCloseTo(4.5, 1);
-        expect(big).toHaveClass('shadow-hang');
-        expect(within(screen.getByTestId('wall-footer')).getByTestId('scale-rule-line').style.width).toBe(`${Math.round(100 * K)}px`);
-    });
-
-    it('shows the 800px catalogue image on the wall, not the 300px thumbnail (which would blur at this size)', async () => {
-        homepage = {
-            ...homepageData,
-            wall: [card('AN-1', 'Wall Piece', 180, 140, { image_url: 'https://example.test/catalogue.webp', thumbnail_url: 'https://example.test/thumb.webp' })],
-        };
-        mockApi();
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        expect(screen.getByTestId('wall-field').querySelector('img')).toHaveAttribute('src', 'https://example.test/catalogue.webp');
-    });
-
-    it('spaces neighbours by max(43 × k, 48px, caption overflow + 24px)', async () => {
-        homepage = { ...homepageData, wall: [card('AN-1', 'Wall Piece', 180, 140), card('AN-4', 'Middle', 150, 110), card('AN-2', 'Small Piece', 40, 30)] };
-        mockApi();
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const [a, b, c] = wallFields();
-        const right = (el) => parseFloat(el.style.left) + parseFloat(el.style.width);
-        const overflow = (w) => Math.max(0, 180 - w * K) / 2;
-        const expected = (w1, w2) => Math.max(43 * K, 48, overflow(w1) + overflow(w2) + 24);
-        expect(Math.abs(parseFloat(b.style.left) - right(a) - expected(180, 150))).toBeLessThanOrEqual(1);
-        expect(Math.abs(parseFloat(c.style.left) - right(b) - expected(150, 40))).toBeLessThanOrEqual(1);
-    });
-
-    it('stands the 170 cm figure at the left of the wall, 170 × k tall', async () => {
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const figure = screen.getByTestId('human-figure');
-        expect(figure).toHaveAttribute('height', String(Math.round(170 * K)));
-        expect(parseFloat(figure.style.left)).toBeLessThan(parseFloat(wallFields()[0].style.left));
-        expect(screen.getByText('170 sm')).toBeInTheDocument();
-    });
-
-    it('updates the position counter as the wall scrolls', async () => {
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const counter = screen.getByTestId('wall-position');
-        expect(counter).toHaveTextContent('1 / 2');
-        const scroller = screen.getByTestId('home-wall');
-        const [big] = wallFields();
-        scroller.scrollLeft = parseFloat(big.style.left) + parseFloat(big.style.width) + 5;
-        fireEvent.scroll(scroller);
-
-        expect(counter).toHaveTextContent('2 / 2');
-    });
-
-    it('leaves the wall section out entirely when there are no wall works', async () => {
-        homepage = { ...homepageData, wall: [] };
-        mockApi();
-        renderHome();
-        await screen.findByRole('heading', { level: 1 });
-
-        expect(screen.queryByTestId('home-wall')).not.toBeInTheDocument();
-        expect(screen.queryByTestId('human-figure')).not.toBeInTheDocument();
-    });
-
-    it('still builds the wall, the figure and the scale for a single work', async () => {
-        homepage = { ...homepageData, wall: [card('AN-9', 'Only One', 100, 80)] };
-        mockApi();
-        renderHome();
-        await screen.findByText('Only One');
-
-        expect(wallFields()).toHaveLength(1);
-        expect(screen.getByTestId('human-figure')).toBeInTheDocument();
-        expect(within(screen.getByTestId('wall-footer')).getByTestId('scale-rule')).toBeInTheDocument();
-        expect(screen.queryByTestId('wall-position')).not.toBeInTheDocument(); // "1 / 1" says nothing
-    });
-
-    it('shows no price on the wall', async () => {
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const wall = screen.getByTestId('home-wall');
-        expect(within(wall).queryByText(/AZN|Qiymət/)).not.toBeInTheDocument();
-        expect(within(wall).getAllByText('Kamran Səfərli')).toHaveLength(2);
-    });
-
-    it('makes the wall keyboard-focusable and named', async () => {
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const wall = screen.getByRole('region', { name: 'Divar: əsərlər həqiqi ölçüdə, sürüşdürmək üçün ox düymələri' });
-        expect(wall).toHaveAttribute('tabindex', '0');
-        wall.focus();
-        expect(document.activeElement).toBe(wall);
-        expect(within(wall).getByRole('link', { name: /^Wall Piece, Kamran Səfərli/ })).toHaveAttribute('href', '/artworks/AN-1');
-    });
-
-    it('draws no wall surface or frame, only the floor line', async () => {
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const surface = screen.getByTestId('wall-surface');
-        expect(surface).toHaveClass('border-b', 'border-line');
-        expect(surface.className).not.toMatch(/bg-|border-t/);
-        expect(surface.style.height).toBe(`${Math.round(270 * K)}px`); // the 270 cm wall, floor at its bottom edge
-    });
-
-    it('shows the current exhibition as a full-width wine block after the featured works, and not again in the list', async () => {
-        const ex = (slug, title, status) => ({ ...homepageData.exhibition, slug, title, status, venue: 'Main Gallery', short_text: 'Dörd rəssam.' });
-        homepage = { ...homepageData, exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming')] } };
-        mockApi();
-        const { container } = renderHome();
-
-        const block = await screen.findByTestId('home-current-show');
-        expect(block).toHaveClass('bg-wine', 'text-wine-ink', '-mx-page', 'py-step-8');
-        expect(block.className).not.toMatch(/-my-/); // keeps the step-9 rhythm around it (flush, neighbours touched its edges)
-        expect(within(block).getByRole('heading', { level: 2, name: 'Now Show' })).toHaveClass('text-section');
-        expect(within(block).getByText('10 yanvar 2026 – 10 fevral 2026 · Main Gallery')).toHaveClass('text-wine-ink-muted');
-        expect(within(block).getByRole('link', { name: 'Sərgi haqqında' })).toHaveAttribute('href', '/exhibitions/now');
-        expect(block.innerHTML).not.toMatch(/signal/);
-        // Not repeated in the list below; the list keeps the other shows.
-        const list = screen.getByRole('heading', { level: 2, name: 'Sərgilər' }).closest('section');
-        expect(within(list).queryByText('Now Show')).not.toBeInTheDocument();
-        expect(within(list).getByText('Soon Show')).toBeInTheDocument();
-        expect(within(list).queryByRole('heading', { name: 'Cari sərgilər' })).not.toBeInTheDocument();
-        // Order: featured, then the wine block, then the artists.
-        const featured = screen.getByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' });
-        const artists = screen.getByRole('heading', { level: 2, name: 'Rəssamlar' });
-        expect(Boolean(featured.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
-        expect(Boolean(block.compareDocumentPosition(artists) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
-        expect(container.querySelectorAll('[data-testid="home-current-show"]')).toHaveLength(1);
-    });
-
-    it('shows no wine block without a current exhibition', async () => {
-        homepage = { ...homepageData, exhibition: null, exhibitions: { current: [], upcoming: [{ ...homepageData.exhibition, slug: 'soon', title: 'Soon Show', status: 'upcoming' }] } };
-        mockApi();
-        renderHome();
-
-        expect(await screen.findByText('Soon Show')).toBeInTheDocument();
-        expect(screen.queryByTestId('home-current-show')).not.toBeInTheDocument();
-    });
-
-    describe('the hero stats line', () => {
-        it('shows works, artists and the exhibition month, middle-dot separated, in text-meta / ink-muted', async () => {
-            const ex = (slug, status, start) => ({ ...homepageData.exhibition, slug, status, start_date: start });
-            homepage = { ...homepageData, stats: { artists: 4, artworks: 8, exhibitions: 2 }, exhibitions: { current: [], upcoming: [ex('soon', 'upcoming', '2027-04-10')] } };
-            mockApi();
-            renderHome();
-
-            const line = await screen.findByTestId('home-stats');
-            expect(line).toHaveTextContent('8 əsər kataloqda · 4 rəssam təmsil olunur · aprel 2027 sərgi');
-            expect(line).toHaveClass('text-meta', 'text-ink-muted');
-            // Each part keeps together, so a narrow screen breaks the line only at the dots.
-            [...line.querySelectorAll('span')].forEach((part) => expect(part).toHaveClass('whitespace-nowrap'));
-            expect(line.querySelectorAll('span')).toHaveLength(3);
-            expect(within(screen.getByTestId('home-hero')).getByTestId('home-stats')).toBe(line);
-        });
-
-        it('drops the exhibition part when there is no current or upcoming exhibition', async () => {
-            homepage = { ...homepageData, stats: { artists: 4, artworks: 8, exhibitions: 0 }, exhibition: null, exhibitions: { current: [], upcoming: [] } };
-            mockApi();
-            renderHome();
-
-            expect(await screen.findByTestId('home-stats')).toHaveTextContent(/^8 əsər kataloqda · 4 rəssam təmsil olunur$/);
-        });
-
-        it('shows no line at all without stats', async () => {
-            for (const stats of [null, { artists: 0, artworks: 0, exhibitions: 0 }]) {
-                homepage = { ...homepageData, stats };
-                mockApi();
-                const { unmount } = renderHome();
-                await screen.findByRole('heading', { level: 1 });
-                expect(screen.queryByTestId('home-stats')).not.toBeInTheDocument();
-                unmount();
-            }
-        });
-    });
-
-    describe('the hero image', () => {
-        const withHero = (image_url) => ({ ...homepageData, page: { ...homepageData.page, sections: [{ ...homepageData.page.sections[0], image_url }] } });
-
-        it('with image_url: a second column from 1024px, a 4:3 cover image with a 1px line, no shadow, sized from the viewport', async () => {
-            homepage = withHero('https://example.test/hero.webp');
-            mockApi();
-            renderHome();
-
-            const hero = await screen.findByTestId('home-hero');
-            expect(hero).toHaveClass('lg:grid', 'lg:grid-cols-[minmax(0,1fr)_auto]');
-            const frame = within(hero).getByTestId('home-hero-image');
-            expect(frame).toHaveClass('aspect-[4/3]', 'border', 'border-line', 'hidden', 'lg:block', 'h-[clamp(140px,17vh,200px)]');
-            expect(frame.className).not.toMatch(/shadow/);
-            expect(within(frame).getByRole('img')).toHaveAttribute('src', 'https://example.test/hero.webp');
-            expect(within(frame).getByRole('img')).toHaveClass('object-cover');
-        });
-
-        it('without image_url: the single-column text hero stays', async () => {
-            homepage = withHero(null);
-            mockApi();
-            renderHome();
-
-            const hero = await screen.findByTestId('home-hero');
-            expect(hero.className).not.toMatch(/grid/);
-            expect(within(hero).queryByTestId('home-hero-image')).not.toBeInTheDocument();
-        });
-    });
-
-    it('opens with a text-only hero: text-hero heading, Spectral lead, no image', async () => {
+    it('opens with the hero photograph across the full width: no overlay, no text on it, min(78vh, 760px) tall, 60vh on phones', async () => {
         renderHome();
 
         const hero = await screen.findByTestId('home-hero');
-        expect(within(hero).getByRole('heading', { level: 1, name: 'ArtNiyyətli' })).toHaveClass('text-hero');
-        expect(within(hero).getByText('Müasir Azərbaycan sənətini kəşf edin.')).toHaveClass('font-editorial', 'text-lead', 'text-ink-muted');
-        expect(hero.querySelector('img')).toBeNull();
-        expect(hero.closest('.pt-step-8')).not.toBeNull();
+        const image = within(hero).getByTestId('home-hero-image');
+        expect(image).toHaveAttribute('src', 'https://example.test/hero.webp');
+        expect(image).toHaveClass('w-full', 'object-cover', 'h-[60vh]', 'md:h-[min(78vh,760px)]');
+        expect(image.className).not.toMatch(/opacity|absolute|-z-/);
+        // The wrapper holds the image only, out of the page gutter.
+        expect(image.parentElement).toHaveClass('-mx-page');
+        expect(image.parentElement.children).toHaveLength(1);
+        expect(hero.innerHTML).not.toMatch(/gradient|bg-black|bg-ink\/|overlay/);
     });
 
-    it('puts each section label (interface text, sentence case) right above its heading', async () => {
-        const ex = (slug, title, status) => ({ ...homepageData.exhibition, slug, title, status });
-        homepage = { ...homepageData, exhibitions: { current: [ex('now', 'Now Show', 'current')], upcoming: [ex('soon', 'Soon Show', 'upcoming')] } };
+    it('puts the current exhibition on one line under the photograph, with "Sərgiyə bax" on the right', async () => {
+        renderHome();
+
+        const line = await screen.findByTestId('home-hero-line');
+        expect(following(screen.getByTestId('home-hero-image'), line)).toBe(true);
+        expect(line).toHaveClass('md:flex-row', 'md:justify-between', 'flex-col');
+        expect(within(line).getByText('İlk satış sərgisi')).toHaveClass('font-editorial', 'italic', 'text-[22px]');
+        expect(within(line).getByText('Kamran Səfərli, Nərmin Qasımova · 15 oktyabr 2026 – 30 noyabr 2026 · Bakı')).toHaveClass('text-label', 'text-ink-muted');
+        const link = within(line).getByRole('link', { name: 'Sərgiyə bax' });
+        expect(link).toHaveAttribute('href', '/exhibitions/ilk-satis');
+        expect(within(link).getByText('Sərgiyə bax')).toHaveClass('link-line');
+        // The hero heading stays the page's h1, for screen readers only.
+        expect(screen.getByRole('heading', { level: 1, name: 'ArtNiyyətli' })).toHaveClass('sr-only');
+    });
+
+    it('without a current exhibition, the line holds the hero heading (the visible h1) and subheading', async () => {
+        homepage = { ...homepageData, exhibitions: { current: [], upcoming: [] }, exhibition: null };
         mockApi();
         renderHome();
-        await screen.findByText('Wall Piece');
 
-        const pairs = { Kolleksiya: 'Seçilmiş əsərlər', Təmsilçilik: 'Rəssamlar', Təqvim: 'Sərgilər', Jurnal: 'Son məqalələr', Əlaqə: 'Əlaqə saxla' };
-        for (const [label, heading] of Object.entries(pairs)) {
-            const h2 = screen.getByRole('heading', { level: 2, name: heading });
-            const labelEl = h2.previousElementSibling;
-            expect(labelEl).toHaveTextContent(label);
-            expect(labelEl).toHaveClass('text-label', 'text-ink-muted', 'mb-step-2');
-            expect(labelEl.className).not.toMatch(/uppercase/);
-            expect(h2).toHaveClass('text-section');
-        }
-        // The wall's label is its heading, right above the wall.
-        const wallLabel = screen.getByRole('heading', { level: 2, name: 'Divar' });
-        expect(wallLabel).toHaveClass('text-label', 'text-ink-muted');
-        expect(Boolean(wallLabel.compareDocumentPosition(screen.getByTestId('home-wall')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+        const line = await screen.findByTestId('home-hero-line');
+        const h1 = within(line).getByRole('heading', { level: 1, name: 'ArtNiyyətli' });
+        expect(h1).not.toHaveClass('sr-only');
+        expect(within(line).getByText('Müasir Azərbaycan sənəti, həqiqi ölçüsündə.')).toHaveClass('text-label', 'text-ink-muted');
+        expect(within(line).queryByRole('link')).not.toBeInTheDocument();
     });
 
-    it('gives the vertical (phone) wall no surface or edge either, and a short floor line under the figure', async () => {
+    it('without a hero image, the hero is the line alone, under the header padding', async () => {
+        homepage = { ...homepageData, page: { sections: [{ ...homepageData.page.sections[0], image_url: null }] } };
+        mockApi();
+        renderHome();
+
+        const hero = await screen.findByTestId('home-hero');
+        expect(hero.querySelector('img')).toBeNull();
+        expect(hero).toHaveClass('pt-step-8');
+    });
+
+    // ── the statement ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    it('sets the hero subheading as the statement: Spectral 300, 30–46px, 1.22, at most 900px wide', async () => {
+        renderHome();
+
+        const statement = await screen.findByTestId('home-statement');
+        const text = within(statement).getByText('Müasir Azərbaycan sənəti, həqiqi ölçüsündə.');
+        expect(text).toHaveClass('font-editorial', 'font-light', 'text-[clamp(30px,3.2vw,46px)]', 'leading-[1.22]', 'max-w-[900px]');
+        expect(following(screen.getByTestId('home-hero'), statement)).toBe(true);
+    });
+
+    it('puts the work and artist counts under the statement in 12px ink-muted', async () => {
+        renderHome();
+
+        const meta = await screen.findByTestId('home-stats');
+        expect(meta).toHaveTextContent(/^12 əsər · 5 rəssam$/);
+        expect(meta).toHaveClass('text-label', 'text-ink-muted');
+        expect(within(screen.getByTestId('home-statement')).getByTestId('home-stats')).toBe(meta);
+    });
+
+    it('statementMeta leaves out zero or missing counts, and gives null with neither', () => {
+        expect(statementMeta({ stats: { artworks: 8, artists: 0 } }, 'az')).toEqual(['8 əsər']);
+        expect(statementMeta({ stats: { artworks: 0, artists: 0 } }, 'az')).toBeNull();
+        expect(statementMeta({}, 'az')).toBeNull();
+        expect(statementMeta({ stats: { artworks: 3, artists: 2 } }, 'en')).toEqual(['3 works', '2 artists']);
+    });
+
+    // ── the current exhibition ────────────────────────────────────────────────────────────────────────────────────
+
+    it('shows the current exhibition in two columns: the cover left, the text right, bottom-aligned; no wine band', async () => {
+        const { container } = renderHome();
+
+        const block = await screen.findByTestId('home-current-show');
+        expect(block).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-[1.55fr_1fr]', 'md:gap-[72px]', 'md:items-end');
+        const cover = within(block).getByTestId('home-current-show-cover');
+        expect(cover).toHaveAttribute('src', 'https://example.test/cover.webp');
+        // The cover comes first, so on phones it stands above the text.
+        expect(block.firstElementChild).toBe(cover);
+
+        const h2 = within(block).getByRole('heading', { level: 2, name: 'İlk satış sərgisi' });
+        expect(h2).toHaveClass('text-section');
+        expect(h2.previousElementSibling).toHaveTextContent('Cari sərgi');
+        expect(within(block).getByText('15 oktyabr 2026 – 30 noyabr 2026 · Bakı')).toHaveClass('text-label', 'text-ink-muted');
+        expect(within(block).getByText('Dörd rəssam, on iki əsər.')).toHaveClass('font-editorial', 'font-light', 'text-reading');
+        expect(within(block).getByRole('link', { name: 'Sərgi haqqında' })).toHaveAttribute('href', '/exhibitions/ilk-satis');
+        expect(container.innerHTML).not.toMatch(/wine/);
+    });
+
+    it('shows the current exhibition as text alone without a cover, and not at all without a current one', async () => {
+        homepage = { ...homepageData, exhibitions: { current: [{ ...SHOW, media: [] }], upcoming: [] } };
+        mockApi();
+        const { unmount } = renderHome();
+        const block = await screen.findByTestId('home-current-show');
+        expect(block.className).not.toMatch(/grid/);
+        expect(block.querySelector('img')).toBeNull();
+        unmount();
+
+        homepage = { ...homepageData, exhibitions: { current: [], upcoming: homepageData.exhibitions.upcoming }, exhibition: null };
+        mockApi();
+        renderHome();
+        await screen.findByText('Featured Piece');
+        expect(screen.queryByTestId('home-current-show')).not.toBeInTheDocument();
+        // Upcoming shows are not listed on the home page.
+        expect(screen.queryByText('Soon Show')).not.toBeInTheDocument();
+    });
+
+    // ── the featured works ────────────────────────────────────────────────────────────────────────────────────────
+
+    it('shows the featured works in one row at one k, bottom-aligned, 40px apart, with no figure and no scale rule', async () => {
+        renderHome();
+
+        const heading = await screen.findByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' });
+        const section = heading.closest('section');
+        const row = within(section).getByTestId('featured-row');
+        expect(row).toHaveClass('flex', 'items-end', 'gap-x-[40px]');
+        const [big, small] = within(section).getAllByTestId('featured-field');
+        // k = min((1296 − 40) / (180 + 40), 384 / 140): the height cap wins.
+        const k = 384 / 140;
+        expect(big.style.height).toBe(`${Math.round(140 * k)}px`);
+        expect(small.style.height).toBe(`${Math.round(30 * k)}px`);
+        const widths = [...row.children].map((li) => parseFloat(li.style.width));
+        expect(widths[0] / widths[1]).toBeCloseTo(180 / 40, 1);
+        expect(widths[0] + widths[1] + 40).toBeLessThanOrEqual(1296);
+        expect(within(section).queryByTestId('human-figure')).not.toBeInTheDocument();
+        expect(within(section).queryByTestId('scale-rule')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('home-wall')).not.toBeInTheDocument();
+    });
+
+    it('captions each work: title in Spectral italic 15px, the artist, and size · price in 12px ink-muted', async () => {
+        renderHome();
+
+        const section = (await screen.findByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' })).closest('section');
+        const link = within(section).getByRole('link', { name: /^Small Piece/ });
+        expect(link).toHaveAttribute('href', '/artworks/AN-4');
+        expect(link).toHaveClass('text-ink'); // the title takes the link's ink
+        expect(within(link).getByText('Small Piece')).toHaveClass('font-editorial', 'italic', 'text-[15px]');
+        expect(within(link).getByText('Kamran Səfərli')).toHaveClass('text-label', 'text-ink-muted');
+        expect(within(link).getByTestId('featured-details')).toHaveTextContent('40 × 30 sm · qiymət sorğu ilə');
+        expect(within(within(section).getByRole('link', { name: /^Featured Piece/ })).getByTestId('featured-details')).toHaveTextContent('180 × 140 sm · 9 800 AZN');
+    });
+
+    it('puts "Bütün əsərlər" on the right of the featured heading', async () => {
+        renderHome();
+
+        const section = (await screen.findByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' })).closest('section');
+        const all = within(section).getByRole('link', { name: 'Bütün əsərlər' });
+        expect(all).toHaveAttribute('href', '/artworks');
+        expect(all.parentElement).toHaveClass('flex', 'justify-between', 'items-baseline');
+    });
+
+    it('lists the featured works one per line on phones, the widest at the full width', async () => {
         const innerWidth = window.innerWidth;
         window.innerWidth = 375;
         global.ResizeObserver = class {
@@ -489,124 +325,118 @@ describe('HomePage', () => {
         };
         try {
             renderHome();
-            await screen.findByText('Wall Piece');
-
-            const wall = screen.getByTestId('home-wall');
-            expect(wall.className).not.toMatch(/bg-|border/);
-            expect(screen.queryByTestId('wall-surface')).not.toBeInTheDocument();
-            const figure = screen.getByTestId('human-figure');
-            const floor = screen.getByTestId('figure-floor');
-            expect(floor).toHaveClass('h-px');
-            expect(parseFloat(floor.style.top)).toBe(parseFloat(figure.style.top) + Number(figure.getAttribute('height')));
-            // No padding or edge to lay out inside: the works use the full 343px, and none reaches past it.
-            wallFields().forEach((f) => expect(parseFloat(f.style.left) + parseFloat(f.style.width)).toBeLessThanOrEqual(343));
+            const row = await screen.findByTestId('featured-row');
+            expect(row).toHaveClass('flex-col');
+            const widths = screen.getAllByTestId('featured-field').map((field) => parseFloat(field.style.width));
+            expect(widths[0]).toBe(343);
+            expect(widths[0] / widths[1]).toBeCloseTo(180 / 40, 1);
+            // One work per line: the caption is not squeezed to a small work's width.
+            [...row.children].forEach((li) => expect(li.style.width).toBe(''));
         } finally {
             window.innerWidth = innerWidth;
         }
-    });
-
-    it('keeps the tallest work of the vertical stack under 60% of a low screen (a phone on its side)', async () => {
-        const { innerWidth, innerHeight } = window;
-        window.innerWidth = 667;
-        window.innerHeight = 375;
-        global.ResizeObserver = class {
-            constructor(cb) { this.cb = cb; }
-            observe() { this.cb([{ contentRect: { width: 627 } }]); }
-            disconnect() {}
-        };
-        try {
-            renderHome();
-            await screen.findByText('Wall Piece');
-
-            const tallest = Math.max(...wallFields().map((f) => parseFloat(f.style.height)));
-            expect(tallest).toBeLessThanOrEqual(Math.round(375 * 0.6) + 1);
-            // One k still: the figure is 170 × k where k = tallest / 140 cm.
-            expect(Number(screen.getByTestId('human-figure').getAttribute('height'))).toBe(Math.round(170 * (tallest / 140)));
-        } finally {
-            window.innerWidth = innerWidth;
-            window.innerHeight = innerHeight;
-        }
-    });
-
-    it('puts the scale rule and the figure label under the floor on the left, the counter on the right', async () => {
-        renderHome();
-        await screen.findByText('Wall Piece');
-
-        const footer = screen.getByTestId('wall-footer');
-        const wall = screen.getByTestId('home-wall');
-        expect(Boolean(wall.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
-        const [left, right] = footer.children;
-        expect(within(left).getByText('170 sm')).toBeInTheDocument();
-        expect(within(left).getByTestId('scale-rule')).toBeInTheDocument();
-        expect(right).toBe(screen.getByTestId('wall-position'));
-    });
-
-    it('shows "Seçilmiş əsərlər" after the wall when featured works exist, on its own scaled grid', async () => {
-        renderHome();
-        const heading = await screen.findByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' });
-        const section = heading.closest('section');
-
-        expect(within(section).getByText('Featured Piece')).toBeInTheDocument();
-        expect(within(section).getByTestId('scale-rule')).toBeInTheDocument();
-        expect(Boolean(screen.getByTestId('home-wall').compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
-        expect(Boolean(section.compareDocumentPosition(screen.getByRole('heading', { level: 2, name: 'Rəssamlar' })) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     });
 
     it('leaves the featured section out when there are no featured works', async () => {
         homepage = { ...homepageData, featured: [] };
         mockApi();
         renderHome();
-        await screen.findByText('Wall Piece');
+        await screen.findByText('A B');
 
         expect(screen.queryByRole('heading', { name: 'Seçilmiş əsərlər' })).not.toBeInTheDocument();
     });
 
-    // (was: a 4:5 portrait) — the artist cards' portrait is a circle now (the client's exception to "no radius").
-    it('shows the artists with the artists list card (round portrait, name, direction) in 2 / 3 / 4 columns', async () => {
+    // ── the artists ───────────────────────────────────────────────────────────────────────────────────────────────
+
+    it('shows the artists in 2 / 4 columns, each card one of the artist\'s works from the page, with "Bütün rəssamlar"', async () => {
+        homepage = { ...homepageData, featured: [card('AN-3', 'Featured Piece', 180, 140, { image_url: 'https://example.test/an3.webp' })], artists: [{ ...homepageData.artists[0], artworks_count: 3 }] };
+        mockApi();
         renderHome();
 
         const list = await screen.findByTestId('home-artists');
-        // (was: 1 column on phones) — two below 640px keep the home page shorter; the artists page stays at one.
-        expect(list).toHaveClass('grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4');
-        const card = within(list).getByRole('link', { name: /A B/ });
-        expect(card).toHaveAttribute('href', '/artists/a');
-        expect(within(card).getByTestId('artist-portrait')).toHaveClass('aspect-square', 'rounded-full', 'border-line');
-        expect(within(card).getByText('Modern')).toHaveClass('text-meta', 'text-ink-muted');
+        expect(list).toHaveClass('grid-cols-2', 'md:grid-cols-4');
+        const cardLink = within(list).getByRole('link', { name: /A B/ });
+        expect(cardLink).toHaveAttribute('href', '/artists/a');
+        const work = within(cardLink).getByTestId('artist-card-work');
+        expect(work).toHaveClass('items-end', 'md:h-[300px]');
+        expect(work.querySelector('img')).toHaveAttribute('src', 'https://example.test/an3.webp');
+        expect(within(cardLink).queryByTestId('artist-portrait')).not.toBeInTheDocument();
+        expect(within(cardLink).getByText('A B')).toHaveClass('text-ui');
+        expect(within(cardLink).getByText(/Modern/)).toHaveTextContent('Modern · 3 əsər');
+        expect(within(list.closest('section')).getByRole('link', { name: 'Bütün rəssamlar' })).toHaveAttribute('href', '/artists');
     });
 
-    it('shows the number of works on the home artist cards too (artworks_count is sent on /homepage)', async () => {
-        homepage = { ...homepageData, artists: [{ ...homepageData.artists[0], artworks_count: 3 }] };
-        mockApi();
+    it('shows the artist\'s monogram when the page has no work of theirs with an image', async () => {
         renderHome();
 
-        const card = within(await screen.findByTestId('home-artists')).getByRole('link', { name: /A B/ });
-        expect(within(card).getByTestId('artist-works-count')).toHaveTextContent('3 əsər');
+        const cardLink = within(await screen.findByTestId('home-artists')).getByRole('link', { name: /A B/ });
+        expect(within(cardLink).getByTestId('artist-monogram')).toHaveTextContent('AB');
+        expect(cardLink.querySelector('img')).toBeNull();
     });
 
-    it('leaves out empty blocks: artists, exhibitions, journal, FAQ', async () => {
-        homepage = { ...homepageData, artists: [], exhibition: null, exhibitions: { current: [], upcoming: [] }, faqs: [] };
+    // ── the journal ───────────────────────────────────────────────────────────────────────────────────────────────
+
+    it('shows the latest three articles as "Qeydlər": a 1px line above, date, Spectral 300 title, short text', async () => {
+        renderHome();
+
+        const heading = await screen.findByRole('heading', { level: 2, name: 'Qeydlər' });
+        expect(heading.previousElementSibling).toHaveTextContent('Jurnal');
+        const section = heading.closest('section');
+        expect(within(section).getByRole('link', { name: 'Bütün məqalələr' })).toHaveAttribute('href', '/articles');
+        const list = within(section).getByTestId('home-articles-list');
+        expect(list).toHaveClass('border-t', 'border-line', 'md:grid-cols-3');
+        const article = within(list).getByRole('link', { name: /Kamran Səfərli ilə müsahibə/ });
+        expect(article).toHaveAttribute('href', '/articles/musahibe');
+        expect(within(article).getByText('Kamran Səfərli ilə müsahibə')).toHaveClass('font-editorial', 'font-light', 'text-[24px]');
+        expect(within(article).getByText('Xətt və boşluq haqqında.')).toHaveClass('text-meta', 'text-ink-muted');
+        expect(global.fetch.mock.calls.some(([url]) => url.startsWith('/api/v1/articles') && url.includes('per_page=3'))).toBe(true);
+    });
+
+    it('leaves out the empty blocks: artists, journal', async () => {
+        homepage = { ...homepageData, artists: [] };
         articles = [];
         mockApi();
         renderHome();
-        await screen.findByText('Wall Piece');
+        await screen.findByText('Featured Piece');
 
-        for (const name of ['Rəssamlar', 'Sərgilər', 'Son məqalələr', 'Suallar']) {
-            expect(screen.queryByRole('heading', { level: 2, name })).not.toBeInTheDocument();
-        }
+        for (const name of ['Rəssamlar', 'Qeydlər']) expect(screen.queryByRole('heading', { level: 2, name })).not.toBeInTheDocument();
     });
 
-    it('shows the latest journal articles and the contact block', async () => {
-        renderHome();
+    // ── the page as a whole ───────────────────────────────────────────────────────────────────────────────────────
 
-        expect(await screen.findByRole('link', { name: /Kamran Səfərli ilə müsahibə/ })).toHaveAttribute('href', '/articles/musahibe');
-        expect(global.fetch.mock.calls.some(([url]) => url.startsWith('/api/v1/articles') && url.includes('per_page=3'))).toBe(true);
-        expect(screen.getByRole('link', { name: 'Əlaqə saxla' })).toHaveAttribute('href', '/contact');
-    });
-
-    it('uses no Signal on the page itself', async () => {
+    it('orders the page: hero, statement, current exhibition, featured, artists, journal — 180px apart at 1440, 96px on phones', async () => {
         const { container } = renderHome();
-        await screen.findByText('Wall Piece');
+        await screen.findByRole('heading', { level: 2, name: 'Qeydlər' });
+
+        const page = container.querySelector('[data-testid="home-hero"]').parentElement;
+        expect(page).toHaveClass('flex', 'flex-col', 'gap-[clamp(96px,12.5vw,180px)]');
+        const order = [
+            screen.getByTestId('home-hero'),
+            screen.getByTestId('home-statement'),
+            screen.getByTestId('home-current-show'),
+            screen.getByRole('heading', { level: 2, name: 'Seçilmiş əsərlər' }),
+            screen.getByRole('heading', { level: 2, name: 'Rəssamlar' }),
+            screen.getByRole('heading', { level: 2, name: 'Qeydlər' }),
+        ];
+        order.slice(1).forEach((node, i) => expect(following(order[i], node)).toBe(true));
+    });
+
+    it('has no wall, "how it works", FAQ, contact block, seal or wine band any more', async () => {
+        const { container } = renderHome();
+        await screen.findByRole('heading', { level: 2, name: 'Qeydlər' });
+
+        expect(screen.queryByTestId('home-wall')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('home-seal')).not.toBeInTheDocument();
+        expect(screen.queryByText('Necə sifariş verə bilərəm?')).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Əlaqə saxla' })).not.toBeInTheDocument();
+        expect(container.innerHTML).not.toMatch(/bg-wine|data-surface/);
+    });
+
+    it('uses no Signal and no boxed button on the page itself', async () => {
+        const { container } = renderHome();
+        await screen.findByText('Featured Piece');
 
         expect(container.innerHTML).not.toMatch(/signal/);
+        container.querySelectorAll('a').forEach((link) => expect(link.className).not.toMatch(/(^|\s)border(\s|-)|bg-/));
     });
 });

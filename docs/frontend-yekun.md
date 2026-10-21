@@ -16,10 +16,10 @@ Yekun vəziyyət:
 
 | Ünvan | Səhifə | Qısa təsvir |
 |---|---|---|
-| `/` | Ana səhifə | Mətn hero, əsərlər həqiqi ölçüdə divarda (ilk ekranda), seçilmiş əsərlər, cari sərgi bordo zolaqda, rəssamlar, digər sərgilər, son məqalələr, "necə işləyir", suallar, əlaqə bloku |
+| `/` | Ana səhifə | Tam enli hero şəkli (üstündə mətn yoxdur), altında cari sərginin sətri; bəyanat; cari sərgi (örtük və mətn, iki sütun); seçilmiş əsərlər bir sırada, bir k ilə; rəssamlar (hər kartda rəssamın bir əsəri); "Qeydlər" (son üç məqalə). Bölmələr arası 180 px (telefonda 96 px) |
 | `/artworks` | Kataloq | Başlıq zolağı və əsər sayı, filtrlər (janr, texnika, rəssam, ölçü, qiymət, status, sıralama, ünvanda saxlanılır), əsərlər bir k ilə həqiqi ölçüdə, miqyas xətti, səhifələmə |
 | `/artworks/:kod` | Əsər | Əsas şəkil (ən çoxu 6 px/sm), kiçik şəkillər, göstəricilər cədvəli, "divarda gör" (240 / 270 / 320 sm divar, 170 sm fiqur), video, sorğu forması, WhatsApp, bənzər əsərlər |
-| `/artists` | Rəssamlar | Dairəvi portretli kartlar, ad, istiqamət və əsər sayı ortada: 4, 3 və 1 sütun |
+| `/artists` | Rəssamlar | Ana səhifənin kartı: rəssamın bir əsəri (300 px-lik sahədə, öz nisbətində), yoxdursa monoqram; altında ad, istiqamət və əsər sayı: 4 və 2 sütun |
 | `/artists/:slug` | Rəssam | Yığcam başlıq, əsərləri divarda, tərcümeyi-hal və yaradıcılıq yanaşması iki sütunda, sərgi tarixçəsi, mükafatlar, sorğu keçidi |
 | `/exhibitions` | Sərgilər | Cari, gələcək və arxiv qrupları; arxiv səhifələnir |
 | `/exhibitions/:slug` | Sərgi | Başlıq, tarix, məkan, status və mətn bir blokda; sərgidəki əsərlər divarda; iştirakçı rəssamlar; fotolar və video; sorğu keçidi |
@@ -42,7 +42,7 @@ Hər iki dil (AZ, EN) dəstəklənir. SEO başlığı və təsviri admin paneld�
 
 Hər əsər eyni miqyasda çəkilir: bir santimetr ekranda `k` piksel olur. Bir görünüşdə bütün əsərlər və 170 sm-lik insan fiquru eyni k ilə çəkilir, ona görə 180 sm-lik əsər 40 sm-likdən düz 4,5 dəfə böyük görünür.
 
-**Ana səhifə divarı:**
+**Divar (rəssam və sərgi səhifələri):**
 
 - k mövcud hündürlükdən hesablanır: ekran hündürlüyünün 58%-i, 320 ilə 640 piksel arasında.
 - Divar 270 sm-dir, əsərlərin mərkəzi döşəmədən 150 sm yuxarıdadır.
@@ -58,15 +58,18 @@ Hər əsər eyni miqyasda çəkilir: bir santimetr ekranda `k` piksel olur. Bir 
 - "Divarda gör" əsəri 240, 270 və ya 320 sm-lik divarda fiqurun yanında göstərir, ən çoxu 1,6 px/sm.
 - Əsas şəkil ən çoxu 6 px/sm ilə göstərilir.
 
-**Kataloq, seçilmiş əsərlər və bənzər əsərlər** öz k-sı olan şəbəkələrdir. Yanlarında miqyas xətti var (1 m, sığmayanda 50, 20, 10 və ya 5 sm), ki fərqli görünüşlər müqayisə oluna bilsin.
+**Ana səhifənin seçilmiş əsərləri** bir sıradadır: hamısı eyni k ilə yan-yana sığır, aşağıdan hizalıdır, aralıq 40 px; fiqur və miqyas xətti yoxdur (`FeaturedRow`). Telefonda hər sətirdə bir əsər, ən enlisi tam endə.
+
+**Kataloq və bənzər əsərlər** öz k-sı olan şəbəkələrdir. Yanlarında miqyas xətti var (1 m, sığmayanda 50, 20, 10 və ya 5 sm), ki fərqli görünüşlər müqayisə oluna bilsin.
 
 **Divarın işləndiyi səhifələr:**
 
 | Yer | Komponent |
 |---|---|
-| ana səhifə, rəssam səhifəsi, sərgi səhifəsi | `HomeWall` |
+| rəssam səhifəsi, sərgi səhifəsi | `HomeWall` |
 | əsər səhifəsi | `DetailWallView` və əsas sahə |
-| kataloq, seçilmiş və bənzər əsərlər | `ScaledArtworkGrid` |
+| ana səhifənin seçilmiş əsərləri | `FeaturedRow` |
+| kataloq və bənzər əsərlər | `ScaledArtworkGrid` |
 
 Bütün hesablama bir yerdədir: `lib/wall.js`, testləri ilə.
 
@@ -118,7 +121,7 @@ Telefonda (768 pikseldən aşağıda) 11-13 piksellik səviyyələr 14 piksələ
 
 - qradiyent yoxdur;
 - kölgə yalnız divara asılmış əsərdədir (`shadow-hang`);
-- yumru künc yoxdur (`--radius-input: 0`). Tək istisna müştərinin qərarıdır: rəssam kartlarındakı portret (rəssamlar siyahısı və ana səhifənin rəssamlar bloku) tam dairədir, şəkil kvadrat kəsilir. Rəssamın öz səhifəsində və sərgi səhifəsində portret 4:5 düzbucaqlı qalır;
+- yumru künc yoxdur (`--radius-input: 0`), istisnasız. Rəssam kartları portret deyil, rəssamın əsərini göstərir; rəssamın öz səhifəsində portret 4:5 düzbucaqlıdır, portret yoxdursa monoqram;
 - təkrarlanan animasiya yoxdur;
 - böyük hərfli etiket yoxdur;
 - Signal bir ekranda ən çoxu üç dəfədir və heç vaxt fon deyil. Bu büdcə səhifənin sakit vəziyyətinə aiddir: xəta görünəndə (API xətası, forma və ya aralıq doğrulaması) ekranda üçdən çox qırmızı element ola bilər, çünki xəta görünməlidir; bu halda aktiv filtr sayı kimi məlumat elementləri Signal-ı itirir. Marka qırmızısı loqoda işlənir və üç Signal büdcəsinə daxil deyil: `--color-signal` və `--color-brand` rəngləri yaxın olsa da, rolları ayrı olduğu üçün ayrı tokenlərdir;

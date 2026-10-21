@@ -6,26 +6,41 @@ import ExhibitionCard from '../components/ExhibitionCard.jsx';
 import ArticleCard from '../components/ArticleCard.jsx';
 
 describe('ArtistCard', () => {
-    // The card reads the locale (its works-count label), so it renders inside LocaleProvider.
-    it('renders the name, direction, and a link to the profile', () => {
-        render(
-            <LocaleProvider>
-                <ArtistCard
-                    artist={{ slug: 'aygun-mammadova', first_name: 'Aygün', last_name: 'Məmmədova', direction: 'Müasir rəssamlıq', portrait_url: 'https://example.test/portrait.webp' }}
-                />
-            </LocaleProvider>
-        );
+    const AYGUN = { id: 5, slug: 'aygun-mammadova', first_name: 'Aygün', last_name: 'Məmmədova', direction: 'Müasir rəssamlıq', portrait_url: 'https://example.test/portrait.webp' };
+    const WORK = { inventory_code: 'AN-1', title: 'A', artist: { id: 5, name: 'Aygün Məmmədova' }, image_url: 'https://example.test/work.webp', width_cm: 80, height_cm: 120 };
 
-        expect(screen.getByText('Aygün Məmmədova')).toBeInTheDocument();
-        expect(screen.getByText('Müasir rəssamlıq')).toBeInTheDocument();
+    // The card reads the locale (its works-count label), so it renders inside LocaleProvider.
+    it('renders one of the artist\'s works in its own ratio, then the name, the direction and a link to the profile', () => {
+        const { container } = render(<LocaleProvider><ArtistCard artist={AYGUN} artwork={WORK} /></LocaleProvider>);
+
+        expect(screen.getByText('Aygün Məmmədova')).toHaveClass('text-ui');
+        expect(screen.getByText('Müasir rəssamlıq')).toHaveClass('text-label', 'text-ink-muted');
         expect(screen.getByRole('link')).toHaveAttribute('href', '/artists/aygun-mammadova');
-        expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.test/portrait.webp');
-        expect(screen.getByRole('img')).toHaveAttribute('loading', 'lazy');
+        // The work, not the portrait: decorative (the name follows), lazy, in the 80 × 120 ratio, no frame.
+        const img = container.querySelector('img');
+        expect(img).toHaveAttribute('src', 'https://example.test/work.webp');
+        expect(img).toHaveAttribute('alt', '');
+        expect(img).toHaveAttribute('loading', 'lazy');
+        expect(img).toHaveAttribute('width', '800');
+        expect(img).toHaveAttribute('height', '1200');
+        expect(img).toHaveClass('max-h-full', 'max-w-full');
+        expect(screen.getByTestId('artist-card-work')).toHaveClass('flex', 'items-end', 'h-[200px]', 'md:h-[300px]');
+        expect(container.innerHTML).not.toMatch(/rounded|border/);
     });
 
-    it('renders a placeholder, not a broken image, when portrait_url is null', () => {
-        render(<LocaleProvider><ArtistCard artist={{ slug: 'x', first_name: 'X', last_name: 'Y', direction: 'Z', portrait_url: null }} /></LocaleProvider>);
-        expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    it('shows the monogram, not a broken image or an empty field, without a work', () => {
+        const { container } = render(<LocaleProvider><ArtistCard artist={{ slug: 'x', first_name: 'Xəyal', last_name: 'Yusifov', direction: 'Z', portrait_url: null }} /></LocaleProvider>);
+
+        expect(container.querySelector('img')).toBeNull();
+        expect(screen.getByTestId('artist-monogram')).toHaveTextContent('XY');
+        expect(screen.getByTestId('artist-monogram')).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('reads `name` (exhibition artists) and is plain text, not a link, without a slug', () => {
+        render(<LocaleProvider><ArtistCard artist={{ id: 6, slug: null, name: 'No Slug' }} /></LocaleProvider>);
+
+        expect(screen.getByText('No Slug')).toBeInTheDocument();
+        expect(screen.queryByRole('link')).not.toBeInTheDocument();
     });
 });
 

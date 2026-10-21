@@ -87,11 +87,25 @@ describe('ArtistDetailPage', () => {
         // (was: text-heading) — the design pass raises the artist's name to text-display.
         expect(await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' })).toHaveClass('text-display');
         const portrait = screen.getByTestId('artist-portrait');
-        expect(portrait).toHaveClass('aspect-[4/5]', 'max-w-40', 'border', 'border-line');
+        expect(portrait).toHaveClass('aspect-[4/5]', 'max-w-40');
+        expect(portrait.className).not.toMatch(/border/); // no frame
         expect(within(portrait).getByRole('img', { name: 'Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/portrait.webp');
         expect(screen.getByText('Müasir rəssamlıq')).toBeInTheDocument();
         expect(screen.getByText('1985, Bakı')).toBeInTheDocument();
         expect(document.body.innerHTML).not.toMatch(/rounded/);
+    });
+
+    it('shows the artist\'s monogram in the portrait\'s place without a portrait, not an empty beige field', async () => {
+        artist = { ...detail, portrait_url: null };
+        mockApi();
+        renderPage();
+
+        await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' });
+        const portrait = screen.getByTestId('artist-portrait');
+        expect(portrait).toHaveClass('aspect-[4/5]', 'items-end');
+        expect(portrait.className).not.toMatch(/bg-surface-field/);
+        expect(within(portrait).queryByRole('img')).not.toBeInTheDocument();
+        expect(within(portrait).getByTestId('artist-monogram')).toHaveTextContent('AM');
     });
 
     it('hangs the works on a wall at one k, with the 170 cm figure at 170 × k', async () => {

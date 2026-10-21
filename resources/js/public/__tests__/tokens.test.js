@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
@@ -35,6 +35,18 @@ describe('design tokens', () => {
         const block = css.slice(css.indexOf('@utility link-line'), css.indexOf('}', css.indexOf('@utility link-line')));
         expect(block).toMatch(/border-bottom: 1px solid currentColor;/);
         expect(block).toMatch(/padding-bottom: 3px;/);
+    });
+
+    it('keeps the 14px phone floor for the navigation too (13px on desktops, 14px in the phone menu)', () => {
+        expect(token('text-nav')).toBe('13px');
+        const phone = css.slice(css.indexOf('@media (max-width: 767px)'), css.indexOf('}', css.indexOf('@media (max-width: 767px)')));
+        expect(phone).toMatch(/--text-nav: 14px;/);
+    });
+
+    it('sets every section title (h2) of the public pages in text-section, none in the old 20px / 500 text-subheading', () => {
+        const dir = resolve(__dirname, '..');
+        const sources = ['pages', 'components', 'layout'].flatMap((sub) => readdirSync(resolve(dir, sub)).filter((f) => f.endsWith('.jsx')).map((f) => readFileSync(resolve(dir, sub, f), 'utf8')));
+        for (const source of sources) expect(source).not.toMatch(/<h2[^>]*text-subheading/);
     });
 
     it('loads Spectral 300 (roman) beside 400, from the same self-hosted family', () => {

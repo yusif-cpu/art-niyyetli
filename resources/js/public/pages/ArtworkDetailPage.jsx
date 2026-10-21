@@ -147,7 +147,7 @@ export default function ArtworkDetailPage({ params }) {
             )}
 
             <section aria-labelledby="enquiry-title" className="mt-step-9 max-w-xl">
-                <h2 id="enquiry-title" className="text-subheading">{t(locale, 'artwork.enquireTitle')}</h2>
+                <h2 id="enquiry-title" className="text-section">{t(locale, 'artwork.enquireTitle')}</h2>
                 <div className="mt-step-5">
                     <EnquiryForm subject="buy" artworkCode={data.inventory_code} />
                 </div>
@@ -155,7 +155,7 @@ export default function ArtworkDetailPage({ params }) {
 
             {similar.length > 0 && (
                 <section aria-labelledby="similar-title" className="mt-step-9">
-                    <h2 id="similar-title" className="mb-step-5 text-subheading">{t(locale, 'artwork.similar')}</h2>
+                    <h2 id="similar-title" className="mb-step-5 text-section">{t(locale, 'artwork.similar')}</h2>
                     <ScaledArtworkGrid artworks={similar} preset={PRESETS.similar} />
                 </section>
             )}

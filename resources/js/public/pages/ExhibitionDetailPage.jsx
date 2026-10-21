@@ -70,14 +70,14 @@ export default function ExhibitionDetailPage({ params }) {
 
             {artworks.length > 0 && (
                 <section aria-labelledby="exhibition-works">
-                    <h2 id="exhibition-works" className="mb-step-5 text-subheading">{t(locale, 'exhibitions.works')}</h2>
+                    <h2 id="exhibition-works" className="mb-step-5 text-section">{t(locale, 'exhibitions.works')}</h2>
                     <HomeWall artworks={artworks} label={t(locale, 'exhibitions.wallLabel')} />
                 </section>
             )}
 
             {artists.length > 0 && (
                 <section aria-labelledby="exhibition-artists">
-                    <h2 id="exhibition-artists" className="mb-step-4 text-subheading">{t(locale, 'exhibitions.participatingArtists')}</h2>
+                    <h2 id="exhibition-artists" className="mb-step-4 text-section">{t(locale, 'exhibitions.participatingArtists')}</h2>
                     {/* The artists list's own card: one of the artist's works in this show, else the monogram. Under
                         the name, the artist's number of works in THIS show ("2 əsər"), counted from the works on the
                         page — not the direction. A slug can be null here (E10 is not filtered): then the card is
@@ -97,7 +97,7 @@ export default function ExhibitionDetailPage({ params }) {
 
             {(photos.length > 0 || data.video) && (
                 <section aria-labelledby="exhibition-media" className="flex flex-col gap-step-5">
-                    <h2 id="exhibition-media" className="text-subheading">{t(locale, 'exhibitions.media')}</h2>
+                    <h2 id="exhibition-media" className="text-section">{t(locale, 'exhibitions.media')}</h2>
                     {photos.length > 0 && (
                         <ul className="grid grid-cols-1 gap-step-4 sm:grid-cols-2 lg:grid-cols-3">
                             {photos.map((photo, index) => (

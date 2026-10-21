@@ -55,7 +55,7 @@ export default function StaticPage({ params }) {
                                 <img src={section.image_url} alt={section.heading || ''} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                             </div>
                         )}
-                        {section.heading && <h2 className="mb-step-3 text-subheading">{section.heading}</h2>}
+                        {section.heading && <h2 className="mb-step-3 text-section">{section.heading}</h2>}
                         <p className="font-editorial text-reading whitespace-pre-line">{section.body}</p>
                     </section>
                 ))}

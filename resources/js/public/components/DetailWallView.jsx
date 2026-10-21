@@ -38,7 +38,7 @@ export default function DetailWallView({ artwork }) {
     return (
         <section aria-labelledby="wall-view-title" className="font-ui">
             <div className="flex flex-wrap items-baseline justify-between gap-step-4">
-                <h2 id="wall-view-title" className="text-subheading">{t(locale, 'artwork.wallTitle')}</h2>
+                <h2 id="wall-view-title" className="text-section">{t(locale, 'artwork.wallTitle')}</h2>
                 <fieldset className="flex flex-wrap items-center gap-x-step-4">
                     <legend className="sr-only">{t(locale, 'artwork.wallHeight')}</legend>
                     <span aria-hidden="true" className="mr-step-2 text-label text-ink-muted">{t(locale, 'artwork.wallHeight')}</span>

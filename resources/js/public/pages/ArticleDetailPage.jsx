@@ -71,7 +71,7 @@ export default function ArticleDetailPage({ params }) {
 
             {more.length > 0 && (
                 <section aria-labelledby="article-more" className="border-t border-line pt-step-6">
-                    <h2 id="article-more" className="text-subheading">{t(locale, 'articles.more')}</h2>
+                    <h2 id="article-more" className="text-section">{t(locale, 'articles.more')}</h2>
                     <ul>
                         {more.map((article) => (
                             <li key={article.slug} className="border-b border-line">

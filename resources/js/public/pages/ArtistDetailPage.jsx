@@ -44,7 +44,7 @@ function History({ id, title, rows }) {
 
     return (
         <section aria-labelledby={id}>
-            <h2 id={id} className="mb-step-4 text-subheading">{title}</h2>
+            <h2 id={id} className="mb-step-4 text-section">{title}</h2>
             <ul className="border-t border-line">
                 {rows.map((row, index) => (
                     <li key={index} className="grid grid-cols-[4rem_minmax(0,1fr)] gap-step-4 border-b border-line py-step-3 md:grid-cols-[4rem_minmax(0,2fr)_minmax(0,1fr)]">
@@ -95,7 +95,7 @@ export default function ArtistDetailPage({ params }) {
 
             {artworks.length > 0 && (
                 <section aria-labelledby="artist-works">
-                    <h2 id="artist-works" className="mb-step-5 text-subheading">{t(locale, 'artist.works')}</h2>
+                    <h2 id="artist-works" className="mb-step-5 text-section">{t(locale, 'artist.works')}</h2>
                     <HomeWall artworks={artworks} label={t(locale, 'artist.wallLabel')} />
                 </section>
             )}
@@ -105,13 +105,13 @@ export default function ArtistDetailPage({ params }) {
                 <section aria-label={t(locale, 'artist.biography')} className="grid gap-step-6 lg:grid-cols-2 lg:gap-step-8" data-testid="artist-texts">
                     {data.biography && (
                         <div className="max-w-prose">
-                            <h2 className="mb-step-3 text-subheading">{t(locale, 'artist.biography')}</h2>
+                            <h2 className="mb-step-3 text-section">{t(locale, 'artist.biography')}</h2>
                             <p className="font-editorial text-reading whitespace-pre-line">{data.biography}</p>
                         </div>
                     )}
                     {data.artistic_approach && (
                         <div className="max-w-prose">
-                            <h2 className="mb-step-3 text-subheading">{t(locale, 'artist.approach')}</h2>
+                            <h2 className="mb-step-3 text-section">{t(locale, 'artist.approach')}</h2>
                             <p className="font-editorial text-reading whitespace-pre-line">{data.artistic_approach}</p>
                         </div>
                     )}

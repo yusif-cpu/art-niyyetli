@@ -311,6 +311,7 @@
         --text-label: 14px;
         --text-meta: 14px;
         --text-byline: 14px;
+        --text-nav: 14px; /* the phone menu panel and its "menyu" toggle */
     }
 }
 

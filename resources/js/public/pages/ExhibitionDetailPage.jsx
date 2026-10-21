@@ -8,7 +8,7 @@ import { excerpt } from '../lib/text.js';
 import { formatDateRange } from '../lib/format.js';
 import { getExhibition } from '../services/exhibitions.js';
 import ArtistCard from '../components/ArtistCard.jsx';
-import { artworkFor } from '../lib/artists.js';
+import { artworkFor, worksBy } from '../lib/artists.js';
 import HomeWall from '../components/HomeWall.jsx';
 import YoutubeEmbed from '../components/YoutubeEmbed.jsx';
 import ErrorState from '../components/ErrorState.jsx';
@@ -78,12 +78,17 @@ export default function ExhibitionDetailPage({ params }) {
             {artists.length > 0 && (
                 <section aria-labelledby="exhibition-artists">
                     <h2 id="exhibition-artists" className="mb-step-4 text-subheading">{t(locale, 'exhibitions.participatingArtists')}</h2>
-                    {/* The artists list's own card: one of the artist's works in this show, else the monogram. A slug
-                        can be null here (E10 is not filtered): then the card is plain, not a link. */}
+                    {/* The artists list's own card: one of the artist's works in this show, else the monogram. Under
+                        the name, the artist's number of works in THIS show ("2 əsər"), counted from the works on the
+                        page — not the direction. A slug can be null here (E10 is not filtered): then the card is
+                        plain, not a link. */}
                     <ul className="grid grid-cols-2 gap-x-step-4 gap-y-step-7 md:grid-cols-4 md:gap-x-step-6">
                         {artists.map((artist) => (
                             <li key={artist.id}>
-                                <ArtistCard artist={artist} artwork={artworkFor(artist, artworks)} />
+                                <ArtistCard
+                                    artist={{ ...artist, direction: null, artworks_count: worksBy(artist, artworks).length }}
+                                    artwork={artworkFor(artist, artworks)}
+                                />
                             </li>
                         ))}
                     </ul>

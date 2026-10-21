@@ -13,19 +13,22 @@ export function initials(name) {
         .join('');
 }
 
+/** The artist's works among `artworks` (artwork cards with an `artist` object), matched by id or slug. */
+export function worksBy(artist, artworks) {
+    if (!artist || !Array.isArray(artworks)) return [];
+
+    return artworks.filter((work) => {
+        const by = work?.artist;
+        if (!by) return false;
+
+        return (artist.id != null && by.id === artist.id) || (Boolean(artist.slug) && by.slug === artist.slug);
+    });
+}
+
 /**
- * The work an artist card shows: the first one with an image among the works the page has already loaded, matched
- * by the artist's id (or slug). No backend field is involved; with no match the card shows the monogram.
+ * The work an artist card shows: the first one with an image among the works the page has already loaded. No
+ * backend field is involved; with no match the card shows the monogram.
  */
 export function artworkFor(artist, artworks) {
-    if (!artist || !Array.isArray(artworks)) return null;
-
-    return (
-        artworks.find((work) => {
-            const by = work?.artist;
-            if (!by || !(work.image_url || work.thumbnail_url)) return false;
-
-            return (artist.id != null && by.id === artist.id) || (Boolean(artist.slug) && by.slug === artist.slug);
-        }) ?? null
-    );
+    return worksBy(artist, artworks).find((work) => work.image_url || work.thumbnail_url) ?? null;
 }

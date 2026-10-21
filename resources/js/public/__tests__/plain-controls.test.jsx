@@ -24,7 +24,9 @@ describe('plain controls (no boxes, no outlined buttons)', () => {
         expect(within(chosen).getByText('Painting')).toHaveClass('link-line');
         expect(within(chosen).getByText('Painting')).not.toHaveClass('border-transparent');
         expect(other).toHaveClass('text-ink-muted');
-        expect(within(other).getByText('Drawing')).toHaveClass('link-line', 'border-transparent');
+        // Not link-line: its border shorthand would beat border-transparent and draw the line anyway.
+        expect(within(other).getByText('Drawing')).toHaveClass('border-b', 'border-transparent', 'pb-[3px]');
+        expect(within(other).getByText('Drawing')).not.toHaveClass('link-line');
         // Form fields stay fields.
         expect(screen.getByRole('combobox')).toHaveClass('border', 'border-line-strong');
     });
@@ -36,6 +38,8 @@ describe('plain controls (no boxes, no outlined buttons)', () => {
         const current = screen.getByRole('button', { current: 'page' });
         expect(within(current).getByText('2')).toHaveClass('link-line');
         expect(within(current).getByText('2')).not.toHaveClass('border-transparent');
+        // Exactly one line on the bar: the other pages carry no link-line.
+        expect(screen.getByRole('navigation').querySelectorAll('.link-line')).toHaveLength(1);
     });
 
     it('the retry action is a text link, not a framed button', () => {
@@ -54,5 +58,7 @@ describe('plain controls (no boxes, no outlined buttons)', () => {
         const pressed = screen.getAllByRole('button').filter((b) => b.getAttribute('aria-pressed') === 'true');
         expect(pressed).toHaveLength(1);
         expect(pressed[0].querySelector('.link-line:not(.border-transparent)')).not.toBeNull();
+        // Only the chosen height carries the line.
+        expect(document.querySelectorAll('fieldset .link-line')).toHaveLength(1);
     });
 });

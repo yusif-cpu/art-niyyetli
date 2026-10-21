@@ -89,6 +89,19 @@ describe('ExhibitionDetailPage', () => {
         expect(within(section).queryByTestId('artist-portrait')).not.toBeInTheDocument();
     });
 
+    it('shows under each participating artist their number of works in this show, counted from the page, not the direction', async () => {
+        exhibition = { ...detail, artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova', direction: 'Modern' }, { id: 6, slug: null, name: 'No Slug' }] };
+        mockApi();
+        renderPage();
+
+        const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
+        // Both works on the page are Aygün's (artist id 5).
+        expect(within(within(section).getByRole('link', { name: /Aygün Məmmədova/ })).getByTestId('artist-works-count')).toHaveTextContent('2 əsər');
+        expect(within(section).queryByText(/Modern/)).not.toBeInTheDocument();
+        // None of No Slug's: no count line at all.
+        expect(within(section).getByText('No Slug').parentElement.querySelector('[data-testid="artist-works-count"]')).toBeNull();
+    });
+
     it('shows a participating artist\'s work from this show, the monogram otherwise (never the portrait)', async () => {
         const withImage = { ...work('AN-1', 'A Piece', 180, 140), image_url: 'https://example.test/an1.webp' };
         exhibition = {

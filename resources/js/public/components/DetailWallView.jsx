@@ -65,7 +65,7 @@ export default function DetailWallView({ artwork }) {
                             </span>
                             <div
                                 data-testid="wall-work"
-                                className={`absolute overflow-hidden border border-line ${artwork.image_url ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
+                                className={`absolute overflow-hidden ${artwork.image_url ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
                                 style={{ left: L.work.left, bottom: L.work.bottom, width: L.work.width, height: L.work.height }}
                             >
                                 {artwork.image_url && <img src={artwork.image_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}

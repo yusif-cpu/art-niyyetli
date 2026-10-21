@@ -96,7 +96,7 @@ export default function HomeWall({ artworks, label }) {
                                         data-testid="wall-item"
                                     >
                                         <span
-                                            className={`absolute block overflow-hidden border border-line shadow-hang transition-colors duration-[120ms] ease-standard group-hover:border-line-strong ${wallImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
+                                            className={`absolute block overflow-hidden shadow-hang ${wallImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
                                             style={{ left: it.left, top: it.top, width: it.width, height: it.height }}
                                             data-testid="wall-field"
                                         >

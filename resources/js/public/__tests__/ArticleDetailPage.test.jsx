@@ -55,13 +55,13 @@ describe('ArticleDetailPage', () => {
         expect(heading.closest('article')).toHaveClass('max-w-prose');
     });
 
-    it('shows the cover across the column, without a shadow', async () => {
+    it('shows the cover across the column, without a frame or a shadow', async () => {
         renderPage();
 
         const cover = await screen.findByRole('img', { name: 'An Interview' });
         expect(cover).toHaveAttribute('src', 'https://example.test/cover.webp');
-        expect(cover.parentElement).toHaveClass('w-full', 'border', 'border-line');
-        expect(cover.parentElement.className).not.toMatch(/shadow/);
+        expect(cover.parentElement).toHaveClass('w-full');
+        expect(cover.parentElement.className).not.toMatch(/border|shadow/);
     });
 
     it('ends with up to three other articles, never the current one', async () => {

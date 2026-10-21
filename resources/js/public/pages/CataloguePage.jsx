@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
@@ -23,7 +23,7 @@ function prefersReducedMotion() {
 /**
  * The catalogue. Its whole state (filters, sort, page) lives in the URL query under the API's own parameter names:
  * a filter change REPLACES the history entry, a page change PUSHES one, and Back restores the previous page.
- * Signal budget on this screen: the header uses two (brand, active "Əsərlər"); the active-filter count is the third.
+ * No Signal on this screen until an error shows: the active-filter count is plain ink (colour belongs to the works).
  */
 export default function CataloguePage() {
     const { locale } = useLocale();
@@ -35,10 +35,6 @@ export default function CataloguePage() {
     const [retryToken, setRetryToken] = useState(0);
     const [filtersOpen, setFiltersOpen] = useState(false);
     const listRef = useRef(null);
-    // Which range fields show their validation error ({ size_min: true, … }): any shown error takes the Signal.
-    const [rangeErrors, setRangeErrors] = useState({});
-    const onRangeErrorChange = useCallback((key, shown) => setRangeErrors((current) => (current[key] === shown ? current : { ...current, [key]: shown })), []);
-    const rangeErrorShown = Object.values(rangeErrors).some(Boolean);
 
     useEffect(() => {
         const onPopState = () => setQuery(parseQuery(window.location.search));
@@ -121,9 +117,8 @@ export default function CataloguePage() {
                         <h2 id="catalogue-filters-title" className="flex items-baseline gap-step-2 text-nav">
                             {t(locale, 'filters.title')}
                             {count > 0 && (
-                                // Any error on screen (the API's, or a range the visitor typed wrong) takes the Signal:
-                                // the count (information) falls back to ink-muted.
-                                <span className={`figures ${artworks.error || rangeErrorShown ? 'text-ink-muted' : 'text-signal-ink'}`} data-testid="active-filter-count">
+                                // Information, not an alert: ink, never Signal.
+                                <span className="figures text-ink" data-testid="active-filter-count">
                                     {count}
                                     <span className="sr-only"> {t(locale, 'filters.activeCount')}</span>
                                 </span>
@@ -144,7 +139,7 @@ export default function CataloguePage() {
                     </div>
                     {/* Below lg the panel folds under the heading; no animation. */}
                     <div id="catalogue-filters" className={`${filtersOpen ? 'block' : 'hidden'} mt-step-5 lg:block`}>
-                        <FilterBar filters={query} onChange={updateFilters} genres={genres.data || []} mediums={mediums.data || []} artists={artists.data || []} invalidRanges={invalidRanges} onRangeErrorChange={onRangeErrorChange} />
+                        <FilterBar filters={query} onChange={updateFilters} genres={genres.data || []} mediums={mediums.data || []} artists={artists.data || []} invalidRanges={invalidRanges} />
                     </div>
                 </aside>
 

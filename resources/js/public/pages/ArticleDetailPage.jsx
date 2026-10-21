@@ -59,7 +59,7 @@ export default function ArticleDetailPage({ params }) {
                 </header>
 
                 {cover && (
-                    <div className="aspect-[3/2] w-full overflow-hidden border border-line bg-surface-field">
+                    <div className="aspect-[3/2] w-full overflow-hidden bg-surface-field">
                         <img src={cover} alt={data.title} loading="eager" fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
                     </div>
                 )}

@@ -101,7 +101,7 @@ export default function ExhibitionDetailPage({ params }) {
                     {photos.length > 0 && (
                         <ul className="grid grid-cols-1 gap-step-4 sm:grid-cols-2 lg:grid-cols-3">
                             {photos.map((photo, index) => (
-                                <li key={photo.url} className="aspect-[4/3] overflow-hidden border border-line bg-surface-field">
+                                <li key={photo.url} className="aspect-[4/3] overflow-hidden bg-surface-field">
                                     <img src={photo.url} alt={`${data.title} — ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                                 </li>
                             ))}

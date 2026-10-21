@@ -26,7 +26,7 @@ export default function ArtworkViewer({ artwork }) {
     const { k } = valid ? computeScale([artwork], { mode: preset.mode, width, share: preset.share, maxItemHeightPx, maxK: preset.maxK }) : { k: 0 };
     const alt = [artwork.title, artwork.artist?.name].filter(Boolean).join(', ');
 
-    const fieldClass = `overflow-hidden border border-line shadow-hang ${current ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`;
+    const fieldClass = `overflow-hidden shadow-hang ${current ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`;
     const image = current && <img src={current.url} alt={alt} loading="eager" decoding="async" fetchPriority="high" className="h-full w-full object-cover" />;
 
     return (

@@ -51,7 +51,7 @@ export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }
     const field = (
         <div
             data-testid="artwork-field"
-            className={`overflow-hidden border border-line transition-colors duration-[120ms] ease-standard group-hover:border-line-strong ${cardImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
+            className={`overflow-hidden ${cardImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
             style={size ? { width: size.fieldWidth, height: size.fieldHeight } : { aspectRatio: validDims ? `${w} / ${h}` : '4 / 5' }}
         >
             {cardImage && <img src={cardImage} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}

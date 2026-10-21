@@ -144,14 +144,15 @@ describe('Catalogue', () => {
         await waitFor(() => expect(artworkUrls().some((url) => url.includes('size_min=100'))).toBe(true));
     });
 
-    it('shows the active filter count in signal-ink and a clear link that resets the filters', async () => {
+    it('shows the active filter count in ink (never Signal) and a clear link that resets the filters', async () => {
         window.history.replaceState(null, '', '/artworks?genre=abstraksiya&status=available&sort=newest');
         renderPage();
         await screen.findByText('Uzun divar');
 
         const badge = screen.getByTestId('active-filter-count');
         expect(badge).toHaveTextContent('2');
-        expect(badge).toHaveClass('text-signal-ink');
+        expect(badge).toHaveClass('text-ink');
+        expect(badge.className).not.toMatch(/signal/);
 
         await userEvent.click(screen.getByRole('button', { name: 'Filtrləri təmizlə' }));
         expect(window.location.search).toBe('?sort=newest'); // sort is not a filter: it stays
@@ -159,24 +160,21 @@ describe('Catalogue', () => {
         expect(screen.queryByRole('button', { name: 'Filtrləri təmizlə' })).not.toBeInTheDocument();
     });
 
-    it('gives the Signal to an error: the active filter count drops to ink-muted while the error shows', async () => {
+    it('leaves the Signal to errors alone: the count stays ink while an API error shows', async () => {
         window.history.replaceState(null, '', '/artworks?genre=abstraksiya');
         artworksResponse = () => errorResponse(500);
         mockApi();
         renderPage();
 
-        await screen.findByRole('alert');
-        const badge = screen.getByTestId('active-filter-count');
-        expect(badge).not.toHaveClass('text-signal-ink');
-        expect(badge).toHaveClass('text-ink-muted');
+        const alert = await screen.findByRole('alert');
+        expect(screen.getByTestId('active-filter-count')).toHaveClass('text-ink');
+        expect(within(alert).getByText('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')).toHaveClass('text-signal-ink');
     });
 
-    it('gives the Signal to a range validation error too: the filter count drops to ink-muted while it shows, and gets it back after', async () => {
+    it('keeps the count ink while a range validation error shows; the error itself is the Signal', async () => {
         window.history.replaceState(null, '', '/artworks?genre=abstraksiya');
         renderPage();
         await screen.findByText('Uzun divar');
-        const badge = screen.getByTestId('active-filter-count');
-        expect(badge).toHaveClass('text-signal-ink');
 
         const [, priceMin] = screen.getAllByLabelText('ən azı');
         const [, priceMax] = screen.getAllByLabelText('ən çoxu');
@@ -184,13 +182,8 @@ describe('Catalogue', () => {
         fireEvent.change(priceMax, { target: { value: '100' } });
         fireEvent.blur(priceMax);
 
-        await screen.findByText('"ən çoxu" "ən azı"-dan kiçik ola bilməz.');
-        await waitFor(() => expect(screen.getByTestId('active-filter-count')).not.toHaveClass('text-signal-ink'));
-        expect(screen.getByTestId('active-filter-count')).toHaveClass('text-ink-muted');
-
-        // Correcting the range clears the error, and the count takes the Signal back.
-        fireEvent.change(priceMax, { target: { value: '900' } });
-        await waitFor(() => expect(screen.getByTestId('active-filter-count')).toHaveClass('text-signal-ink'));
+        expect(await screen.findByText('"ən çoxu" "ən azı"-dan kiçik ola bilməz.')).toHaveClass('text-signal-ink');
+        expect(screen.getByTestId('active-filter-count')).toHaveClass('text-ink');
     });
 
     it('puts a one-metre ScaleRule above the grid, at the current k', async () => {

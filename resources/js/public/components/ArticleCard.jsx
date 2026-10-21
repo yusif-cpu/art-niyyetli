@@ -34,7 +34,7 @@ export default function ArticleCard({ article }) {
                 {article.short_text && <span className="max-w-prose font-editorial text-reading-sm text-ink-muted">{article.short_text}</span>}
             </span>
             {cover && (
-                <span className="block aspect-[4/3] overflow-hidden border border-line bg-surface-field md:row-start-1 md:col-start-2">
+                <span className="block aspect-[4/3] overflow-hidden bg-surface-field md:row-start-1 md:col-start-2">
                     <img src={cover} alt={article.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </span>
             )}

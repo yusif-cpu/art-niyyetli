@@ -5,6 +5,8 @@ import Pagination from '../components/Pagination.jsx';
 import FilterBar from '../components/FilterBar.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import DetailWallView from '../components/DetailWallView.jsx';
+import ArtworkCard from '../components/ArtworkCard.jsx';
+import HomeWall from '../components/HomeWall.jsx';
 
 // No outlined or filled buttons outside forms: toggles are text, the chosen one ink with a line under it.
 const noBox = (el) => expect(el.className).not.toMatch(/(^|\s)border(\s|-line|-strong)|bg-/);
@@ -49,6 +51,34 @@ describe('plain controls (no boxes, no outlined buttons)', () => {
         noBox(retry);
         expect(retry).toHaveClass('min-h-11');
         expect(retry.querySelector('.link-line')).not.toBeNull();
+    });
+
+    it('draws artwork images without a frame; a work hung on a wall keeps its shadow', () => {
+        const originalRO = global.ResizeObserver;
+        global.ResizeObserver = class {
+            constructor(cb) { this.cb = cb; }
+            observe() { this.cb([{ contentRect: { width: 1000 } }]); }
+            disconnect() {}
+        };
+        try {
+            const work = { inventory_code: 'AN-1', title: 'A', artist: { id: 1, name: 'X' }, image_url: 'https://example.test/a.webp', width_cm: 100, height_cm: 80, price: 100, currency: 'AZN', availability: 'available' };
+            render(
+                <LocaleProvider>
+                    <ArtworkCard artwork={work} k={2} />
+                    <DetailWallView artwork={work} />
+                    <HomeWall artworks={[work]} />
+                </LocaleProvider>
+            );
+
+            const frame = /(^|\s)border(\s|-)/;
+            expect(screen.getByTestId('artwork-field').className).not.toMatch(frame);
+            expect(screen.getByTestId('wall-work').className).not.toMatch(frame);
+            const hung = screen.getByTestId('wall-field');
+            expect(hung.className).not.toMatch(frame);
+            expect(hung).toHaveClass('shadow-hang');
+        } finally {
+            global.ResizeObserver = originalRO;
+        }
     });
 
     it('the wall heights are text toggles', () => {

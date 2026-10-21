@@ -23,6 +23,13 @@ describe('NotFoundPage', () => {
         screen.getAllByRole('link').forEach((link) => expect(link).toHaveClass('min-h-11')); // 44px touch targets
     });
 
+    it('starts with the heading: no drawing above it', () => {
+        const { container } = render(<LocaleProvider><NotFoundPage /></LocaleProvider>);
+
+        expect(container.querySelector('svg')).toBeNull();
+        expect(screen.getByRole('heading', { level: 1 }).previousElementSibling).toBeNull();
+    });
+
     it('uses no Signal and none of the old classes', () => {
         const { container } = render(<LocaleProvider><NotFoundPage /></LocaleProvider>);
 

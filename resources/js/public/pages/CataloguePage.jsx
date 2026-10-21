@@ -97,7 +97,7 @@ export default function CataloguePage() {
     // reads like "no artworks match" unless told apart from a genuinely empty filter result.
     const outOfRange = Boolean(artworks.meta && artworks.meta.current_page > artworks.meta.last_page);
     const clearButton = count > 0 && (
-        <button type="button" onClick={clearFilters} className="cursor-pointer text-meta text-ink-muted underline decoration-1 underline-offset-2 hover:text-ink">
+        <button type="button" onClick={clearFilters} className="cursor-pointer text-meta text-ink-muted link-line hover:text-ink">
             {t(locale, 'filters.clear')}
         </button>
     );
@@ -160,7 +160,7 @@ export default function CataloguePage() {
                     {!artworks.loading && !artworks.error && artworks.data?.length === 0 && outOfRange && (
                         <div className="flex flex-col items-start gap-step-3 py-step-6">
                             <p className="text-ui text-ink-muted">{t(locale, 'catalogue.pageOutOfRange')}</p>
-                            <button type="button" onClick={() => changePage(1)} className="cursor-pointer text-meta text-ink underline decoration-1 underline-offset-2 hover:text-ink-muted">
+                            <button type="button" onClick={() => changePage(1)} className="cursor-pointer text-meta text-ink link-line hover:text-ink-muted">
                                 {t(locale, 'catalogue.backToFirstPage')}
                             </button>
                         </div>

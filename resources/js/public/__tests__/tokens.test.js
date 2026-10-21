@@ -23,4 +23,21 @@ describe('design tokens', () => {
         expect(token('text-display')).toBe('clamp(38px, 4.6vw, 59px)');
         expect(token('text-heading')).toBe('clamp(28px, 3.4vw, 48px)');
     });
+
+    it('sets titles light: page titles at weight 300 in their sizes, section titles their own 28–36px level', () => {
+        for (const level of ['text-hero', 'text-display', 'text-heading']) expect(token(`${level}--font-weight`)).toBe('300');
+        expect(token('text-section')).toBe('clamp(28px, 2.4vw, 36px)');
+        expect(token('text-section--font-weight')).toBe('300');
+        expect(token('text-section--letter-spacing')).toBe('-0.01em');
+    });
+
+    it('draws links as text with a 1px line 3px under it (link-line)', () => {
+        const block = css.slice(css.indexOf('@utility link-line'), css.indexOf('}', css.indexOf('@utility link-line')));
+        expect(block).toMatch(/border-bottom: 1px solid currentColor;/);
+        expect(block).toMatch(/padding-bottom: 3px;/);
+    });
+
+    it('loads Spectral 300 (roman) beside 400, from the same self-hosted family', () => {
+        expect(css).toMatch(/font-family: 'Spectral';\s*font-style: normal;\s*font-display: swap;\s*font-weight: 300;/);
+    });
 });

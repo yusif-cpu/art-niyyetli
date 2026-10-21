@@ -78,7 +78,7 @@ function CurrentShowBlock({ exhibition, locale }) {
     return (
         <section aria-labelledby="home-current-show" data-surface="wine" data-testid="home-current-show" className="-mx-page bg-wine px-page py-step-8 text-wine-ink">
             <p className="mb-step-2 text-label text-wine-ink-muted">{t(locale, 'home.currentExhibition')}</p>
-            <h2 id="home-current-show" className="text-heading">{exhibition.title}</h2>
+            <h2 id="home-current-show" className="text-section">{exhibition.title}</h2>
             {(dates || exhibition.venue) && (
                 <p className="figures mt-step-3 text-meta text-wine-ink-muted">{[dates, exhibition.venue].filter(Boolean).join(' · ')}</p>
             )}
@@ -268,7 +268,7 @@ export default function HomePage() {
             )}
 
             {/* The admin's "how it works" copy, next to the questions it answers. */}
-            {steps && <SectionCopy section={steps} as="h2" headingClassName="text-heading" />}
+            {steps && <SectionCopy section={steps} as="h2" headingClassName="text-section" />}
 
             {faqs.length > 0 && (
                 <Block id="home-faqs" title={t(locale, 'home.faqs')}>

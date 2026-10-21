@@ -338,12 +338,13 @@ describe('HomePage', () => {
         expect(within(wall).getByRole('link', { name: /^Wall Piece, Kamran Səfərli/ })).toHaveAttribute('href', '/artworks/AN-1');
     });
 
-    it('gives the wall a surface with a top edge and a floor line', async () => {
+    it('draws no wall surface or frame, only the floor line', async () => {
         renderHome();
         await screen.findByText('Wall Piece');
 
         const surface = screen.getByTestId('wall-surface');
-        expect(surface).toHaveClass('bg-surface-field-3', 'border-t', 'border-b', 'border-line');
+        expect(surface).toHaveClass('border-b', 'border-line');
+        expect(surface.className).not.toMatch(/bg-|border-t/);
         expect(surface.style.height).toBe(`${Math.round(270 * K)}px`); // the 270 cm wall, floor at its bottom edge
     });
 
@@ -356,7 +357,7 @@ describe('HomePage', () => {
         const block = await screen.findByTestId('home-current-show');
         expect(block).toHaveClass('bg-wine', 'text-wine-ink', '-mx-page', 'py-step-8');
         expect(block.className).not.toMatch(/-my-/); // keeps the step-9 rhythm around it (flush, neighbours touched its edges)
-        expect(within(block).getByRole('heading', { level: 2, name: 'Now Show' })).toHaveClass('text-heading');
+        expect(within(block).getByRole('heading', { level: 2, name: 'Now Show' })).toHaveClass('text-section');
         expect(within(block).getByText('10 yanvar 2026 – 10 fevral 2026 · Main Gallery')).toHaveClass('text-wine-ink-muted');
         expect(within(block).getByRole('link', { name: 'Sərgi haqqında' })).toHaveAttribute('href', '/exhibitions/now');
         expect(block.innerHTML).not.toMatch(/signal/);
@@ -470,7 +471,7 @@ describe('HomePage', () => {
             expect(labelEl).toHaveTextContent(label);
             expect(labelEl).toHaveClass('text-label', 'text-ink-muted', 'mb-step-2');
             expect(labelEl.className).not.toMatch(/uppercase/);
-            expect(h2).toHaveClass('text-heading');
+            expect(h2).toHaveClass('text-section');
         }
         // The wall's label is its heading, right above the wall.
         const wallLabel = screen.getByRole('heading', { level: 2, name: 'Divar' });
@@ -478,7 +479,7 @@ describe('HomePage', () => {
         expect(Boolean(wallLabel.compareDocumentPosition(screen.getByTestId('home-wall')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
     });
 
-    it('gives the vertical (phone) wall a surface and edge too, and a short floor line under the figure', async () => {
+    it('gives the vertical (phone) wall no surface or edge either, and a short floor line under the figure', async () => {
         const innerWidth = window.innerWidth;
         window.innerWidth = 375;
         global.ResizeObserver = class {
@@ -491,14 +492,14 @@ describe('HomePage', () => {
             await screen.findByText('Wall Piece');
 
             const wall = screen.getByTestId('home-wall');
-            expect(wall).toHaveClass('bg-surface-field-3', 'border', 'border-line');
+            expect(wall.className).not.toMatch(/bg-|border/);
             expect(screen.queryByTestId('wall-surface')).not.toBeInTheDocument();
             const figure = screen.getByTestId('human-figure');
             const floor = screen.getByTestId('figure-floor');
             expect(floor).toHaveClass('h-px');
             expect(parseFloat(floor.style.top)).toBe(parseFloat(figure.style.top) + Number(figure.getAttribute('height')));
-            // The works are laid out inside the surface's padding: none reaches past 343 − 2 × 17.
-            wallFields().forEach((f) => expect(parseFloat(f.style.left) + parseFloat(f.style.width)).toBeLessThanOrEqual(343 - 34));
+            // No padding or edge to lay out inside: the works use the full 343px, and none reaches past it.
+            wallFields().forEach((f) => expect(parseFloat(f.style.left) + parseFloat(f.style.width)).toBeLessThanOrEqual(343));
         } finally {
             window.innerWidth = innerWidth;
         }

@@ -52,7 +52,9 @@ describe('ExhibitionsPage', () => {
         expect(row).toHaveAttribute('href', '/exhibitions/winter-show-2026');
         expect(within(row).getByText('10 yanvar 2026 – 10 fevral 2026')).toBeInTheDocument();
         expect(within(row).getByText('Main Gallery')).toBeInTheDocument();
-        expect(within(row).getByText('Cari')).toHaveClass('border', 'border-line-strong', 'text-ink');
+        // Plain small text, no box.
+        expect(within(row).getByText('Cari')).toHaveClass('text-caption', 'text-ink-muted');
+        expect(within(row).getByText('Cari').className).not.toMatch(/border/);
     });
 
     it('uses no Signal, "current" included', async () => {

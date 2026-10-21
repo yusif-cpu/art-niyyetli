@@ -10,8 +10,8 @@ export default function ErrorState({ error, onRetry }) {
             {/* Errors use signal-ink (small red text) and count toward the screen's Signal budget. */}
             <p className="text-ui text-signal-ink">{message}</p>
             {onRetry && (
-                <button type="button" onClick={onRetry} className="mt-step-3 cursor-pointer border border-line-strong px-step-4 py-step-2 text-meta text-ink transition-colors duration-[120ms] ease-standard hover:border-ink">
-                    {t(locale, 'common.retry')}
+                <button type="button" onClick={onRetry} className="mt-step-2 inline-flex min-h-11 cursor-pointer items-center text-meta text-ink">
+                    <span className="link-line">{t(locale, 'common.retry')}</span>
                 </button>
             )}
         </div>

@@ -51,7 +51,8 @@ describe('ExhibitionDetailPage', () => {
         expect(await screen.findByRole('heading', { level: 1, name: 'Winter Show 2026' })).toHaveClass('text-heading');
         expect(screen.getByText('10 yanvar 2026 – 10 fevral 2026')).toBeInTheDocument();
         expect(screen.getByText('Main Gallery')).toBeInTheDocument();
-        expect(screen.getByText('Cari')).toHaveClass('border-line-strong', 'text-ink');
+        expect(screen.getByText('Cari')).toHaveClass('text-caption', 'text-ink-muted');
+        expect(screen.getByText('Cari').className).not.toMatch(/border/);
         expect(screen.getByText('Full concept text.')).toHaveClass('font-editorial', 'text-reading', 'max-w-prose');
     });
 
@@ -128,12 +129,14 @@ describe('ExhibitionDetailPage', () => {
         expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
     });
 
-    it('uses no Signal and no rounded or neutral classes; the enquiry link is wine', async () => {
+    it('uses no Signal and no rounded or neutral classes; the enquiry link is a plain text link', async () => {
         const { container } = renderPage();
         await screen.findByText('A Piece');
 
         expect(container.innerHTML).not.toMatch(/signal|rounded|neutral-/);
-        expect(screen.getByRole('link', { name: 'Sərgi haqqında soruş' })).toHaveClass('bg-wine', 'text-wine-ink');
+        const enquire = screen.getByRole('link', { name: 'Sərgi haqqında soruş' });
+        expect(enquire.className).not.toMatch(/bg-|border/);
+        expect(within(enquire).getByText('Sərgi haqqında soruş')).toHaveClass('link-line');
     });
 
     it('shows "Sərgi tapılmadı" with a link back to the exhibitions for a 404', async () => {

@@ -2,13 +2,13 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { formatDateRange } from '../lib/format.js';
 
-/** The status label: ink text in a hairline box — never Signal, "current" included. */
+/** The status label: plain small ink-muted text, no box — never Signal, "current" included. */
 export function ExhibitionStatus({ status }) {
     const { locale } = useLocale();
     if (!status) return null;
 
     return (
-        <span className="w-fit border border-line-strong px-step-2 py-0.5 text-caption whitespace-nowrap text-ink">
+        <span className="w-fit text-caption whitespace-nowrap text-ink-muted">
             {t(locale, `exhibitions.${status === 'past' ? 'archive' : status}`)}
         </span>
     );

@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
+import { toggleLineClass } from '../lib/linkLine.js';
 
 // With more artists than this the artist choice becomes a <select>, otherwise an inline option list.
 const ARTIST_LIST_MAX = 12;
 
-// Options and fields are 44px touch targets (min-h-11), the text stays text-meta.
+// Options and fields are 44px touch targets (min-h-11), the text stays text-meta. Options are plain text, no box.
 const optionClass = (selected) =>
-    `inline-flex min-h-11 cursor-pointer items-center border px-step-3 text-meta transition-colors duration-[120ms] ease-standard ${selected ? 'border-line-strong text-ink' : 'border-line text-ink-muted hover:text-ink'}`;
+    `inline-flex min-h-11 cursor-pointer items-center text-meta transition-colors duration-[120ms] ease-standard ${selected ? 'text-ink' : 'text-ink-muted hover:text-ink'}`;
 const fieldClass = 'min-h-11 w-full rounded-input border border-line-strong bg-surface-raised px-step-2 py-step-1 text-meta text-ink';
 
 /**
  * An inline single-choice list (the API filters on ONE genre / medium / artist, E7). Clicking the selected option
- * clears it. aria-pressed tells the state; the selection shows as a stronger border and ink, never a fill.
+ * clears it. aria-pressed tells the state; the selection shows as ink with a line under it, never a box or a fill.
  */
 function OptionList({ legend, options, value, onChange }) {
     if (options.length === 0) return null;
@@ -20,13 +21,13 @@ function OptionList({ legend, options, value, onChange }) {
     return (
         <fieldset className="flex flex-col gap-step-2">
             <legend className="mb-step-2 text-label text-ink-muted">{legend}</legend>
-            <div className="flex flex-wrap gap-step-2">
+            <div className="flex flex-wrap gap-x-step-4">
                 {options.map((option) => {
                     const selected = value === option.value;
 
                     return (
                         <button key={option.value} type="button" aria-pressed={selected} onClick={() => onChange(selected ? undefined : option.value)} className={optionClass(selected)}>
-                            {option.label}
+                            <span className={toggleLineClass(selected)}>{option.label}</span>
                         </button>
                     );
                 })}

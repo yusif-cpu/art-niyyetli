@@ -6,6 +6,7 @@ import { PRESETS, WALL_HEIGHTS_CM, detailWallLayout } from '../lib/wall.js';
 import { formatDimensions } from '../lib/format.js';
 import { fieldToneFor } from './ArtworkCard.jsx';
 import HumanFigure from './HumanFigure.jsx';
+import { toggleLineClass } from '../lib/linkLine.js';
 
 // The wall may use at most this share of the viewport height (and never more than this many px).
 const WALL_VIEWPORT_RATIO = 0.55;
@@ -22,8 +23,9 @@ function metres(cm, locale) {
 
 /**
  * "Divarda gör": the work on a 240 / 270 / 320 cm wall next to the 170 cm figure — one k, from this section's own
- * container (lib/wall.js detailWallLayout, cap 1.6 px/cm). The restrained version only: the wall is surface, the
- * floor a 1px line, the figure a borderless surface-field-2 shape, captions in ink-muted. No colour fill, no arrows,
+ * container (lib/wall.js detailWallLayout, cap 1.6 px/cm). The restrained version only: the wall is the page itself
+ * (no fill, no frame), the floor a 1px line, the figure a borderless surface-field-2 shape, captions in ink-muted. No
+ * colour fill, no arrows,
  * no animation — a new wall height simply redraws. A work taller than the wall raises it (the caption says so).
  */
 export default function DetailWallView({ artwork }) {
@@ -37,7 +39,7 @@ export default function DetailWallView({ artwork }) {
         <section aria-labelledby="wall-view-title" className="font-ui">
             <div className="flex flex-wrap items-baseline justify-between gap-step-4">
                 <h2 id="wall-view-title" className="text-subheading">{t(locale, 'artwork.wallTitle')}</h2>
-                <fieldset className="flex flex-wrap items-center gap-step-2">
+                <fieldset className="flex flex-wrap items-center gap-x-step-4">
                     <legend className="sr-only">{t(locale, 'artwork.wallHeight')}</legend>
                     <span aria-hidden="true" className="mr-step-2 text-label text-ink-muted">{t(locale, 'artwork.wallHeight')}</span>
                     {WALL_HEIGHTS_CM.map((cm) => (
@@ -46,9 +48,9 @@ export default function DetailWallView({ artwork }) {
                             type="button"
                             aria-pressed={cm === wallCm}
                             onClick={() => setWallCm(cm)}
-                            className={`figures inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center border px-step-3 text-meta ${cm === wallCm ? 'border-line-strong text-ink' : 'border-line text-ink-muted hover:text-ink'}`}
+                            className={`figures inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center text-meta ${cm === wallCm ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
                         >
-                            {metres(cm, locale)}
+                            <span className={toggleLineClass(cm === wallCm)}>{metres(cm, locale)}</span>
                         </button>
                     ))}
                 </fieldset>
@@ -57,7 +59,7 @@ export default function DetailWallView({ artwork }) {
             <div ref={ref} className="mt-step-5">
                 {L.ready && (
                     <>
-                        <div data-testid="wall" className="relative border-b border-line bg-surface" style={{ height: L.wall.height }}>
+                        <div data-testid="wall" className="relative border-b border-line" style={{ height: L.wall.height }}>
                             <span className="absolute top-0 left-0 text-caption text-ink-muted">
                                 {t(locale, 'artwork.wallCaption')} {metres(L.wall.heightCm, locale)}
                             </span>

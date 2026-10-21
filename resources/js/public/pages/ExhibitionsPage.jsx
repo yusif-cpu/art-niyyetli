@@ -17,7 +17,7 @@ function Group({ id, title, items, children }) {
 
     return (
         <section aria-labelledby={id}>
-            <h2 id={id} className="mb-step-4 text-heading">{title}</h2>
+            <h2 id={id} className="mb-step-4 text-section">{title}</h2>
             <ul className="border-t border-line">
                 {items.map((exhibition) => <ExhibitionRow key={exhibition.slug} exhibition={exhibition} />)}
             </ul>

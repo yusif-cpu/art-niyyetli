@@ -14,7 +14,6 @@ const WALL_MIN_PX = 320;
 const WALL_MAX_PX = 640;
 const CAPTION_OFFSET_PX = 10;
 const CAPTION_BLOCK_PX = 56; // room for title, artist and size under a work
-const VERTICAL_INSET_PX = 17; // the vertical surface's padding (16) + its 1px edge
 const FLOOR_OVERHANG_PX = 12; // the short floor line under the figure reaches a little past it
 // The vertical stack takes k from the width; on a low screen (a phone on its side) that would make the tallest work
 // fill the screen. It may take at most this share of the viewport height, never less than the floor.
@@ -55,8 +54,8 @@ export default function HomeWall({ artworks, label }) {
     const [ref, width] = useElementWidth();
     const [scrollLeft, setScrollLeft] = useState(0);
     const vertical = typeof window !== 'undefined' && window.innerWidth < VERTICAL_BELOW_PX;
-    // Vertical: the works hang inside a framed surface, so they are laid out in the width inside its padding and edge.
-    const innerWidth = vertical ? Math.max(0, width - 2 * VERTICAL_INSET_PX) : width;
+    // The works stand on the page itself (no surface, no frame), so they use the whole width either way.
+    const innerWidth = width;
     const L = wallLayout(artworks, { width: innerWidth, height: wallHeight(), vertical, ...(vertical ? { maxItemHeightPx: stackMaxItemHeight() } : {}) });
     const count = L.items.length;
     // Horizontal: the canvas ends at the floor unless a caption hangs below it (a work reaching the floor).
@@ -71,14 +70,13 @@ export default function HomeWall({ artworks, label }) {
                         role="region"
                         aria-label={label || t(locale, 'home.wallLabel')}
                         data-testid="home-wall"
-                        className={vertical ? 'border border-line bg-surface-field-3 p-step-4' : 'overflow-x-auto overflow-y-hidden'}                        onScroll={(event) => setScrollLeft(event.currentTarget.scrollLeft)}
+                        className={vertical ? undefined : 'overflow-x-auto overflow-y-hidden'}
+                        onScroll={(event) => setScrollLeft(event.currentTarget.scrollLeft)}
                     >
                         <div className="relative" style={{ width: vertical ? '100%' : Math.max(L.width, width), height: canvasHeight }} data-k={L.k}>
-                            {/* The wall itself: a surface from the floor line up to its 270 cm top edge, so the air above
-                                the works reads as wall. Below the floor stays page (room for a caption that reaches it).
-                                Vertical: the whole column is the surface (the scroller's own edge); there is no shared
-                                floor, so a short floor line stands under the figure alone. */}
-                            {!vertical && <div aria-hidden="true" data-testid="wall-surface" className="absolute top-0 right-0 left-0 border-t border-b border-line bg-surface-field-3" style={{ height: L.floor }} />}
+                            {/* No wall surface and no frame: the works stand on the page, and only the floor line is
+                                drawn. Vertical: there is no shared floor, so a short floor line stands under the figure alone. */}
+                            {!vertical && <div aria-hidden="true" data-testid="wall-surface" className="absolute top-0 right-0 left-0 border-b border-line" style={{ height: L.floor }} />}
                             <HumanFigure width={L.figure.width} height={L.figure.height} className="absolute" style={{ left: L.figure.left, top: L.figure.top }} />
                             {vertical && <span aria-hidden="true" data-testid="figure-floor" className="absolute block h-px bg-line-strong" style={{ left: L.figure.left, top: L.figure.top + L.figure.height, width: L.figure.width + FLOOR_OVERHANG_PX }} />}
                             {L.items.map((it) => {

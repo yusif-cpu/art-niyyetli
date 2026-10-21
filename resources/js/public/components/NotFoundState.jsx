@@ -15,7 +15,7 @@ export default function NotFoundState({ title, body, links = [] }) {
                 <ul className="mt-step-4 flex flex-wrap gap-x-step-6">
                     {links.map((link) => (
                         <li key={link.href}>
-                            <a href={link.href} className="inline-flex min-h-11 items-center text-ui text-ink underline decoration-1 underline-offset-2">{link.label}</a>
+                            <a href={link.href} className="inline-flex min-h-11 items-center text-ui text-ink"><span className="link-line">{link.label}</span></a>
                         </li>
                     ))}
                 </ul>

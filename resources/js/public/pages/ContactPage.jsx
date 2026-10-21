@@ -28,7 +28,7 @@ function Details({ settings, locale }) {
             value: (
                 <>
                     <span className="block whitespace-pre-line">{settings.address}</span>
-                    <a href={mapHref(settings.address)} target="_blank" rel="noopener noreferrer" className="mt-step-1 inline-block text-meta text-ink underline decoration-1 underline-offset-2">
+                    <a href={mapHref(settings.address)} target="_blank" rel="noopener noreferrer" className="mt-step-1 inline-block text-meta text-ink link-line">
                         {t(locale, 'contact.openMap')}
                     </a>
                 </>

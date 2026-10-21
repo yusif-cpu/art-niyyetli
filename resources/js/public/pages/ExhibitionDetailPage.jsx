@@ -119,8 +119,8 @@ export default function ExhibitionDetailPage({ params }) {
             )}
 
             <div>
-                <a href="/contact" className="inline-block bg-wine px-step-5 py-step-3 text-ui text-wine-ink">
-                    {t(locale, 'exhibitions.enquire')}
+                <a href="/contact" className="inline-flex min-h-11 items-center text-ui text-ink">
+                    <span className="link-line">{t(locale, 'exhibitions.enquire')}</span>
                 </a>
             </div>
         </article>

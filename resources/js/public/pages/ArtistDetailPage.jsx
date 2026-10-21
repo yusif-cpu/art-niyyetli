@@ -31,8 +31,8 @@ function NotFound({ locale }) {
         <div className="px-page pt-step-8 pb-step-9 font-ui">
             <h1 className="text-display">{t(locale, 'artist.notFoundTitle')}</h1>
             <p className="mt-step-4 text-ui text-ink-muted">{t(locale, 'artist.notFoundBody')}</p>
-            <a href="/artists" className="mt-step-4 inline-flex min-h-11 items-center text-ui text-ink underline decoration-1 underline-offset-2">
-                {t(locale, 'artist.backToArtists')}
+            <a href="/artists" className="mt-step-4 inline-flex min-h-11 items-center text-ui text-ink">
+                <span className="link-line">{t(locale, 'artist.backToArtists')}</span>
             </a>
         </div>
     );
@@ -122,8 +122,8 @@ export default function ArtistDetailPage({ params }) {
             <History id="artist-awards" title={t(locale, 'artist.awards')} rows={awards} />
 
             <div>
-                <a href="/contact" className="inline-block bg-wine px-step-5 py-step-3 text-ui text-wine-ink">
-                    {t(locale, 'artist.enquire')}
+                <a href="/contact" className="inline-flex min-h-11 items-center text-ui text-ink">
+                    <span className="link-line">{t(locale, 'artist.enquire')}</span>
                 </a>
             </div>
         </article>

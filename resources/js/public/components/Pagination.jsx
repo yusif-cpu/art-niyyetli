@@ -1,5 +1,6 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
+import { toggleLineClass } from '../lib/linkLine.js';
 
 /** Page numbers to show: first, last, and the current page with one neighbour each side; gaps become "…". */
 export function pageWindow(current, last) {
@@ -14,7 +15,8 @@ export function pageWindow(current, last) {
     return out;
 }
 
-const buttonClass = 'min-h-11 min-w-11 cursor-pointer border border-line px-step-2 py-step-1 text-meta text-ink-muted transition-colors duration-[120ms] ease-standard hover:border-line-strong hover:text-ink disabled:cursor-default disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink-muted';
+// Plain text, no box: the current page is ink with a line under it.
+const buttonClass = 'min-h-11 min-w-11 cursor-pointer px-step-1 text-meta text-ink-muted transition-colors duration-[120ms] ease-standard hover:text-ink disabled:cursor-default disabled:opacity-40 disabled:hover:text-ink-muted';
 
 export default function Pagination({ meta, onPageChange }) {
     const { locale } = useLocale();
@@ -37,9 +39,9 @@ export default function Pagination({ meta, onPageChange }) {
                         aria-current={page === current ? 'page' : undefined}
                         aria-label={`${t(locale, 'catalogue.page')} ${page}`}
                         onClick={() => page !== current && onPageChange(page)}
-                        className={`figures ${buttonClass} ${page === current ? 'border-line-strong text-ink' : ''}`}
+                        className={`figures ${buttonClass} ${page === current ? 'text-ink' : ''}`}
                     >
-                        {page}
+                        <span className={toggleLineClass(page === current)}>{page}</span>
                     </button>
                 )
             )}

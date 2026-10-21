@@ -103,7 +103,9 @@ describe('ArtistDetailPage', () => {
         expect(small.style.width).toBe(`${Math.round(40 * K)}px`);
         expect(screen.getByTestId('human-figure')).toHaveAttribute('height', String(Math.round(170 * K)));
         expect(screen.getByRole('region', { name: /Rəssamın əsərləri divarda/ })).toHaveAttribute('tabindex', '0');
-        expect(screen.getByTestId('wall-surface')).toHaveClass('bg-surface-field-3');
+        // No wall surface or frame: only the floor line.
+        expect(screen.getByTestId('wall-surface')).toHaveClass('border-b', 'border-line');
+        expect(screen.getByTestId('wall-surface').className).not.toMatch(/bg-|border-t/);
         expect(within(screen.getByTestId('wall-footer')).getByTestId('scale-rule')).toBeInTheDocument();
     });
 
@@ -159,12 +161,14 @@ describe('ArtistDetailPage', () => {
         expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/og.jpg');
     });
 
-    it('uses no Signal on the page itself; the enquiry link is wine', async () => {
+    it('uses no Signal on the page itself; the enquiry link is a plain text link, not a button', async () => {
         const { container } = renderPage();
         await screen.findByText('A Piece');
 
         expect(container.innerHTML).not.toMatch(/signal/);
-        expect(screen.getByRole('link', { name: 'Rəssam haqqında soruş' })).toHaveClass('bg-wine', 'text-wine-ink');
+        const enquire = screen.getByRole('link', { name: 'Rəssam haqqında soruş' });
+        expect(enquire.className).not.toMatch(/bg-|border/);
+        expect(within(enquire).getByText('Rəssam haqqında soruş')).toHaveClass('link-line');
     });
 
     it('shows a static skeleton while loading, and an error with a retry', async () => {

@@ -189,6 +189,34 @@ describe('Site chrome (header + footer)', () => {
         expect(footer.innerHTML).not.toMatch(/signal/);
     });
 
+    it('splits the menus: the collection routes, then the header pages (no home) with the legal pages; contact in beige', async () => {
+        mockShell({
+            settings: { ...EMPTY_SETTINGS, contact_email: 'info@artniyyatli.com', phone: '070 353 05 12', opening_hours: 'B.e. – şənbə, 10:00–20:00' },
+            navigation: {
+                header: [
+                    { type: 'page', title: 'Ana səhifə', href: '/' },
+                    { type: 'route', route_key: 'artworks', href: '/artworks' },
+                    { type: 'route', route_key: 'artists', href: '/artists' },
+                    { type: 'page', title: 'Haqqımızda', href: '/about' },
+                    { type: 'page', title: 'Əlaqə', href: '/contact' },
+                ],
+                footer: [{ type: 'page', title: 'Məxfilik siyasəti', href: '/privacy-policy' }, { type: 'page', title: 'İstifadə şərtləri', href: '/terms' }],
+            },
+        });
+        renderShell();
+
+        const footer = screen.getByRole('contentinfo');
+        await within(footer).findByText('info@artniyyatli.com');
+        const names = (testId) => within(within(footer).getByTestId(testId)).getAllByRole('link').map((a) => a.textContent);
+        expect(names('footer-nav')).toEqual(['Əsərlər', 'Rəssamlar']);
+        expect(names('footer-legal')).toEqual(['Haqqımızda', 'Əlaqə', 'Məxfilik siyasəti', 'İstifadə şərtləri']);
+        expect(within(footer).queryByRole('link', { name: 'Ana səhifə' })).not.toBeInTheDocument();
+
+        const contact = within(footer).getByTestId('footer-contact');
+        expect(contact).toHaveClass('text-[#C9BDB0]');
+        expect([...contact.querySelectorAll('a, p')].map((el) => el.textContent)).toEqual(['070 353 05 12', 'info@artniyyatli.com', 'B.e. – şənbə, 10:00–20:00']);
+    });
+
     it('marks the active navigation item by ink alone (no line, no Signal), including on its detail pages', async () => {
         window.history.pushState(null, '', '/artworks/AN-2024-031');
         mockShell();

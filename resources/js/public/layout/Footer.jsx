@@ -5,6 +5,9 @@ import BrandLogo from '../components/BrandLogo.jsx';
 import { phoneHref } from '../lib/format.js';
 import SocialLinks, { visibleSocialLinks } from '../components/SocialLinks.jsx';
 
+// The contact column's light beige on wine (#C9BDB0, 9.1:1 on #3E0B0A): the brief's own value for this column only.
+const CONTACT_TONE = 'text-[#C9BDB0]';
+
 function itemLabel(locale, item) {
     return item.type === 'page' ? item.title : t(locale, `nav.${item.route_key}`);
 }
@@ -29,16 +32,20 @@ function LinkColumn({ label, items, locale, testId }) {
 }
 
 /**
- * Four columns, no column titles (they would be invented words): the logo and the footer text; the site navigation
- * (the header menu); the legal pages (the admin's footer menu); contact details and social links. One column below
- * 768px. Wine section: only wine-ink and wine-ink-muted, never Signal (3.94:1 on wine). data-surface switches the
- * focus ring.
+ * Four columns, no column titles (they would be invented words): the logo (and the footer text); the collection's
+ * routes from the header menu (Əsərlər, Rəssamlar, Sərgilər, Jurnal); the header's pages but home (Haqqımızda,
+ * Əlaqə) followed by the admin's footer menu (the legal pages); and the phone, e-mail and reply hours in light beige,
+ * then the address and the social links when set. The home link is left out: the logo is it. An empty field shows
+ * no line, and an empty column is not drawn at all. One column below 768px. Wine section: wine-ink, wine-ink-muted
+ * and the contact beige only, never Signal (3.94:1 on wine). data-surface switches the focus ring.
  */
 export default function Footer() {
     const { locale } = useLocale();
     const { navigation, settings, socialLinks } = useSiteData();
     const headerItems = Array.isArray(navigation.data?.header) ? navigation.data.header : [];
     const footerItems = Array.isArray(navigation.data?.footer) ? navigation.data.footer : [];
+    const routeItems = headerItems.filter((item) => item.type === 'route');
+    const pageItems = [...headerItems.filter((item) => item.type !== 'route' && item.href !== '/'), ...footerItems];
     const site = settings.data || {};
     const phoneLink = phoneHref(site.phone);
     // No address, hours, e-mail, phone or social link: no contact column at all. An empty grid item still takes a row
@@ -58,36 +65,32 @@ export default function Footer() {
                 </div>
 
                 {/* Named apart from the header's "Main" menu: two landmarks must not share a name. */}
-                <LinkColumn label={t(locale, 'nav.footerSite')} items={headerItems} locale={locale} testId="footer-nav" />
-                <LinkColumn label={t(locale, 'nav.footerLegal')} items={footerItems} locale={locale} testId="footer-legal" />
+                <LinkColumn label={t(locale, 'nav.footerSite')} items={routeItems} locale={locale} testId="footer-nav" />
+                <LinkColumn label={t(locale, 'nav.footerLegal')} items={pageItems} locale={locale} testId="footer-legal" />
 
                 {hasContact && (
-                    <div className="flex flex-col items-start gap-step-4 text-meta" data-testid="footer-contact">
-                        {(site.address || site.opening_hours) && (
-                            <div className="leading-relaxed text-wine-ink-muted">
-                                {site.address && <p>{site.address}</p>}
-                                {site.opening_hours && <p className="figures">{site.opening_hours}</p>}
-                            </div>
-                        )}
-                        {(site.contact_email || site.phone) && (
+                    <div className={`flex flex-col items-start gap-step-4 text-meta ${CONTACT_TONE}`} data-testid="footer-contact">
+                        {(site.phone || site.contact_email || site.opening_hours) && (
                             <div className="flex flex-col gap-step-1">
-                                {site.contact_email && (
-                                    <a href={`mailto:${site.contact_email}`} className="hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
-                                        {site.contact_email}
-                                    </a>
-                                )}
                                 {site.phone && (
                                     <a href={phoneLink} className="figures hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
                                         {site.phone}
                                     </a>
                                 )}
+                                {site.contact_email && (
+                                    <a href={`mailto:${site.contact_email}`} className="hover:underline max-md:flex max-md:min-h-11 max-md:items-center">
+                                        {site.contact_email}
+                                    </a>
+                                )}
+                                {site.opening_hours && <p className="figures">{site.opening_hours}</p>}
                             </div>
                         )}
+                        {site.address && <p className="leading-relaxed">{site.address}</p>}
                         <SocialLinks
                             links={socialLinks.data}
                             className="gap-x-step-4 gap-y-step-2"
                             imgClassName="h-5 w-5 object-contain"
-                            textClassName="text-label text-wine-ink hover:underline"
+                            textClassName="text-label hover:underline"
                         />
                     </div>
                 )}

@@ -219,7 +219,7 @@
     --text-byline-lg--font-weight: 500;
     --text-ui: 15px;                             /* interface body copy, buttons; demo 16px */
     --text-ui--line-height: 1.5;
-    --text-nav: 14px;                            /* navigation; demo 15px +0.01em [1.21] */
+    --text-nav: 13px;                            /* navigation: small and quiet, ink-muted; demo 15px +0.01em [1.21] */
     --text-nav--line-height: 1.3;
     --text-nav--letter-spacing: 0em;
     --text-nav--font-weight: 500;

@@ -189,7 +189,7 @@ describe('Site chrome (header + footer)', () => {
         expect(footer.innerHTML).not.toMatch(/signal/);
     });
 
-    it('marks the active navigation item with signal-ink, including on its detail pages', async () => {
+    it('marks the active navigation item by ink alone (no line, no Signal), including on its detail pages', async () => {
         window.history.pushState(null, '', '/artworks/AN-2024-031');
         mockShell();
         renderShell();
@@ -198,13 +198,15 @@ describe('Site chrome (header + footer)', () => {
         const header = within(screen.getByRole('banner'));
         const active = await header.findByRole('link', { name: 'Əsərlər' });
         expect(active).toHaveAttribute('aria-current', 'page');
-        // (was: border-signal) — the underline belongs to the row layout; the phone panel uses 44px rows instead.
-        expect(active).toHaveClass('text-signal-ink', 'md:border-signal');
+        // (was: text-signal-ink with a red underline) — the active item is ink, the others ink-muted.
+        expect(active).toHaveClass('text-ink');
+        expect(active.className).not.toMatch(/signal|border/);
         expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Əsərlər' })).not.toHaveClass('text-signal-ink');
 
         for (const name of ['Ana səhifə', 'Rəssamlar']) {
             const link = header.getByRole('link', { name });
             expect(link).not.toHaveAttribute('aria-current');
+            expect(link).toHaveClass('text-ink-muted');
             expect(link).not.toHaveClass('text-signal-ink');
         }
     });

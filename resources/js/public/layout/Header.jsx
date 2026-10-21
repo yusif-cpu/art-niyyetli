@@ -58,15 +58,16 @@ export default function Header() {
     usePanel(menuOpen, setMenuOpen, menuButton);
 
     return (
-        <header className="sticky top-0 z-20 border-b border-line bg-surface font-ui text-ink">
+        <header className="sticky top-0 z-20 bg-surface font-ui text-ink">
             {/*
               Widths (Montserrat is ~20% wider than the demo's face, see plan §6.3). Social links live in the footer only.
-              ≥ lg  one row; a safety net for long admin menus: the navigation shrinks and wraps inside (right-aligned);
+              ≥ lg  one row, logo left, navigation right, the language 28px after it (no divider); a safety net for
+                    long admin menus: the navigation shrinks and wraps inside (right-aligned);
               md    two rows: brand + language, then the navigation, left-aligned;
               < md  brand + a "menyu" text toggle; the navigation and the language open as a plain panel below.
               Touch targets are 44px; negative margins keep the bar's visible height.
             */}
-            <div className="flex flex-wrap items-center gap-x-step-6 gap-y-step-4 px-page py-step-5 lg:flex-nowrap">
+            <div className="flex flex-wrap items-center gap-x-step-6 gap-y-step-4 px-page py-step-5 lg:flex-nowrap lg:gap-x-[28px]">
                 {/* The logo in brand red (a brand colour, not Signal): the lockup, and below 400px the mark alone.
                     Its colour never changes on hover or focus; focus shows only the outline. The lockup is 36px tall
                     (the client's 2.46 : 1 lockup is narrower than the old 3 : 1 one: at 32px its second line read
@@ -91,14 +92,14 @@ export default function Header() {
                         {headerItems.map((item) => {
                             const active = isActive(item.href, pathname);
 
-                            // Phone panel: a 44px row per link. Row layout: the text keeps its underline and a
-                            // transparent ::after stretches the hit area to 44px tall.
+                            // Phone panel: a 44px row per link. Row layout: a transparent ::after stretches the hit
+                            // area to 44px tall. The active item is told only by ink: no line, no Signal.
                             return (
                                 <a
                                     key={item.href}
                                     href={item.href}
                                     aria-current={active ? 'page' : undefined}
-                                    className={`whitespace-nowrap text-nav transition-colors duration-150 ease-standard max-md:flex max-md:min-h-11 max-md:items-center md:relative md:border-b md:pb-1 md:after:absolute md:after:inset-x-0 md:after:-inset-y-3 md:after:content-[''] ${active ? 'text-signal-ink md:border-signal' : 'text-ink-muted hover:text-ink md:border-transparent'}`}
+                                    className={`whitespace-nowrap text-nav transition-colors duration-150 ease-standard max-md:flex max-md:min-h-11 max-md:items-center md:relative md:after:absolute md:after:inset-x-0 md:after:-inset-y-3 md:after:content-[''] ${active ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
                                 >
                                     {itemLabel(locale, item)}
                                 </a>
@@ -110,7 +111,7 @@ export default function Header() {
                 )}
 
                 <div className="ml-auto flex shrink-0 items-center gap-step-5 lg:ml-0">
-                    <LocaleSwitcher className={`${hasMenu ? 'hidden md:flex' : ''} -my-2 lg:border-l lg:border-line lg:pl-step-5`} />
+                    <LocaleSwitcher className={`${hasMenu ? 'hidden md:flex' : ''} -my-2`} />
                     {hasMenu && (
                         <button
                             ref={menuButton}

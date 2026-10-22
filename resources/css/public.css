@@ -136,7 +136,7 @@
 */
 @theme static {
     /* ---------------------------------------------------------------- colour
-    | Contrast on Bone #F4F0E8 (WCAG): ink 15.81 · ink-muted 5.24 · signal 3.73 · signal-ink 4.56 · line 1.27 ·
+    | Contrast on Bone #F4F0E8 (WCAG): ink 15.81 · ink-muted 5.4 · signal 3.73 · signal-ink 4.56 · line 1.27 ·
     | line-strong 3.01. On wine #3E0B0A: wine-ink 14.70 · wine-ink-muted 7.38 · signal 3.94.
     */
     --color-surface: #f4f0e8;         /* Bone — the page background */
@@ -151,7 +151,18 @@
     /* Secondary text: medium · dimensions, labels, eyebrows, filter counters. The demo's lighter #9A9089
        (2.75:1) is merged into this tone on purpose — there is no ink-faint. Hierarchy comes from size and
        placement, not from a lighter grey. */
-    --color-ink-muted: #6b625c;
+    --color-ink-muted: #6e6359;       /* krem-bordo: 5.4:1 on Bone */
+
+    /* Krem-bordo cards: surface-sunk for boxes on the cream sections (artist boxes, the artwork stage, the form card),
+       wine-deep for cards on the wine bands (the buying steps). wine-muted is the second text tone on wine (8.9:1),
+       wine-accent the italic emphasis word on wine. field-line borders the form fields. */
+    --color-surface-sunk: #ebe4d7;
+    --color-wine-deep: #2c0807;
+    --color-wine-muted: #d7c6be;
+    --color-wine-accent: #f0d9cf;
+    --color-field-line: #cfc6b7;
+    /* The 170 cm silhouette: a warm grey that reads on the cream wall and on surface-sunk. */
+    --color-figure: #948a80;
 
     --color-line: #ddd6ca;            /* DECORATIVE separators only (1.27:1) */
     /* Borders of form fields and other interactive outlines: the lightest tone of the warm-grey ramp

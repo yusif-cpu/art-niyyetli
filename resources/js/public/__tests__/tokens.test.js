@@ -19,6 +19,16 @@ describe('design tokens', () => {
         expect(token('color-wine')).toBe('#3e0b0a');
     });
 
+    it('adds the krem-bordo tokens from the same palette and darkens ink-muted to #6E6359', () => {
+        expect(token('color-surface')).toBe('#f4f0e8');
+        expect(token('color-ink')).toBe('#1a1614');
+        expect(token('color-ink-muted')).toBe('#6e6359');
+        expect(token('color-surface-sunk')).toBe('#ebe4d7');
+        expect(token('color-wine-deep')).toBe('#2c0807');
+        expect(token('color-wine-muted')).toBe('#d7c6be');
+        expect(token('color-wine-accent')).toBe('#f0d9cf');
+    });
+
     it('keeps page titles clearly above section titles on tablets: display 38px, heading 28px at their minimum', () => {
         expect(token('text-display')).toBe('clamp(38px, 4.6vw, 59px)');
         expect(token('text-heading')).toBe('clamp(28px, 3.4vw, 48px)');

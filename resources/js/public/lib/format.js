@@ -90,6 +90,34 @@ export function formatDateRange(start, end, locale = 'az') {
     return a && b && a !== b ? `${a} – ${b}` : a || b;
 }
 
+const SHORT_MONTHS = {
+    az: ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avq', 'sen', 'okt', 'noy', 'dek'],
+    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+};
+
+/**
+ * A compact range for one-line labels: "15 oktyabr – 30 noyabr 2026" (the year once, when both ends share it), with
+ * `{ year: false }` "15 oktyabr – 30 noyabr", with `{ short: true }` "15 okt – 30 noy 2026". Different years keep
+ * both. One date when only one end is valid or both are the same day.
+ */
+export function formatDateSpan(start, end, locale = 'az', { year = true, short = false } = {}) {
+    const parse = (value) => {
+        const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ''));
+        if (!match) return null;
+        const name = ((short ? SHORT_MONTHS : MONTHS)[locale] ?? (short ? SHORT_MONTHS : MONTHS).az)[Number(match[2]) - 1];
+
+        return name ? { day: `${Number(match[3])} ${name}`, year: match[1] } : null;
+    };
+    const a = parse(start);
+    const b = parse(end);
+    const withYear = (d) => (year ? `${d.day} ${d.year}` : d.day);
+    if (!a || !b) return a || b ? withYear(a || b) : null;
+    if (a.day === b.day && a.year === b.year) return withYear(a);
+    if (a.year !== b.year) return `${a.day} ${a.year} – ${b.day} ${b.year}`;
+
+    return `${a.day} – ${withYear(b)}`;
+}
+
 /** Width first: "180 × 140 sm" (az) / "180 × 140 cm" (en). The sign is U+00D7, never the letter x. */
 export function formatDimensions(widthCm, heightCm, locale = 'az') {
     if (!(widthCm > 0) || !(heightCm > 0)) return null;

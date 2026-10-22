@@ -27,6 +27,26 @@ export function priceLine(artwork, locale) {
 }
 
 /**
+ * The caption under a work (home page, catalogue, similar works): the title in Spectral italic 18px ink, "artist ·
+ * size" in 13px ink-muted, then the price — or "Qiymət sorğu ilə" — in 13px 600 wine; "Satılıb" / "Rezerv edilib" in
+ * ink-muted. `dims` is the formatted size (the caller has it already).
+ */
+export function ArtworkCaption({ artwork, dims }) {
+    const { locale } = useLocale();
+    const price = priceLine(artwork, locale);
+    const unavailable = artwork.availability === 'sold' || artwork.availability === 'reserved';
+    const byline = [artwork.artist?.name, dims].filter(Boolean).join(' · ');
+
+    return (
+        <span className="mt-step-4 flex flex-col gap-[3px]" data-testid="artwork-caption">
+            {artwork.title && <span className="font-editorial text-[18px] leading-[1.3] text-ink italic decoration-1 underline-offset-2 group-hover:underline">{artwork.title}</span>}
+            {byline && <span className="figures text-meta text-ink-muted">{byline}</span>}
+            <span className={`figures text-meta font-semibold ${unavailable ? 'text-ink-muted' : 'text-wine'}`} data-testid="artwork-price-line">{price.text}</span>
+        </span>
+    );
+}
+
+/**
  * One artwork. With `k` (px per cm, from lib/wall.js) the field is the work at true relative size and the card is at
  * least 155px wide with the field centred; `zoneHeight` bottom-aligns the fields of one row. Without `k` (screens not
  * yet on the wall module) the card fills its column and the field keeps the work's cm proportions.

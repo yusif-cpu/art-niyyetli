@@ -13,18 +13,18 @@ describe('ArtistCard', () => {
     it('renders one of the artist\'s works in its own ratio, then the name, the direction and a link to the profile', () => {
         const { container } = render(<LocaleProvider><ArtistCard artist={AYGUN} artwork={WORK} /></LocaleProvider>);
 
-        expect(screen.getByText('Aygün Məmmədova')).toHaveClass('text-ui');
-        expect(screen.getByText('Müasir rəssamlıq')).toHaveClass('text-label', 'text-ink-muted');
+        expect(screen.getByText('Aygün Məmmədova')).toHaveClass('text-[20px]', 'font-semibold', 'text-wine');
+        expect(screen.getByText('Müasir rəssamlıq')).toHaveClass('text-meta', 'text-ink-muted');
         expect(screen.getByRole('link')).toHaveAttribute('href', '/artists/aygun-mammadova');
-        // The work, not the portrait: decorative (the name follows), lazy, in the 80 × 120 ratio, no frame.
+        // The work, not the portrait: decorative (the name follows), lazy, in the 80 × 120 ratio, no frame, hung.
         const img = container.querySelector('img');
         expect(img).toHaveAttribute('src', 'https://example.test/work.webp');
         expect(img).toHaveAttribute('alt', '');
         expect(img).toHaveAttribute('loading', 'lazy');
         expect(img).toHaveAttribute('width', '800');
         expect(img).toHaveAttribute('height', '1200');
-        expect(img).toHaveClass('max-h-full', 'max-w-full');
-        expect(screen.getByTestId('artist-card-work')).toHaveClass('flex', 'items-end', 'h-[200px]', 'md:h-[300px]');
+        expect(img).toHaveClass('max-h-full', 'max-w-full', 'shadow-hang');
+        expect(screen.getByTestId('artist-card-work')).toHaveClass('flex', 'items-center', 'justify-center', 'bg-surface-sunk', 'h-[200px]', 'md:h-[340px]', 'md:p-[36px]');
         expect(container.innerHTML).not.toMatch(/rounded|border/);
     });
 

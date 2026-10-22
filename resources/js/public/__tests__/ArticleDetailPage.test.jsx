@@ -50,7 +50,7 @@ describe('ArticleDetailPage', () => {
         const heading = await screen.findByRole('heading', { level: 1, name: 'An Interview' });
         expect(heading).toHaveClass('font-editorial', 'text-heading');
         const header = heading.closest('header');
-        expect(within(header).getByText('5 yanvar 2026 · Müsahibə')).toHaveClass('text-caption', 'text-ink-muted');
+        expect(within(header).getByText('MÜSAHİBƏ · 5 yanvar 2026')).toHaveClass('text-label', 'text-wine');
         expect(header.firstElementChild).not.toBe(heading); // the date line comes first
         expect(heading.closest('article')).toHaveClass('max-w-prose');
     });

@@ -29,8 +29,8 @@ describe('ArtistsPage', () => {
 
         const kamran = await screen.findByRole('link', { name: /Kamran Səfərli/ });
         expect(kamran).toHaveAttribute('href', '/artists/kamran-seferli');
-        expect(within(kamran).getByText('Abstrakt kompozisiya')).toHaveClass('text-label', 'text-ink-muted');
-        expect(within(kamran).getByText('Kamran Səfərli')).toHaveClass('text-ui');
+        expect(within(kamran).getByText('Abstrakt kompozisiya')).toHaveClass('text-meta', 'text-ink-muted');
+        expect(within(kamran).getByText('Kamran Səfərli')).toHaveClass('text-[20px]', 'font-semibold', 'text-wine');
         expect(screen.getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/artists/kamran-seferli', '/artists/aygun-mammadova']);
         expect(screen.getByRole('heading', { level: 1, name: 'Rəssamlar' })).toHaveClass('text-display');
     });

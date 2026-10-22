@@ -30,8 +30,8 @@ describe('ArticlesPage', () => {
 
         const link = await screen.findByRole('link', { name: /An Interview/ });
         expect(link).toHaveAttribute('href', '/articles/a');
-        expect(within(link).getByText('5 yanvar 2026 · Müsahibə')).toHaveClass('text-caption', 'text-ink-muted');
-        expect(within(link).getByText('An Interview')).toHaveClass('font-editorial');
+        expect(within(link).getByText('MÜSAHİBƏ · 5 yanvar 2026')).toHaveClass('text-label', 'font-semibold', 'text-wine');
+        expect(within(link).getByText('An Interview')).toHaveClass('font-semibold', 'text-wine');
         expect(within(link).getByText('Teaser.')).toBeInTheDocument();
         expect(within(link).getByRole('img', { name: 'An Interview' })).toHaveAttribute('src', 'https://example.test/cover.webp');
         expect(screen.getByRole('heading', { level: 1, name: 'Jurnal' })).toHaveClass('text-display');
@@ -41,7 +41,7 @@ describe('ArticlesPage', () => {
         renderPage();
 
         const link = await screen.findByRole('link', { name: /Some News/ });
-        expect(within(link).getByText('5 yanvar 2026 · Xəbər')).toBeInTheDocument();
+        expect(within(link).getByText('XƏBƏR · 5 yanvar 2026')).toBeInTheDocument();
         expect(within(link).queryByRole('img')).not.toBeInTheDocument();
         expect(link.querySelector('.aspect-\\[4\\/3\\]')).toBeNull();
         expect(link.className).not.toMatch(/grid-cols/);

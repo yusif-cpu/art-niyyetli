@@ -10,34 +10,51 @@ export function articleType(locale, type) {
     return label && label !== path ? label : null;
 }
 
-/** "10 sentyabr 2026 · Müsahibə": the date and the type, the line above an article's title. */
-export function ArticleMeta({ article, className = '' }) {
-    const { locale } = useLocale();
-    const parts = [formatDate(article.published_at, locale), articleType(locale, article.type)].filter(Boolean);
-    if (parts.length === 0) return null;
-
-    return <p className={`figures text-caption text-ink-muted ${className}`}>{parts.join(' · ')}</p>;
+/** The article's cover: the first media item with a URL, or null. */
+export function articleCover(article) {
+    return Array.isArray(article?.media) ? article.media.find((m) => m.url)?.url ?? null : null;
 }
 
 /**
- * One article in a list, the whole item a link: date and type, the title (Spectral), the short text, and the cover
- * (the first media image) at the side when there is one — a 4:3 field with a 1px line, no shadow.
+ * "MÜSAHİBƏ · 22 oktyabr 2026": the type in capitals and the date, 12px 600 wine — the line above an article's title.
+ * Either part may be missing.
  */
-export default function ArticleCard({ article }) {
-    const cover = article.media?.find((m) => m.url)?.url ?? null;
+export function ArticleMeta({ article, className = '' }) {
+    const { locale } = useLocale();
+    const type = articleType(locale, article.type);
+    const date = formatDate(article.published_at, locale);
+    if (!type && !date) return null;
 
     return (
-        <a href={`/articles/${encodeURIComponent(article.slug)}`} className={`group grid gap-step-4 py-step-5 text-ink ${cover ? 'md:grid-cols-[minmax(0,1fr)_16rem] md:gap-step-6' : ''}`}>
-            <span className="flex flex-col gap-step-2">
-                <ArticleMeta article={article} />
-                <span className="font-editorial text-title decoration-1 underline-offset-2 group-hover:underline">{article.title}</span>
-                {article.short_text && <span className="max-w-prose font-editorial text-reading-sm text-ink-muted">{article.short_text}</span>}
-            </span>
+        <p className={`figures text-label font-semibold text-wine ${className}`}>
+            {/* toLocaleUpperCase, not CSS uppercase: "Bələdçi" must become "BƏLƏDÇİ" (az dotted İ). */}
+            {type && type.toLocaleUpperCase(locale === 'az' ? 'az' : 'en')}
+            {type && date && ' · '}
+            {date}
+        </p>
+    );
+}
+
+/**
+ * One article as a card, the whole card a link: the cover 260px tall (cover-fit; none without a cover — no empty
+ * box), the type and date, the title (`size` "lg" 24px for the home page, else 22px; 600, wine), and the short text
+ * in Spectral 16px ink-muted when `withText`.
+ */
+export default function ArticleCard({ article, size = 'md', withText = true }) {
+    const cover = articleCover(article);
+
+    return (
+        <a href={`/articles/${encodeURIComponent(article.slug)}`} className="group flex flex-col text-ink" data-testid="article-card">
             {cover && (
-                <span className="block aspect-[4/3] overflow-hidden bg-surface-field md:row-start-1 md:col-start-2">
+                <span className="mb-step-5 block h-[220px] overflow-hidden bg-surface-sunk md:h-[260px]">
                     <img src={cover} alt={article.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </span>
             )}
+            <ArticleMeta article={article} />
+            <span className={`mt-step-2 block font-semibold tracking-[-0.015em] text-wine decoration-1 underline-offset-4 group-hover:underline ${size === 'lg' ? 'text-[24px] leading-[1.2]' : 'text-[22px] leading-[1.22]'}`}>
+                {article.title}
+            </span>
+            {withText && article.short_text && <span className="mt-step-3 block font-editorial text-[16px] leading-[1.55] text-ink-muted">{article.short_text}</span>}
         </a>
     );
 }

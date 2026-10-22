@@ -58,7 +58,9 @@ export default function Header() {
     usePanel(menuOpen, setMenuOpen, menuButton);
 
     return (
-        <header className="sticky top-0 z-20 bg-surface font-ui text-ink">
+        // Solid wine on every page, a 1px surface line at 14% under it. Navigation in wine-muted, the current item in
+        // surface; "Əlaqə" (the /contact item) is the secondary button on wine from md up.
+        <header data-surface="wine" className="sticky top-0 z-20 border-b border-surface/14 bg-wine font-ui text-surface">
             {/*
               Widths (Montserrat is ~20% wider than the demo's face, see plan §6.3). Social links live in the footer only.
               ≥ lg  one row, logo left, navigation right, the language 28px after it (no divider); a safety net for
@@ -84,13 +86,14 @@ export default function Header() {
                     <nav
                         id="site-menu"
                         aria-label={t(locale, 'nav.mainLabel')}
-                        className={`${menuOpen ? 'flex' : 'hidden'} order-last w-full flex-col items-stretch max-md:max-h-[calc(100dvh-6rem)] max-md:overflow-y-auto md:flex md:flex-row md:flex-wrap md:items-baseline md:gap-x-step-6 md:gap-y-step-2 lg:order-none lg:w-auto lg:min-w-0 lg:flex-1 lg:justify-end`}
+                        className={`${menuOpen ? 'flex' : 'hidden'} order-last w-full flex-col items-stretch max-md:max-h-[calc(100dvh-6rem)] max-md:overflow-y-auto md:flex md:flex-row md:flex-wrap md:items-center md:gap-x-[30px] md:gap-y-step-2 lg:order-none lg:w-auto lg:min-w-0 lg:flex-1 lg:justify-end`}
                         onClick={(event) => {
                             if (event.target.closest('a')) setMenuOpen(false);
                         }}
                     >
                         {headerItems.map((item) => {
                             const active = isActive(item.href, pathname);
+                            const contact = item.href === '/contact';
 
                             // Phone panel: a 44px row per link. Row layout: a transparent ::after stretches the hit
                             // area to 44px tall. The active item is told only by ink: no line, no Signal.
@@ -99,19 +102,23 @@ export default function Header() {
                                     key={item.href}
                                     href={item.href}
                                     aria-current={active ? 'page' : undefined}
-                                    className={`whitespace-nowrap text-nav transition-colors duration-150 ease-standard max-md:flex max-md:min-h-11 max-md:items-center md:relative md:after:absolute md:after:inset-x-0 md:after:-inset-y-3 md:after:content-[''] ${active ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
+                                    className={
+                                        contact
+                                            ? `whitespace-nowrap text-nav transition-colors duration-150 ease-standard max-md:flex max-md:min-h-11 max-md:items-center ${active ? 'max-md:text-surface' : 'max-md:text-wine-muted'} md:-my-2 md:ml-step-2 md:inline-flex md:min-h-11 md:items-center md:border md:border-surface/55 md:px-[22px] md:py-[11px] md:text-[14px] md:font-semibold md:text-surface md:hover:border-surface`
+                                            : `whitespace-nowrap text-nav transition-colors duration-150 ease-standard max-md:flex max-md:min-h-11 max-md:items-center md:relative md:after:absolute md:after:inset-x-0 md:after:-inset-y-3 md:after:content-[''] ${active ? 'text-surface' : 'text-wine-muted hover:text-surface'}`
+                                    }
                                 >
                                     {itemLabel(locale, item)}
                                 </a>
                             );
                         })}
                         {/* The language choice travels with the menu on phones. */}
-                        {menuOpen && <LocaleSwitcher className="mt-step-3 border-t border-line pt-step-3 md:hidden" />}
+                        {menuOpen && <LocaleSwitcher tone="wine" className="mt-step-3 border-t border-surface/14 pt-step-3 md:hidden" />}
                     </nav>
                 )}
 
                 <div className="ml-auto flex shrink-0 items-center gap-step-5 lg:ml-0">
-                    <LocaleSwitcher className={`${hasMenu ? 'hidden md:flex' : ''} -my-2`} />
+                    <LocaleSwitcher tone="wine" className={`${hasMenu ? 'hidden md:flex' : ''} -my-2`} />
                     {hasMenu && (
                         <button
                             ref={menuButton}
@@ -119,7 +126,7 @@ export default function Header() {
                             aria-expanded={menuOpen}
                             aria-controls="site-menu"
                             onClick={() => setMenuOpen((open) => !open)}
-                            className="-my-2 -mr-step-3 inline-flex min-h-11 cursor-pointer items-center px-step-3 text-nav text-ink md:hidden"
+                            className="-my-2 -mr-step-3 inline-flex min-h-11 cursor-pointer items-center px-step-3 text-nav text-surface md:hidden"
                         >
                             {t(locale, 'nav.menu')}
                         </button>

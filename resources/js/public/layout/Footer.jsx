@@ -37,7 +37,8 @@ function LinkColumn({ label, items, locale, testId }) {
  * Əlaqə) followed by the admin's footer menu (the legal pages); and the phone, e-mail and reply hours in light beige,
  * then the address and the social links when set. The home link is left out: the logo is it. An empty field shows
  * no line, and an empty column is not drawn at all. One column below 768px. Wine section: wine-ink, wine-ink-muted
- * and the contact beige only, never Signal (3.94:1 on wine). data-surface switches the focus ring.
+ * and the contact beige only, never Signal (3.94:1 on wine). data-surface switches the focus ring. A 1px surface line at
+ * 14% on top keeps a wine band above it from running into the footer.
  */
 export default function Footer() {
     const { locale } = useLocale();
@@ -53,7 +54,7 @@ export default function Footer() {
     const hasContact = Boolean(site.address || site.opening_hours || site.contact_email || site.phone || visibleSocialLinks(socialLinks.data).length);
 
     return (
-        <footer data-surface="wine" className="bg-wine px-page pt-step-8 pb-step-7 font-ui text-wine-ink">
+        <footer data-surface="wine" className="border-t border-surface/14 bg-wine px-page pt-step-8 pb-step-7 font-ui text-wine-ink">
             <div className="grid gap-step-7 md:grid-cols-4 md:gap-step-6" data-testid="footer-columns">
                 <div className="flex flex-col items-start gap-step-4">
                     {/* The same lockup as the header, larger, in brand red on wine (4.10:1). 48px tall: about the

@@ -217,7 +217,7 @@ describe('Site chrome (header + footer)', () => {
         expect([...contact.querySelectorAll('a, p')].map((el) => el.textContent)).toEqual(['070 353 05 12', 'info@artniyyatli.com', 'B.e. – şənbə, 10:00–20:00']);
     });
 
-    it('marks the active navigation item by ink alone (no line, no Signal), including on its detail pages', async () => {
+    it('draws the header as a solid wine band: active item in surface, the others wine-muted, no Signal', async () => {
         window.history.pushState(null, '', '/artworks/AN-2024-031');
         mockShell();
         renderShell();
@@ -226,17 +226,27 @@ describe('Site chrome (header + footer)', () => {
         const header = within(screen.getByRole('banner'));
         const active = await header.findByRole('link', { name: 'Əsərlər' });
         expect(active).toHaveAttribute('aria-current', 'page');
-        // (was: text-signal-ink with a red underline) — the active item is ink, the others ink-muted.
-        expect(active).toHaveClass('text-ink');
+        expect(screen.getByRole('banner')).toHaveClass('bg-wine', 'border-b', 'border-surface/14');
+        expect(screen.getByRole('banner')).toHaveAttribute('data-surface', 'wine');
+        expect(active).toHaveClass('text-surface');
         expect(active.className).not.toMatch(/signal|border/);
         expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Əsərlər' })).not.toHaveClass('text-signal-ink');
 
         for (const name of ['Ana səhifə', 'Rəssamlar']) {
             const link = header.getByRole('link', { name });
             expect(link).not.toHaveAttribute('aria-current');
-            expect(link).toHaveClass('text-ink-muted');
+            expect(link).toHaveClass('text-wine-muted');
             expect(link).not.toHaveClass('text-signal-ink');
         }
+    });
+
+    it('shows the "Əlaqə" item as the secondary button on wine from md up', async () => {
+        mockShell({ navigation: { header: [{ type: 'route', route_key: 'artworks', href: '/artworks' }, { type: 'page', title: 'Əlaqə', href: '/contact' }], footer: [] } });
+        renderShell();
+
+        const contact = await within(screen.getByRole('banner')).findByRole('link', { name: 'Əlaqə' });
+        expect(contact).toHaveClass('md:border', 'md:border-surface/55', 'md:text-surface', 'md:font-semibold');
+        expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Əsərlər' }).className).not.toMatch(/border-surface/);
     });
 
     it('toggles the collapsed menu with a plain text button', async () => {

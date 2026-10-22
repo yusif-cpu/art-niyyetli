@@ -50,6 +50,7 @@ Conventions:
 14. [Backup and restore checks](#14-backup-and-restore-checks)
 15. [Troubleshooting and rollback](#15-troubleshooting-and-rollback)
 16. [Routine updates (after the first deploy)](#16-routine-updates-after-the-first-deploy)
+17. [Updating from a release archive (no git checkout on the server)](#17-updating-from-a-release-archive-no-git-checkout-on-the-server)
 
 ---
 
@@ -125,6 +126,7 @@ those names everywhere in your notes.
 
 **Updating later:** see step 16. Always check that the working tree is clean first (`git status`). A production checkout
 must contain **no local edits to tracked files**; the only untracked files should be `.env` and the override file.
+A server that receives a `git archive` instead of a checkout updates by step 17.
 
 ---
 
@@ -792,8 +794,69 @@ An ordered summary; each item refers to the step above.
 7. Rebuild the frontend: `npm ci && npm run build` (step 6).
 8. If the release has migrations: `docker compose exec app php artisan migrate --force` (step 7.2). Do **not** run `db:seed`.
 9. `docker compose exec app php artisan config:cache && docker compose exec app php artisan view:cache && docker compose exec app php artisan public-cache:flush`
-10. `docker compose exec app php artisan app:preflight` → exit 0.
-11. `docker compose exec app php artisan up` (if it was down), then the smoke tests (step 13), including the Journal check.
-12. Record the deployment (date, tag, SHA, migrations run) and keep the pre-deployment backup until the release has proved stable.
+10. **Ownership and write check** of `storage/` and `bootstrap/cache/` (below). Repair before going on.
+11. `docker compose exec app php artisan app:preflight` → exit 0.
+12. `docker compose exec app php artisan up` (if it was down), then the smoke tests (step 13), including the Journal check.
+13. Record the deployment (date, tag, SHA, migrations run) and keep the pre-deployment backup until the release has proved stable.
 
 Returning to a branch after checking out a tag: `git checkout main && git pull --ff-only`.
+
+### 16.1 Ownership and write check (after every update)
+
+Laravel writes to `storage/` (cache, compiled views, sessions, logs, uploaded media) and `bootstrap/cache/` as the app
+container's user — `docker compose exec app id -u`, uid **1000** (`www`) in this image. Anything there owned by another
+user (typically root, after a `sudo` command or a root `tar`) silently breaks the rate limiter, view compilation and
+uploads; `app:preflight` reports it only for the rate-limiter directory.
+
+```bash
+$ cd /srv/art-niyyetli                                   # the deployment directory
+# 1. Nothing under storage/ or bootstrap/cache/ belongs to anyone but the app user (expect no output):
+$ sudo find storage bootstrap/cache \! -uid 1000 -print | head
+# 2. The app user can write everywhere Laravel writes (expect only "ok" lines):
+$ docker compose exec -T app sh -c 'for d in storage/framework/cache/data storage/framework/views storage/framework/sessions storage/logs storage/app/public bootstrap/cache; do test -w "$d" && echo "ok $d" || echo "NOT WRITABLE $d"; done'
+```
+
+If step 1 lists anything or step 2 prints `NOT WRITABLE`: give exactly those back to the app user, which changes
+ownership only, no content — `sudo find storage bootstrap/cache \! -uid 1000 -exec chown 1000:1000 {} +` — then `docker compose exec app php artisan view:clear &&
+docker compose exec app php artisan view:cache` (a view cache written while the directory was not writable is
+incomplete) and run both checks again.
+
+---
+
+## 17. Updating from a release archive (no git checkout on the server)
+
+For a server that holds an extracted `git archive` instead of a clone (the staging server). The archive carries tracked
+files only: `.env`, the override file, `vendor/`, `node_modules/`, `public/build/` and the uploaded media under
+`storage/app/public/` are not in it and are left as they are. The archive does contain the `.gitignore` files that keep
+`storage/**` and `bootstrap/cache/` in git — so extracting it touches those directories.
+
+1. On a workstation, from a clean `main` at the release commit:
+
+   ```bash
+   $ git archive --format=tar.gz -o artniyyetli-<SHA>.tar.gz <SHA>
+   $ tar -tzf artniyyetli-<SHA>.tar.gz | grep -E '^(\.env|vendor/|node_modules/|public/build/)' && echo STOP   # expect nothing
+   $ scp artniyyetli-<SHA>.tar.gz root@<SERVER>:/root/
+   ```
+
+2. On the server, extract **with `--no-same-owner`**. Run as root without it, tar gives every directory in the archive
+   the archive's owner (root) — `storage/`, `storage/framework/{cache,cache/data,sessions,views}`, `storage/logs`,
+   `bootstrap/cache` included — and the app can no longer write there:
+
+   ```bash
+   $ cd /srv/art-niyyetli
+   $ sudo tar --no-same-owner -xzf /root/artniyyetli-<SHA>.tar.gz -C /srv/art-niyyetli
+   $ echo <SHA> | sudo tee REVISION
+   # tar (run as root) still creates the files it writes as root — the code and the storage/**/.gitignore files it
+   # replaces. Give exactly those to the app user; files already owned by it (the uploaded media) are not touched:
+   $ sudo find . \! -uid 1000 -exec chown 1000:1000 {} +
+   ```
+
+3. Files deleted in the new release stay on the server after an extraction. If the release removes files (`git diff
+   --name-status <OLD_SHA> <SHA> | grep '^D'`), delete them by hand.
+
+4. Continue with step 16 from item 5 (images, `composer install --no-dev`, the frontend build, migrations only if the
+   release has any, caches), then **16.1**, `app:preflight` and the smoke tests. The frontend build runs as the app user:
+
+   ```bash
+   $ docker run --rm -u 1000:1000 -e HOME=/tmp -v /srv/art-niyyetli:/app -w /app node:22-alpine sh -c 'npm ci && npm run build'
+   ```

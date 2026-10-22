@@ -9,16 +9,26 @@ class SeoText
 {
     public const SITE_NAME = 'ArtNiyyətli';
 
+    /**
+     * A title's emphasis marks removed: "İlk satış *sərgisi*" → "İlk satış sərgisi". Admin titles may mark one word
+     * with asterisks for the public site's italic emphasis (resources/js/public/components/Emphasis.jsx, the same
+     * rule: no space just inside either mark); plain-text places — <title>, meta and OG tags, JSON-LD — never show them.
+     */
+    public static function plain(?string $text): string
+    {
+        return (string) preg_replace('/\*(?!\s)([^*\n]*?[^\s*])\*/u', '$1', (string) $text);
+    }
+
     public static function pageTitle(?string $entityTitle): string
     {
-        $entityTitle = trim((string) $entityTitle);
+        $entityTitle = trim(self::plain($entityTitle));
 
         return $entityTitle === '' ? self::SITE_NAME : "{$entityTitle} | ".self::SITE_NAME;
     }
 
     public static function description(?string $text, int $limit = 160): ?string
     {
-        $clean = trim(strip_tags((string) $text));
+        $clean = trim(strip_tags(self::plain($text)));
 
         return $clean === '' ? null : Str::limit($clean, $limit);
     }

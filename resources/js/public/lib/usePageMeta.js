@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { plainText } from '../components/Emphasis.jsx';
 import { useLocale } from '../i18n/LocaleContext.jsx';
 
 // The `og:locale` value per active locale (Open Graph's own locale tags, e.g. "az_AZ"/"en_US").
@@ -102,10 +103,13 @@ function upsertAlternate(hreflang, href) {
  * in PublicPageSeoResolver) must keep pointing at that same authoritative path after hydration too, or the
  * canonical would flip the moment React takes over — the opposite of what a canonical is for.
  */
-export function usePageMeta({ title, description, noIndex = false, og, canonicalPath } = {}) {
+export function usePageMeta({ title: rawTitle, description: rawDescription, noIndex = false, og, canonicalPath } = {}) {
     const { locale } = useLocale();
-    const ogTitle = og?.title ?? title;
-    const ogDescription = og?.description ?? description;
+    // Admin titles may carry `*word*` emphasis marks (components/Emphasis.jsx): the head is plain text, never marks.
+    const title = rawTitle ? plainText(rawTitle) : rawTitle;
+    const description = rawDescription ? plainText(rawDescription) : rawDescription;
+    const ogTitle = (og?.title ?? rawTitle) ? plainText(og?.title ?? rawTitle) : undefined;
+    const ogDescription = (og?.description ?? rawDescription) ? plainText(og?.description ?? rawDescription) : undefined;
     const ogImage = og?.image;
 
     useEffect(() => {

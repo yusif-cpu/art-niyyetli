@@ -14,7 +14,7 @@ import NotFoundState from '../components/NotFoundState.jsx';
 import SectionHeading from '../components/SectionHeading.jsx';
 import WineCallout from '../components/WineCallout.jsx';
 import Monogram from '../components/Monogram.jsx';
-import Emphasis from '../components/Emphasis.jsx';
+import Emphasis, { plainText } from '../components/Emphasis.jsx';
 import { ArtworkCaption } from '../components/ArtworkCard.jsx';
 
 const SECTION_PAD = 'py-[clamp(80px,9.72vw,140px)]';
@@ -161,7 +161,7 @@ export default function ArtistDetailPage({ params }) {
                         {history.map((row, index) => (
                             <li key={index} className="grid grid-cols-[4rem_minmax(0,1fr)] gap-x-step-5 gap-y-step-1 border-b border-line py-step-5 md:grid-cols-[7rem_minmax(0,1fr)_auto] md:items-baseline">
                                 <span className="figures text-[15px] font-semibold text-wine">{row.year}</span>
-                                <span className="font-editorial text-[18px] leading-[1.35] text-ink italic md:text-[20px]">{row.title}</span>
+                                <span className="font-editorial text-[18px] leading-[1.35] text-ink italic md:text-[20px]">{plainText(row.title)}</span>
                                 {row.venue && <span className="col-start-2 text-[14px] text-ink-muted md:col-start-auto md:text-right">{row.venue}</span>}
                             </li>
                         ))}

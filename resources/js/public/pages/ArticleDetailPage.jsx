@@ -13,6 +13,7 @@ import ErrorState from '../components/ErrorState.jsx';
 import NotFoundState from '../components/NotFoundState.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import SectionHeading from '../components/SectionHeading.jsx';
+import { plainText } from '../components/Emphasis.jsx';
 
 const MORE_ARTICLES = 3;
 const WORDS_PER_MINUTE = 200;
@@ -70,7 +71,7 @@ export default function ArticleDetailPage({ params }) {
                 <PageHeader label={label} title={data.title} description={data.short_text}>
                     {cover && (
                         <div className="px-page">
-                            <img src={cover} alt={data.title} loading="eager" fetchPriority="high" decoding="async" className="block h-[56vw] w-full object-cover md:h-[600px]" data-testid="article-cover" />
+                            <img src={cover} alt={plainText(data.title)} loading="eager" fetchPriority="high" decoding="async" className="block h-[56vw] w-full object-cover md:h-[600px]" data-testid="article-cover" />
                         </div>
                     )}
                 </PageHeader>
@@ -79,7 +80,7 @@ export default function ArticleDetailPage({ params }) {
                     <div className="mx-auto max-w-[760px]" data-testid="article-body">
                         {data.video && (
                             <div className="mb-step-8">
-                                <YoutubeEmbed video={data.video} title={data.title} />
+                                <YoutubeEmbed video={data.video} title={plainText(data.title)} />
                             </div>
                         )}
                         {paragraphs.map((text, index) => (

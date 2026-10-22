@@ -85,7 +85,7 @@ function Hero({ hero, show, stats, locale }) {
                 {show && (
                     <p className="figures flex items-center gap-step-3 text-[13px] leading-[1.4] font-medium text-wine-muted max-md:text-[14px]" data-testid="home-hero-line">
                         <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-brand" />
-                        <span>{[t(locale, 'home.currentExhibition'), show.title, dates].filter(Boolean).join(' · ')}</span>
+                        <span>{[t(locale, 'home.currentExhibition'), plainText(show.title), dates].filter(Boolean).join(' · ')}</span>
                     </p>
                 )}
                 {heading && (
@@ -131,7 +131,7 @@ function CurrentShow({ show, number, locale }) {
     return (
         <section aria-labelledby="home-current-show" data-testid="home-current-show" data-surface="wine" className={`bg-wine px-page text-surface ${SECTION_PAD}`}>
             <div className={cover ? 'grid grid-cols-1 gap-step-7 md:grid-cols-[1.4fr_1fr] md:items-center md:gap-[80px]' : undefined}>
-                {cover && <img src={cover} alt={show.title} loading="lazy" decoding="async" className="block aspect-[3/2] h-auto w-full object-cover" data-testid="home-current-show-cover" />}
+                {cover && <img src={cover} alt={plainText(show.title)} loading="lazy" decoding="async" className="block aspect-[3/2] h-auto w-full object-cover" data-testid="home-current-show-cover" />}
                 <div className="min-w-0">
                     <SectionHeading id="home-current-show" number={number} label={t(locale, 'home.currentExhibition')} tone="wine" className="text-[clamp(40px,4.6vw,66px)] leading-[1.02] font-bold tracking-[-0.035em]">
                         {show.title}

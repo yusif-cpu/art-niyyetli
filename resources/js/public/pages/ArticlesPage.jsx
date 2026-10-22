@@ -9,6 +9,7 @@ import ArticleCard, { ArticleMeta, articleCover, articleType } from '../componen
 import Pagination from '../components/Pagination.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import Emphasis from '../components/Emphasis.jsx';
 
 /** The newest article as the large card: the cover 560px tall on the left (1.25fr), the text on the right (1fr). */
 function LeadArticle({ article, locale }) {
@@ -25,7 +26,7 @@ function LeadArticle({ article, locale }) {
             <div className="min-w-0">
                 <ArticleMeta article={article} />
                 <h2 className="mt-step-4 text-[clamp(34px,3.5vw,50px)] leading-[1.06] font-bold tracking-[-0.03em] text-wine">
-                    <a href={href} className="decoration-2 underline-offset-[6px] hover:underline">{article.title}</a>
+                    <a href={href} className="decoration-2 underline-offset-[6px] hover:underline"><Emphasis text={article.title} /></a>
                 </h2>
                 {article.short_text && <p className="mt-step-5 font-editorial text-[18px] leading-[1.6] text-ink-muted md:text-[20px]">{article.short_text}</p>}
                 <a href={href} className={`mt-step-6 ${buttonClass('primary', 'cream')}`}>{t(locale, 'pages.journal.read')}</a>

@@ -17,6 +17,7 @@ import PageHeader from '../components/PageHeader.jsx';
 import SectionHeading from '../components/SectionHeading.jsx';
 import Monogram from '../components/Monogram.jsx';
 import ExhibitionCard, { exhibitionCover } from '../components/ExhibitionCard.jsx';
+import { plainText } from '../components/Emphasis.jsx';
 import { PRESETS } from '../lib/wall.js';
 
 const SECTION_PAD = 'py-[clamp(80px,9.72vw,140px)]';
@@ -115,7 +116,7 @@ export default function ExhibitionDetailPage({ params }) {
             <PageHeader label={t(locale, `pages.exhibition.${status}`)} dot={status === 'current'} title={data.title} description={data.short_text} meta={figures}>
                 {cover && (
                     <div className="px-page">
-                        <img src={cover} alt={data.title} loading="eager" fetchPriority="high" decoding="async" className="block h-[56vw] w-full object-cover md:h-[640px]" data-testid="exhibition-cover" />
+                        <img src={cover} alt={plainText(data.title)} loading="eager" fetchPriority="high" decoding="async" className="block h-[56vw] w-full object-cover md:h-[640px]" data-testid="exhibition-cover" />
                     </div>
                 )}
             </PageHeader>
@@ -168,12 +169,12 @@ export default function ExhibitionDetailPage({ params }) {
                         <ul className="grid grid-cols-1 gap-step-4 sm:grid-cols-2 lg:grid-cols-3">
                             {morePhotos.map((photo, index) => (
                                 <li key={photo.url} className="aspect-[4/3] overflow-hidden bg-surface-sunk">
-                                    <img src={photo.url} alt={`${data.title} — ${index + 2}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                                    <img src={photo.url} alt={`${plainText(data.title)} — ${index + 2}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                                 </li>
                             ))}
                         </ul>
                     )}
-                    {data.video && <YoutubeEmbed video={data.video} title={data.title} />}
+                    {data.video && <YoutubeEmbed video={data.video} title={plainText(data.title)} />}
                 </section>
             )}
 

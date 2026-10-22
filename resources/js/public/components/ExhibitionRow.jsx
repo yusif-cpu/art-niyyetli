@@ -1,6 +1,7 @@
 import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { formatDateRange } from '../lib/format.js';
+import Emphasis from './Emphasis.jsx';
 
 /** The status label: plain small ink-muted text, no box — never Signal, "current" included. */
 export function ExhibitionStatus({ status }) {
@@ -28,7 +29,7 @@ export default function ExhibitionRow({ exhibition }) {
                 href={`/exhibitions/${encodeURIComponent(exhibition.slug)}`}
                 className="group grid gap-step-1 py-step-4 text-ink md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_auto] md:grid-rows-1 md:items-baseline md:gap-step-5"
             >
-                <span className="text-byline-lg decoration-1 underline-offset-2 group-hover:underline">{exhibition.title}</span>
+                <span className="text-byline-lg decoration-1 underline-offset-2 group-hover:underline"><Emphasis text={exhibition.title} /></span>
                 {dates && <span className="figures text-meta text-ink-muted md:col-start-2">{dates}</span>}
                 {exhibition.venue && <span className="text-meta text-ink-muted md:col-start-3">{exhibition.venue}</span>}
                 {/* A missing field leaves no empty line on phones; on wide screens the status keeps its own column. */}

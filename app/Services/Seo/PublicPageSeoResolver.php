@@ -64,7 +64,7 @@ class PublicPageSeoResolver
         // The hero heading is itself the site's brand statement (e.g. "ArtNiyyətli"),
         // so unlike every other page's title this is used as-is rather than through
         // SeoText::pageTitle(), which would double-append the site name.
-        $heading = trim((string) $heroFields['heading']);
+        $heading = trim(SeoText::plain($heroFields['heading']));
         $title = $heading === '' ? SeoText::SITE_NAME : $heading;
         $description = SeoText::description($heroFields['body']);
         $ogImageUrl = $this->firstFeaturedArtworkImageUrl();
@@ -166,7 +166,7 @@ class PublicPageSeoResolver
             ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'full')
             : ($mainImage ? $this->mediaVariantUrl($mainImage->media, 'full') : null);
 
-        $title = $override?->title ?? $fields['title'];
+        $title = SeoText::plain($override?->title ?? $fields['title']);
         $description = SeoText::description($override?->description ?? $fields['short_description']);
         $canonical = SeoText::segmentsUrl('artworks', $inventoryCode);
 
@@ -315,7 +315,7 @@ class PublicPageSeoResolver
         $override = $exhibition->seoOverride($locale);
 
         $ogImageUrl = $override?->ogImage ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail') : null;
-        $title = $override?->title ?? $fields['title'];
+        $title = SeoText::plain($override?->title ?? $fields['title']);
         $description = SeoText::description($override?->description ?? $fields['short_text']);
         $canonical = SeoText::segmentsUrl('exhibitions', $slug);
 
@@ -386,7 +386,7 @@ class PublicPageSeoResolver
         $override = $article->seoOverride($locale);
 
         $ogImageUrl = $override?->ogImage ? $this->mediaVariantUrl($override->ogImage->loadMissing('variants'), 'detail') : null;
-        $title = $override?->title ?? $fields['title'];
+        $title = SeoText::plain($override?->title ?? $fields['title']);
         $description = SeoText::description($override?->description ?? $fields['short_text']);
         $canonical = SeoText::segmentsUrl('articles', $slug);
 

@@ -414,6 +414,45 @@ class PublicPageSeoResolverTest extends TestCase
         $this->assertSame('BreadcrumbList', $seo->jsonLd['@graph'][1]['@type']);
     }
 
+    public function test_emphasis_marks_never_reach_the_title_description_or_json_ld(): void
+    {
+        // The admin marks one word of a title for the public site's italic emphasis ("İlk satış *sərgisi*").
+        $home = Page::create(['type' => PageType::Home, 'is_active' => true]);
+        $home->translations()->create(['locale' => 'az', 'slug' => 'home', 'title' => 'Ana səhifə', 'content' => 'X']);
+        $home->sections()->create(['key' => 'hero', 'sort_order' => 0, 'is_active' => true])
+            ->translations()->create(['locale' => 'az', 'heading' => 'Sənəti *həqiqi* ölçüsündə görün.', 'body' => 'Bir *söz* burada.']);
+        $exhibition = $this->makeExhibition('ilk-satis');
+        $exhibition->translations()->where('locale', 'az')->update(['title' => 'İlk satış *sərgisi*']);
+        $article = $this->makePublishedArticle('isiq');
+        $article->translations()->where('locale', 'az')->update(['title' => 'Emalatxanada: *işıq* haqqında söhbət']);
+
+        $homeSeo = $this->resolver()->resolve([], Locale::Az);
+        $this->assertSame('Sənəti həqiqi ölçüsündə görün.', $homeSeo->title);
+        $this->assertSame('Bir söz burada.', $homeSeo->description);
+
+        $show = $this->resolver()->resolve(['exhibitions', 'ilk-satis'], Locale::Az);
+        $this->assertSame('İlk satış sərgisi | ArtNiyyətli', $show->title);
+        $this->assertSame('İlk satış sərgisi', $show->jsonLd['@graph'][0]['itemListElement'][2]['name']);
+
+        $post = $this->resolver()->resolve(['articles', 'isiq'], Locale::Az);
+        $this->assertSame('Emalatxanada: işıq haqqında söhbət | ArtNiyyətli', $post->title);
+        $this->assertSame('Emalatxanada: işıq haqqında söhbət', $post->jsonLd['@graph'][0]['headline']);
+
+        // The rendered head (title, meta, OG, Twitter, JSON-LD) shows no asterisk.
+        foreach (['/', '/exhibitions/ilk-satis', '/articles/isiq'] as $path) {
+            $html = $this->get($path)->assertOk()->getContent();
+            $head = substr($html, 0, strpos($html, '</head>'));
+            $this->assertStringNotContainsString('*', $head, $path);
+        }
+    }
+
+    public function test_plain_removes_only_well_formed_marks(): void
+    {
+        $this->assertSame('İlk satış sərgisi', \App\Support\Seo\SeoText::plain('İlk satış *sərgisi*'));
+        $this->assertSame('5 * 3 = 15', \App\Support\Seo\SeoText::plain('5 * 3 = 15'));
+        $this->assertSame('', \App\Support\Seo\SeoText::plain(null));
+    }
+
     public function test_article_detail_is_not_found_for_a_draft(): void
     {
         $this->makePublishedArticle('draft-article', ['status' => 'draft']);

@@ -29,16 +29,24 @@ describe('design tokens', () => {
         expect(token('color-wine-accent')).toBe('#f0d9cf');
     });
 
-    it('keeps page titles clearly above section titles on tablets: display 38px, heading 28px at their minimum', () => {
-        expect(token('text-display')).toBe('clamp(38px, 4.6vw, 59px)');
-        expect(token('text-heading')).toBe('clamp(28px, 3.4vw, 48px)');
+    it('sets the krem-bordo type scale: bold titles, hero 92px, section titles 58px at their maximum', () => {
+        expect(token('text-hero')).toBe('clamp(46px, 6.4vw, 92px)');
+        expect(token('text-hero--line-height')).toBe('0.98');
+        expect(token('text-hero--letter-spacing')).toBe('-0.035em');
+        expect(token('text-display')).toBe('clamp(40px, 4.6vw, 64px)');
+        expect(token('text-banner')).toBe('clamp(40px, 5.2vw, 76px)');
+        expect(token('text-section')).toBe('clamp(36px, 4vw, 58px)');
+        expect(token('text-section--letter-spacing')).toBe('-0.03em');
+        for (const level of ['text-hero', 'text-banner', 'text-display', 'text-heading', 'text-section']) expect(token(`${level}--font-weight`)).toBe('700');
     });
 
-    it('sets titles light: page titles at weight 300 in their sizes, section titles their own 28–36px level', () => {
-        for (const level of ['text-hero', 'text-display', 'text-heading']) expect(token(`${level}--font-weight`)).toBe('300');
-        expect(token('text-section')).toBe('clamp(28px, 2.4vw, 36px)');
-        expect(token('text-section--font-weight')).toBe('300');
-        expect(token('text-section--letter-spacing')).toBe('-0.01em');
+    it('sets the emphasised word in Spectral italic 400, a little larger, #F0D9CF on wine', () => {
+        const block = css.slice(css.indexOf('@utility emphasis'), css.indexOf('}', css.indexOf('@utility emphasis')));
+        expect(block).toMatch(/font-family: var\(--font-editorial\);/);
+        expect(block).toMatch(/font-style: italic;/);
+        expect(block).toMatch(/font-weight: 400;/);
+        expect(block).toMatch(/font-size: 1\.08em;/);
+        expect(css).toMatch(/\[data-surface='wine'\] \.emphasis \{\s*color: var\(--color-wine-accent\);/);
     });
 
     it('draws links as text with a 1px line 3px under it (link-line)', () => {

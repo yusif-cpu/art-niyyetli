@@ -12,6 +12,7 @@ import ErrorState from '../components/ErrorState.jsx';
 import SectionHeading from '../components/SectionHeading.jsx';
 import ArtistCard from '../components/ArtistCard.jsx';
 import FeaturedRow from '../components/FeaturedRow.jsx';
+import Emphasis, { plainText } from '../components/Emphasis.jsx';
 
 const LATEST_ARTICLES = 3;
 
@@ -81,7 +82,7 @@ function Hero({ hero, show, locale }) {
     if (!image && !show && !heading && !hero?.body) return null;
 
     return (
-        <section aria-label={heading || show?.title || undefined} data-testid="home-hero" className={image ? undefined : 'pt-step-8'}>
+        <section aria-label={plainText(heading) || show?.title || undefined} data-testid="home-hero" className={image ? undefined : 'pt-step-8'}>
             {image && (
                 <div className="-mx-page">
                     <img
@@ -99,13 +100,13 @@ function Hero({ hero, show, locale }) {
             <div className="mt-step-5 flex flex-col items-start gap-step-2 md:flex-row md:items-end md:justify-between md:gap-step-6" data-testid="home-hero-line">
                 {show ? (
                     <div className="min-w-0">
-                        {heading && <h1 className="sr-only">{heading}</h1>}
+                        {heading && <h1 className="sr-only">{plainText(heading)}</h1>}
                         <p className="font-editorial text-[22px] leading-[1.3] italic">{show.title}</p>
                         {showMeta && <p className="figures mt-step-1 text-label text-ink-muted">{showMeta}</p>}
                     </div>
                 ) : (
                     <div className="min-w-0">
-                        {heading && <h1 className="font-editorial text-[22px] leading-[1.3] italic">{heading}</h1>}
+                        {heading && <h1 className="font-editorial text-[22px] leading-[1.3] italic"><Emphasis text={heading} /></h1>}
                         {hero?.body && <p className="mt-step-1 text-label text-ink-muted">{hero.body}</p>}
                     </div>
                 )}
@@ -192,7 +193,7 @@ export default function HomePage() {
     // A hero heading that already IS the site name (a legitimate admin choice) would otherwise double up as
     // "ArtNiyyətli | ArtNiyyətli"; every other case keeps the "Page Title | ArtNiyyətli" convention. The name as the
     // logo spells it ("Art Niyyätli") counts as the site name too, so that heading leaves the title as it was.
-    const heroTitle = hero?.heading?.trim();
+    const heroTitle = hero?.heading ? plainText(hero.heading).trim() : undefined;
     const isSiteName = (text) => SITE_NAMES.includes(text.toLocaleLowerCase('az').replace(/\s+/g, ' '));
     const homeTitle = heroTitle && !isSiteName(heroTitle) ? `${heroTitle} | ArtNiyyətli` : 'ArtNiyyətli';
 

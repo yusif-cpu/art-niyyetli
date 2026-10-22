@@ -204,22 +204,28 @@
     /* Montserrat — interface */
     /* Design pass: the demo's 130px hero and 63px section titles are not copied (Montserrat is ~20% wider; long
        Azerbaijani titles would take 2–3 lines). Tracking tightens with size: −0.03em at 72px, −0.02em at 48px. */
-    --text-hero: clamp(40px, 6vw, 72px);         /* home hero h1; demo clamp(56px, 9vw, 148px) −0.035em */
-    --text-hero--line-height: 1;
-    --text-hero--letter-spacing: -0.03em;
-    --text-hero--font-weight: 300;
-    --text-display: clamp(38px, 4.6vw, 59px);    /* page h1, the artist's name; 38px at 768 stays clear of text-heading's 28 */
+    /* Krem-bordo: bold titles (700), one word in Spectral italic (the `emphasis` utility below). This cancels the
+       earlier "titles at 300" rule. */
+    --text-hero: clamp(46px, 6.4vw, 92px);       /* home hero h1: 92px at 1440, 46px on phones */
+    --text-hero--line-height: 0.98;
+    --text-hero--letter-spacing: -0.035em;
+    --text-hero--font-weight: 700;
+    --text-banner: clamp(40px, 5.2vw, 76px);     /* the h1 of the wine page-header band */
+    --text-banner--line-height: 1;
+    --text-banner--letter-spacing: -0.035em;
+    --text-banner--font-weight: 700;
+    --text-display: clamp(40px, 4.6vw, 64px);    /* other page h1s */
     --text-display--line-height: 1.02;
     --text-display--letter-spacing: -0.035em;
-    --text-display--font-weight: 300;
-    --text-heading: clamp(28px, 3.4vw, 48px);    /* detail-page titles (h1); demo 63px (4.4vw) −0.025em */
+    --text-display--font-weight: 700;
+    --text-heading: clamp(28px, 3.4vw, 48px);    /* smaller titles */
     --text-heading--line-height: 1.1;
     --text-heading--letter-spacing: -0.02em;
-    --text-heading--font-weight: 300;
-    --text-section: clamp(28px, 2.4vw, 36px);    /* section titles (h2): light, not loud — the works carry the page */
-    --text-section--line-height: 1.15;
-    --text-section--letter-spacing: -0.01em;
-    --text-section--font-weight: 300;
+    --text-heading--font-weight: 700;
+    --text-section: clamp(36px, 4vw, 58px);      /* section titles (h2) */
+    --text-section--line-height: 1.05;
+    --text-section--letter-spacing: -0.03em;
+    --text-section--font-weight: 700;
     --text-subheading: 20px;                     /* demo 21px −0.02em [1.29] */
     --text-subheading--line-height: 1.14;
     --text-subheading--letter-spacing: -0.03em;
@@ -342,7 +348,21 @@
     text-decoration: none;
 }
 
+/* The emphasised word of a title (`*word*` in the text, components/Emphasis.jsx): Spectral italic 400, a little
+   larger than the title, in the title's colour on cream and #F0D9CF on wine. */
+@utility emphasis {
+    font-family: var(--font-editorial);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.08em;
+    letter-spacing: -0.01em;
+}
+
 @layer base {
+    [data-surface='wine'] .emphasis {
+        color: var(--color-wine-accent);
+    }
+
     html {
         font-family: var(--font-ui);
     }

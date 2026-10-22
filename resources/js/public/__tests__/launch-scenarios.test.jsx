@@ -230,7 +230,7 @@ describe('launch scenarios', () => {
 
             const details = await screen.findByTestId('contact-details');
             const hours = within(details).getByText(FULL.opening_hours);
-            expect(hours.closest('div')).toHaveTextContent(t('az', 'contact.hours'));
+            expect(hours.closest('div')).toHaveTextContent(t('az', 'pages.contact.hours'));
             expect(hours.textContent).toBe('Bazar ertəsi şənbə, 10:00 20:00');
         });
     });

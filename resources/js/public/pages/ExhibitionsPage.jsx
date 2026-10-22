@@ -4,7 +4,8 @@ import { t } from '../i18n/dictionary.js';
 import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
 import { listExhibitions } from '../services/exhibitions.js';
-import ExhibitionRow from '../components/ExhibitionRow.jsx';
+import ExhibitionCard from '../components/ExhibitionCard.jsx';
+import SectionHeading from '../components/SectionHeading.jsx';
 import Pagination from '../components/Pagination.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import PageHeader from '../components/PageHeader.jsx';
@@ -17,9 +18,13 @@ function Group({ id, title, items, children }) {
 
     return (
         <section aria-labelledby={id}>
-            <h2 id={id} className="mb-step-4 text-section">{title}</h2>
-            <ul className="border-t border-line">
-                {items.map((exhibition) => <ExhibitionRow key={exhibition.slug} exhibition={exhibition} />)}
+            <SectionHeading id={id} divider>{title}</SectionHeading>
+            <ul className="mt-step-7 grid grid-cols-1 gap-step-8 md:grid-cols-2 md:gap-step-6">
+                {items.map((exhibition) => (
+                    <li key={exhibition.slug}>
+                        <ExhibitionCard exhibition={exhibition} />
+                    </li>
+                ))}
             </ul>
             {children}
         </section>
@@ -29,11 +34,11 @@ function Group({ id, title, items, children }) {
 function Skeleton() {
     return (
         <div aria-busy="true" data-testid="exhibitions-skeleton">
-            <div aria-hidden="true" className="border-t border-line">
-                {Array.from({ length: 3 }, (_, i) => (
-                    <div key={i} className="flex gap-step-5 border-b border-line py-step-4">
-                        <div className="h-5 w-1/3 bg-surface-field" />
-                        <div className="h-4 w-1/4 bg-surface-field" />
+            <div aria-hidden="true" className="grid grid-cols-1 gap-step-6 md:grid-cols-2">
+                {Array.from({ length: 2 }, (_, i) => (
+                    <div key={i} className="flex flex-col gap-step-3">
+                        <div className="h-[240px] bg-surface-sunk md:h-[340px]" />
+                        <div className="h-6 w-1/2 bg-surface-sunk" />
                     </div>
                 ))}
             </div>
@@ -43,7 +48,8 @@ function Skeleton() {
 
 /**
  * All exhibitions in three groups — current, upcoming, archive (the admin's stored status, E9 `filter`) — each a
- * list of rows (title, dates, venue, status), an empty group left out. The archive pages. No Signal on the page.
+ * grid of exhibition cards (cover, dates · venue, title, short text), an empty group left out. The archive pages. No
+ * Signal on the page.
  */
 export default function ExhibitionsPage() {
     const { locale } = useLocale();
@@ -63,15 +69,15 @@ export default function ExhibitionsPage() {
     const empty = !loading && !error && list(current).length === 0 && list(upcoming).length === 0 && list(archive).length === 0 && archivePage === 1;
 
     return (
-        <div className="px-page pb-step-9 font-ui">
-            <PageHeader label={t(locale, 'labels.calendar')} title={t(locale, 'nav.exhibitions')} description={t(locale, 'exhibitions.description')} />
+        <div className="font-ui">
+            <PageHeader label={t(locale, 'nav.exhibitions')} title={t(locale, 'pages.exhibition.listTitle')} description={t(locale, 'exhibitions.description')} />
 
-            <div className="mt-step-7">
+            <div className="px-page py-[clamp(80px,9.72vw,140px)]">
                 {error && <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />}
                 {!error && loading && <Skeleton />}
                 {empty && <p className="text-ui text-ink-muted">{t(locale, 'exhibitions.empty')}</p>}
                 {!error && !loading && !empty && (
-                    <div className="flex flex-col gap-step-8">
+                    <div className="flex flex-col gap-[clamp(80px,9.72vw,140px)]">
                         <Group id="exhibitions-current" title={t(locale, 'home.currentExhibitions')} items={list(current)} />
                         <Group id="exhibitions-upcoming" title={t(locale, 'home.upcomingExhibitions')} items={list(upcoming)} />
                         <Group id="exhibitions-archive" title={t(locale, 'exhibitions.archive')} items={list(archive)}>

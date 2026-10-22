@@ -16,8 +16,11 @@ describe('NotFoundPage', () => {
     it('shows a short text and links to the home page and the catalogue', () => {
         render(<LocaleProvider><NotFoundPage /></LocaleProvider>);
 
-        expect(screen.getByRole('heading', { level: 1, name: 'Səhifə tapılmadı' })).toHaveClass('text-display');
-        expect(screen.getByText('Axtardığınız səhifə mövcud deyil.')).toHaveClass('text-ink-muted');
+        expect(screen.getByRole('heading', { level: 1, name: 'Səhifə tapılmadı' })).toHaveClass('text-banner');
+        expect(screen.getByText('Axtardığınız səhifə mövcud deyil.')).toHaveClass('text-wine-muted');
+        // The ways back are buttons: the first primary, the second secondary.
+        expect(screen.getByRole('link', { name: 'Ana səhifəyə qayıt' })).toHaveClass('bg-wine', 'text-surface');
+        expect(screen.getByRole('link', { name: 'Kataloqa bax' })).toHaveClass('border-wine', 'text-wine');
         expect(screen.getByRole('link', { name: 'Ana səhifəyə qayıt' })).toHaveAttribute('href', '/');
         expect(screen.getByRole('link', { name: 'Kataloqa bax' })).toHaveAttribute('href', '/artworks');
         screen.getAllByRole('link').forEach((link) => expect(link).toHaveClass('min-h-11')); // 44px touch targets

@@ -53,7 +53,10 @@ describe('ContactPage', () => {
         expect(within(details).getByRole('link', { name: '+994 12 000 00 00' })).toHaveAttribute('href', 'tel:+994120000000');
         expect(within(details).getByRole('link', { name: 'info@example.com' })).toHaveAttribute('href', 'mailto:info@example.com');
         expect(within(details).getByText('Bazar ertəsi–Şənbə 11:00–19:00')).toBeInTheDocument();
-        expect(within(details).getByText('İş saatları')).toHaveClass('text-label', 'text-ink-muted');
+        expect(within(details).getByText('Cavab saatları')).toHaveClass('text-[13px]', 'text-ink-muted');
+        // The phone and the e-mail lead, in wine 600.
+        expect(within(details).getByRole('link', { name: '+994 12 000 00 00' })).toHaveClass('font-semibold', 'text-wine', 'text-[clamp(28px,2.4vw,34px)]');
+        expect(within(details).getByRole('link', { name: 'info@example.com' })).toHaveClass('font-semibold', 'text-wine');
     });
 
     it('opens the address in a map in a new window, and embeds no map frame', async () => {
@@ -72,7 +75,7 @@ describe('ContactPage', () => {
 
         const details = await screen.findByTestId('contact-details');
         expect(within(details).queryByText('Telefon')).not.toBeInTheDocument();
-        expect(within(details).queryByText('İş saatları')).not.toBeInTheDocument();
+        expect(within(details).queryByText('Cavab saatları')).not.toBeInTheDocument();
         expect(details.children).toHaveLength(2);
     });
 

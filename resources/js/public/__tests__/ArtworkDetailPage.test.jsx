@@ -68,7 +68,7 @@ describe('ArtworkDetailPage', () => {
         mockApi();
         renderPage();
 
-        expect(await screen.findByRole('heading', { level: 1, name: 'Sunset Over Baku' })).toHaveClass('font-editorial', 'text-heading');
+        expect(await screen.findByRole('heading', { level: 1, name: 'Sunset Over Baku' })).toHaveClass('font-editorial', 'italic', 'text-wine');
         const row = (key) => screen.getByTestId(`row-${key}`);
         expect(within(row('year')).getByText('2023')).toBeInTheDocument();
         expect(row('dimensions').querySelector('dd').textContent).toBe(`80${NBSP}×${NBSP}60${NBSP}sm`);
@@ -81,7 +81,7 @@ describe('ArtworkDetailPage', () => {
         // Stage 9: term above value in a narrow table (200% zoom), side by side from 17rem (a container query).
         expect(row('year').closest('dl')).toHaveClass('@container');
         expect(row('year')).toHaveClass('grid-cols-1', '@[17rem]:grid-cols-[minmax(0,8rem)_minmax(0,1fr)]');
-        expect(screen.getByText('A description.')).toHaveClass('font-editorial', 'text-reading');
+        expect(screen.getByText('A description.')).toHaveClass('font-editorial', 'text-ink');
     });
 
     it('hides the price of a sold work', async () => {
@@ -108,7 +108,8 @@ describe('ArtworkDetailPage', () => {
         // Let every request the page might make settle before counting.
         await waitFor(() => expect(calls('/api/v1/artworks/')).toHaveLength(1));
 
-        expect(screen.getByText('Aygün Məmmədova').closest('a')).toBeNull();
+        // The breadcrumb and the artist row both name the artist; neither is a link.
+        screen.getAllByText('Aygün Məmmədova').forEach((el) => expect(el.closest('a')).toBeNull());
         expect(screen.queryByRole('link', { name: 'Aygün Məmmədova' })).not.toBeInTheDocument();
         expect(calls('/api/v1/artists')).toHaveLength(0);
     });
@@ -120,7 +121,7 @@ describe('ArtworkDetailPage', () => {
         const k = Math.min(900 / 80, Math.round(768 * 0.7) / 60, 6);
         expect(k).toBe(6); // 80 × 60 cm is capped: 480 × 360px, not the 717px the width alone would allow
         expect(field).toHaveStyle({ width: `${Math.round(80 * k)}px`, height: `${Math.round(60 * k)}px` });
-        expect(field).toHaveClass('shadow-hang');
+        expect(field).toHaveClass('shadow-present');
         expect(within(field).getByRole('img', { name: 'Sunset Over Baku, Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/full.webp');
         expect(within(field).getByRole('img')).toHaveAttribute('loading', 'eager');
         expect(within(field).getByRole('img')).toHaveAttribute('fetchpriority', 'high');
@@ -139,12 +140,12 @@ describe('ArtworkDetailPage', () => {
         mockApi();
         renderPage();
 
-        const wall = await screen.findByRole('heading', { name: 'Divarda gör' });
+        const wall = await screen.findByRole('heading', { name: 'Otağınızda belə görünəcək' });
         const follows = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
         expect(follows(screen.getByTestId('artwork-price'), wall)).toBe(true);
         expect(follows(wall, screen.getByText('A description.'))).toBe(true);
         expect(follows(wall, screen.getByTitle(detail.title))).toBe(true);
-        expect(follows(wall, screen.getByRole('heading', { name: 'Bu əsər haqqında soruş' }))).toBe(true);
+        expect(follows(wall, screen.getByRole('heading', { name: 'Bu əsər haqqında soruşun' }))).toBe(true);
     });
 
     it('switches the main image from the thumbnails and moves aria-current', async () => {
@@ -231,16 +232,17 @@ describe('ArtworkDetailPage', () => {
     it('leaves out the similar-works section entirely when there are none, and shows it with a scale rule when there are', async () => {
         const { unmount } = renderPage();
         await screen.findByRole('heading', { level: 1 });
-        expect(screen.queryByRole('heading', { name: 'Bənzər əsərlər' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: /Bənzər əsərlər|Rəssamın digər əsərləri/ })).not.toBeInTheDocument();
         unmount();
 
         artwork = { ...detail, similar: [{ ...detail, inventory_code: 'AN-2', title: 'Other', images: undefined }] };
         mockApi();
         renderPage();
-        const section = (await screen.findByRole('heading', { name: 'Bənzər əsərlər' })).closest('section');
+        // The similar works are all by the same artist here, so the title says so.
+        const section = (await screen.findByRole('heading', { name: 'Rəssamın digər əsərləri' })).closest('section');
         expect(within(section).getByTestId('scale-rule')).toBeInTheDocument();
         expect(within(section).getByText('Other')).toBeInTheDocument();
-        expect(within(section).getByTestId('artwork-field')).not.toHaveClass('shadow-hang');
+        expect(within(section).getByTestId('artwork-field')).toHaveClass('shadow-hang');
     });
 
     it('sets the title "<title>, <artist> | ArtNiyyətli" (seoMeta suffix), a word-safe 155-character description and Open Graph tags', async () => {
@@ -302,7 +304,7 @@ describe('ArtworkDetailPage', () => {
         expect(code).toHaveAttribute('readonly');
         const form = code.closest('form');
         expect(form.innerHTML).not.toMatch(/signal/); // no Signal before the form is sent
-        expect(within(form).getByRole('button', { name: 'Göndər' })).toHaveClass('bg-wine', 'text-wine-ink');
+        expect(within(form).getByRole('button', { name: 'Göndər' })).toHaveClass('bg-wine', 'text-surface', 'w-full');
 
         await userEvent.type(within(form).getByLabelText('Ad'), 'Aysel');
         await userEvent.type(within(form).getByLabelText('E-poçt'), 'aysel@example.com');
@@ -363,7 +365,7 @@ describe('ArtworkDetailPage', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'EN' }));
 
-        expect(await screen.findByText('See it on a wall')).toBeInTheDocument();
+        expect((await screen.findAllByText('See it on a wall')).length).toBeGreaterThan(0);
         expect(screen.getByRole('heading', { level: 1, name: 'Sunset Over Baku' })).toBeInTheDocument();
     });
 });

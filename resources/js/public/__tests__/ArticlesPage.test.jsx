@@ -25,22 +25,51 @@ describe('ArticlesPage', () => {
         mockApi();
     });
 
-    it('renders each article as one link: date and type, title in Spectral, short text, cover', async () => {
+    it('shows the newest article as the large card: the 560px cover, "TYPE · date", the 50px title, the text and "Oxu"', async () => {
         renderPage();
 
-        const link = await screen.findByRole('link', { name: /An Interview/ });
-        expect(link).toHaveAttribute('href', '/articles/a');
-        expect(within(link).getByText('MÜSAHİBƏ · 5 yanvar 2026')).toHaveClass('text-label', 'font-semibold', 'text-wine');
-        expect(within(link).getByText('An Interview')).toHaveClass('font-semibold', 'text-wine');
-        expect(within(link).getByText('Teaser.')).toBeInTheDocument();
-        expect(within(link).getByRole('img', { name: 'An Interview' })).toHaveAttribute('src', 'https://example.test/cover.webp');
-        expect(screen.getByRole('heading', { level: 1, name: 'Jurnal' })).toHaveClass('text-display');
+        const lead = await screen.findByTestId('lead-article');
+        expect(lead).toHaveClass('md:grid-cols-[1.25fr_1fr]');
+        expect(lead.querySelector('img')).toHaveAttribute('src', 'https://example.test/cover.webp');
+        expect(lead.querySelector('img').parentElement).toHaveClass('md:h-[560px]', 'shadow-present');
+        expect(within(lead).getByText('MÜSAHİBƏ · 5 yanvar 2026')).toHaveClass('text-label', 'font-semibold', 'text-wine');
+        const title = within(lead).getByRole('heading', { level: 2, name: 'An Interview' });
+        expect(title).toHaveClass('text-[clamp(34px,3.5vw,50px)]', 'font-bold', 'text-wine');
+        expect(within(title).getByRole('link')).toHaveAttribute('href', '/articles/a');
+        expect(within(lead).getByText('Teaser.')).toHaveClass('font-editorial');
+        expect(within(lead).getByRole('link', { name: 'Oxu' })).toHaveAttribute('href', '/articles/a');
+        expect(screen.getByRole('heading', { level: 1, name: 'Sənət, ölçü və kolleksiya' })).toHaveClass('text-banner');
+    });
+
+    it('puts the other articles in a four-column grid of card links', async () => {
+        renderPage();
+
+        const grid = await screen.findByTestId('article-grid');
+        expect(grid).toHaveClass('lg:grid-cols-4');
+        const link = within(grid).getByRole('link', { name: /Some News/ });
+        expect(link).toHaveAttribute('href', '/articles/b');
+        expect(within(link).getByText('Some News')).toHaveClass('text-[22px]', 'font-semibold', 'text-wine');
+    });
+
+    it('offers type chips ("Hamısı" and each type the articles carry) that filter the loaded list', async () => {
+        renderPage();
+
+        const chips = await screen.findByTestId('article-types');
+        expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Hamısı', 'Müsahibə', 'Xəbər']);
+        expect(within(chips).getByRole('button', { name: 'Hamısı' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByText('2 məqalə')).toBeInTheDocument();
+
+        await userEvent.click(within(chips).getByRole('button', { name: 'Xəbər' }));
+        expect(within(chips).getByRole('button', { name: 'Xəbər' })).toHaveAttribute('aria-pressed', 'true');
+        expect(within(chips).getByRole('button', { name: 'Xəbər' })).toHaveClass('bg-wine', 'text-surface');
+        expect(within(screen.getByTestId('lead-article')).getByText('Some News')).toBeInTheDocument();
+        expect(screen.queryByText('An Interview')).not.toBeInTheDocument();
     });
 
     it('leaves out a missing short text and a missing cover, without an empty box', async () => {
         renderPage();
 
-        const link = await screen.findByRole('link', { name: /Some News/ });
+        const link = within(await screen.findByTestId('article-grid')).getByRole('link', { name: /Some News/ });
         expect(within(link).getByText('XƏBƏR · 5 yanvar 2026')).toBeInTheDocument();
         expect(within(link).queryByRole('img')).not.toBeInTheDocument();
         expect(link.querySelector('.aspect-\\[4\\/3\\]')).toBeNull();
@@ -51,9 +80,10 @@ describe('ArticlesPage', () => {
         respond = () => jsonResponse({ data: [article('c', 'Odd', { type: 'podcast' })] });
         renderPage();
 
-        const link = await screen.findByRole('link', { name: /Odd/ });
-        expect(within(link).getByText('5 yanvar 2026')).toBeInTheDocument();
-        expect(link.textContent).not.toMatch(/articles\./);
+        const lead = await screen.findByTestId('lead-article');
+        expect(within(lead).getByText('5 yanvar 2026')).toBeInTheDocument();
+        expect(lead.textContent).not.toMatch(/articles\./);
+        expect(screen.queryByTestId('article-types')).not.toBeInTheDocument();
     });
 
     it('pages with the shared pager', async () => {
@@ -82,11 +112,12 @@ describe('ArticlesPage', () => {
         expect(await screen.findByText('An Interview')).toBeInTheDocument();
     });
 
-    it('uses no Signal, rounded or neutral classes', async () => {
+    it('uses no Signal, rounded or neutral classes; the only shadow is the lead card\'s presentation shadow', async () => {
         const { container } = renderPage();
         await screen.findByText('An Interview');
 
-        expect(container.innerHTML).not.toMatch(/signal|rounded|neutral-|shadow/);
+        expect(container.innerHTML).not.toMatch(/signal|rounded|neutral-/);
+        expect(container.innerHTML.match(/shadow-[a-z]+/g)).toEqual(['shadow-present']);
     });
 
     it('sets a static articles document title', async () => {

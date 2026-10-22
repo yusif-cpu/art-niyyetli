@@ -21,7 +21,7 @@ export function figurePaths(f = FIGURE_CM) {
 
 /**
  * The 170 cm silhouette, drawn in centimetres (viewBox 46 × 170, the geometry of lib/wall.js FIGURE_CM) and stretched
- * to the pixel box figureAt(k) gives — so it always shares the works' k. Flat, borderless, surface-field-2: a
+ * to the pixel box figureAt(k) gives — so it always shares the works' k. Flat, borderless, the warm grey figure token: a
  * person's outline (tapered body, flat shoulders, a neck, a small head), no detail. Decorative (aria-hidden); the
  * "170 sm" label next to it carries the meaning.
  */
@@ -36,7 +36,7 @@ export default function HumanFigure({ width, height, className = '', style }) {
             preserveAspectRatio="none"
             width={width}
             height={height}
-            className={`fill-surface-field-2 ${className}`}
+            className={`fill-figure ${className}`}
             style={style}
         >
             <path d={body} data-part="body" />

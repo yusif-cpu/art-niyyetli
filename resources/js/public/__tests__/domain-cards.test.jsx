@@ -45,24 +45,26 @@ describe('ArtistCard', () => {
 });
 
 describe('ExhibitionCard', () => {
-    it('renders the title, date range, venue, and a link to the detail page', () => {
+    it('renders the cover, "dates · venue", the title in 600 wine, and a link to the detail page', () => {
         render(
-            <ExhibitionCard
-                exhibition={{ slug: 'winter-show-2026', title: 'Winter Show 2026', status: 'current', start_date: '2026-01-10', end_date: '2026-02-10', venue: 'Main Gallery', media: [{ type: 'photo', url: 'https://example.test/ex.webp' }] }}
-            />
+            <LocaleProvider>
+                <ExhibitionCard
+                    exhibition={{ slug: 'winter-show-2026', title: 'Winter Show 2026', status: 'current', start_date: '2026-01-10', end_date: '2026-02-10', venue: 'Main Gallery', media: [{ type: 'photo', url: 'https://example.test/ex.webp' }] }}
+                />
+            </LocaleProvider>
         );
 
-        expect(screen.getByText('Winter Show 2026')).toBeInTheDocument();
-        expect(screen.getByText('Main Gallery')).toBeInTheDocument();
-        expect(screen.getByText('2026-01-10 – 2026-02-10')).toBeInTheDocument();
+        expect(screen.getByText('Winter Show 2026')).toHaveClass('font-semibold', 'text-wine');
+        expect(screen.getByText('10 yanvar – 10 fevral 2026 · Main Gallery')).toBeInTheDocument();
         expect(screen.getByRole('link')).toHaveAttribute('href', '/exhibitions/winter-show-2026');
         expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.test/ex.webp');
         expect(screen.getByRole('img')).toHaveAttribute('loading', 'lazy');
     });
 
     it('renders a placeholder when there is no media', () => {
-        render(<ExhibitionCard exhibition={{ slug: 'x', title: 'X', status: 'past', start_date: '2025-01-01', end_date: '2025-02-01', venue: 'V', media: [] }} />);
+        const { container } = render(<LocaleProvider><ExhibitionCard exhibition={{ slug: 'x', title: 'X', status: 'past', start_date: '2025-01-01', end_date: '2025-02-01', venue: 'V', media: [] }} /></LocaleProvider>);
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
+        expect(container.querySelector('.bg-surface-sunk')).toBeNull(); // no empty cover box
     });
 });
 

@@ -40,36 +40,48 @@ describe('ArticleDetailPage', () => {
         mockApi();
         renderPage();
 
-        expect(await screen.findByText('<b>not bold, literal text</b><script>alert(1)</script>')).toHaveClass('font-editorial', 'text-reading', 'whitespace-pre-line');
+        expect(await screen.findByText('<b>not bold, literal text</b><script>alert(1)</script>')).toHaveClass('font-editorial');
         expect(document.querySelector('article b, article script')).not.toBeInTheDocument();
     });
 
-    it('shows the date and type above a Spectral heading, and the text in a prose column', async () => {
+    it('opens with the wine band: "type · date · reading time", the bold title, the short text; the text in a 760px column', async () => {
+        detail = article('a', 'An Interview', { content: `${'söz '.repeat(400)}\n\nİkinci abzas.`, media: DETAIL.media });
+        mockApi();
         renderPage();
 
         const heading = await screen.findByRole('heading', { level: 1, name: 'An Interview' });
-        expect(heading).toHaveClass('font-editorial', 'text-heading');
-        const header = heading.closest('header');
-        expect(within(header).getByText('MÜSAHİBƏ · 5 yanvar 2026')).toHaveClass('text-label', 'text-wine');
-        expect(header.firstElementChild).not.toBe(heading); // the date line comes first
-        expect(heading.closest('article')).toHaveClass('max-w-prose');
+        expect(heading).toHaveClass('text-banner', 'text-surface');
+        const band = screen.getByTestId('page-header');
+        expect(band).toHaveClass('bg-wine');
+        // 402 words at 200 a minute, rounded up: 3 minutes.
+        expect(within(band).getByTestId('page-header-label')).toHaveTextContent('Müsahibə · 5 yanvar 2026 · 3 dəqiqə');
+        expect(within(band).getByText('Teaser.')).toHaveClass('font-editorial');
+        const body = screen.getByTestId('article-body');
+        expect(body).toHaveClass('max-w-[760px]');
+        // The first paragraph is the 24px lead, the others 19px.
+        const [lead, second] = body.querySelectorAll('p');
+        expect(lead).toHaveClass('md:text-[24px]', 'text-ink');
+        expect(second).toHaveTextContent('İkinci abzas.');
+        expect(second).toHaveClass('md:text-[19px]', 'leading-[1.75]');
     });
 
-    it('shows the cover across the column, without a frame or a shadow', async () => {
+    it('shows the cover inside the wine band, 600px tall, without a frame', async () => {
         renderPage();
 
         const cover = await screen.findByRole('img', { name: 'An Interview' });
         expect(cover).toHaveAttribute('src', 'https://example.test/cover.webp');
-        expect(cover.parentElement).toHaveClass('w-full');
-        expect(cover.parentElement.className).not.toMatch(/border|shadow/);
+        expect(cover).toHaveClass('w-full', 'object-cover', 'md:h-[600px]');
+        expect(screen.getByTestId('page-header')).toContainElement(cover);
+        expect(cover.className).not.toMatch(/border/);
     });
 
     it('ends with up to three other articles, never the current one', async () => {
         renderPage();
 
         const section = (await screen.findByRole('heading', { name: 'Digər məqalələr' })).closest('section');
-        const links = within(section).getAllByRole('link');
+        const links = within(section).getAllByTestId('article-card');
         expect(links.map((a) => a.getAttribute('href'))).toEqual(['/articles/b', '/articles/c', '/articles/d']);
+        expect(within(section).getByRole('link', { name: 'Jurnala qayıt' })).toHaveAttribute('href', '/articles');
         expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('per_page=4'), expect.anything());
     });
 

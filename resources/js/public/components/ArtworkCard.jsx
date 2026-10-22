@@ -48,9 +48,10 @@ export function ArtworkCaption({ artwork, dims }) {
 
 /**
  * One artwork. With `k` (px per cm, from lib/wall.js) the field is the work at true relative size and the card is at
- * least 155px wide with the field centred; `zoneHeight` bottom-aligns the fields of one row. Without `k` (screens not
- * yet on the wall module) the card fills its column and the field keeps the work's cm proportions.
- * The whole card is one link. No shadow: the one-shadow exception belongs to works hung on a wall.
+ * least 155px wide with the field at its left edge (so the caption lines up under the work); `zoneHeight`
+ * bottom-aligns the fields of one row. Without `k` the card fills its column and the field keeps the work's cm
+ * proportions. The whole card is one link. Krem-bordo: every work carries the hang shadow (2px, 6%), and the caption is
+ * the shared ArtworkCaption — title, "artist · size", price or status.
  */
 export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }) {
     const { locale } = useLocale();
@@ -59,9 +60,7 @@ export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }
     // `size` comes from packRows (edge-rounded to the row); otherwise the card sizes itself from k.
     const size = packedSize ?? (k > 0 && validDims ? cardSize(w, h, k) : null);
     const dims = validDims ? formatDimensions(w, h, locale) : null;
-    const medium = lowerFirst(artwork.medium?.name, locale);
     const artistName = artwork.artist?.name || null;
-    const price = priceLine(artwork, locale);
     const label = [artwork.title, artistName, dims].filter(Boolean).join(', ');
     // image_url is the "catalogue" media variant (800px longest edge) — sized for a card this size. thumbnail_url
     // is the 300px variant meant for genuinely small art (e.g. the 64px image-picker strip on the detail page);
@@ -71,7 +70,7 @@ export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }
     const field = (
         <div
             data-testid="artwork-field"
-            className={`overflow-hidden ${cardImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
+            className={`overflow-hidden shadow-hang ${cardImage ? 'bg-surface-field' : fieldToneFor(artwork.inventory_code)}`}
             style={size ? { width: size.fieldWidth, height: size.fieldHeight } : { aspectRatio: validDims ? `${w} / ${h}` : '4 / 5' }}
         >
             {cardImage && <img src={cardImage} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
@@ -86,19 +85,13 @@ export default function ArtworkCard({ artwork, k, zoneHeight, size: packedSize }
             style={size ? { width: size.cardWidth } : undefined}
         >
             {size ? (
-                <div className="flex items-end justify-center" style={{ height: zoneHeight ?? size.fieldHeight }}>
+                <div className="flex items-end justify-start" style={{ height: zoneHeight ?? size.fieldHeight }}>
                     {field}
                 </div>
             ) : (
                 field
             )}
-            <div className="mt-step-3 flex flex-col gap-0.5">
-                <p className="figures text-caption text-ink-muted">{artwork.inventory_code}</p>
-                {artwork.title && <p className="font-editorial text-title-sm italic decoration-1 underline-offset-2 group-hover:underline">{artwork.title}</p>}
-                {artistName && <p className="text-byline">{artistName}</p>}
-                {(dims || medium) && <p className="text-caption text-ink-muted">{[dims, medium].filter(Boolean).join(', ')}</p>}
-                <p className={`text-ui ${price.muted ? 'text-ink-muted' : 'figures'}`}>{price.text}</p>
-            </div>
+            <ArtworkCaption artwork={artwork} dims={dims} />
         </a>
     );
 }

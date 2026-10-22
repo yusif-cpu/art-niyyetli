@@ -6,22 +6,21 @@ import { seoMeta } from '../lib/seoMeta.js';
 import { excerpt } from '../lib/text.js';
 import { getPage } from '../services/pages.js';
 import ErrorState from '../components/ErrorState.jsx';
+import PageHeader from '../components/PageHeader.jsx';
 import NotFoundPage from './NotFoundPage.jsx';
 
 function Skeleton() {
     return (
-        <div className="px-page pt-step-8 pb-step-9" aria-busy="true" data-testid="page-skeleton">
-            <div aria-hidden="true" className="flex max-w-prose flex-col gap-step-3">
-                <div className="h-10 w-1/2 bg-surface-field" />
-                <div className="mt-step-5 h-4 w-full bg-surface-field" />
-                <div className="h-4 w-5/6 bg-surface-field" />
+        <div aria-busy="true" data-testid="page-skeleton">
+            <div aria-hidden="true" className="flex flex-col gap-step-3 bg-wine px-page py-[88px]">
+                <div className="h-14 w-1/2 bg-wine-deep" />
             </div>
         </div>
     );
 }
 
 /**
- * A CMS page (E4): the title, the page text, then the sections in `sort_order`, each a heading and a text (and its
+ * A CMS page (E4), krem-bordo: the wine band with the title, then in a 760px column the page text, then the sections in `sort_order`, each a heading and a text (and its
  * image when there is one). All plain authored text, never HTML; line breaks kept. A section without text is left
  * out. Placeholder copy ("[PLACEHOLDER]" on the legal pages) is shown as it is, on purpose: hiding it would let a
  * missing text go unnoticed.
@@ -42,21 +41,21 @@ export default function StaticPage({ params }) {
         .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
     return (
-        <article className="px-page pt-step-8 pb-step-9 font-ui" key={data.slug}>
-            <h1 className="border-b border-line pb-step-5 text-display">{data.title}</h1>
+        <article className="font-ui" key={data.slug}>
+            <PageHeader title={data.title} />
 
-            <div className="mt-step-7 flex max-w-prose flex-col gap-step-7">
-                {data.content?.trim() && <p className="font-editorial text-reading whitespace-pre-line">{data.content}</p>}
+            <div className="mx-auto flex max-w-[760px] flex-col gap-step-8 px-page py-[clamp(64px,7vw,100px)] md:px-0">
+                {data.content?.trim() && <p className="font-editorial text-[17px] leading-[1.75] whitespace-pre-line text-ink md:text-[19px]">{data.content}</p>}
 
                 {sections.map((section) => (
                     <section key={section.key} aria-label={section.heading || undefined}>
                         {section.image_url && (
-                            <div className="mb-step-4 aspect-[3/2] w-full overflow-hidden border border-line bg-surface-field">
+                            <div className="mb-step-5 aspect-[3/2] w-full overflow-hidden bg-surface-sunk">
                                 <img src={section.image_url} alt={section.heading || ''} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                             </div>
                         )}
-                        {section.heading && <h2 className="mb-step-3 text-section">{section.heading}</h2>}
-                        <p className="font-editorial text-reading whitespace-pre-line">{section.body}</p>
+                        {section.heading && <h2 className="mb-step-4 text-[clamp(26px,2.4vw,34px)] leading-[1.15] font-bold tracking-[-0.025em] text-wine">{section.heading}</h2>}
+                        <p className="font-editorial text-[17px] leading-[1.75] whitespace-pre-line text-ink md:text-[19px]">{section.body}</p>
                     </section>
                 ))}
             </div>

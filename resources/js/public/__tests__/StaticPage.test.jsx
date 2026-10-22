@@ -36,8 +36,10 @@ describe('StaticPage', () => {
 
         await screen.findByText('Intro.');
         expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Birinci', 'İkinci']);
-        expect(screen.getByText('One.')).toHaveClass('font-editorial', 'text-reading', 'whitespace-pre-line');
-        expect(screen.getByRole('heading', { level: 1, name: 'Haqqımızda' })).toHaveClass('text-display');
+        expect(screen.getByText('One.')).toHaveClass('font-editorial', 'whitespace-pre-line', 'md:text-[19px]');
+        expect(screen.getByRole('heading', { level: 2, name: 'Birinci' })).toHaveClass('font-bold', 'text-wine');
+        expect(screen.getByRole('heading', { level: 1, name: 'Haqqımızda' })).toHaveClass('text-banner');
+        expect(screen.getByTestId('page-header')).toHaveClass('bg-wine');
     });
 
     it('leaves out a section whose text is empty, and an empty page text', async () => {

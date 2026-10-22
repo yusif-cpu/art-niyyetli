@@ -29,7 +29,7 @@ function renderCard(props) {
 
 const field = () => screen.getByTestId('artwork-field');
 // exact textContent (the default matcher normalises the non-breaking spaces away)
-const exactText = (text) => (_, el) => el?.tagName === 'P' && el.textContent === text;
+const exactText = (text) => (_, el) => el?.tagName === 'SPAN' && el.textContent === text;
 
 describe('ArtworkCard', () => {
     it('sizes the field from centimetres × k, not from the image', () => {
@@ -39,12 +39,13 @@ describe('ArtworkCard', () => {
         expect(screen.getByRole('link')).toHaveStyle({ width: '200px' });
     });
 
-    it('raises a 40 × 30 card to 155px and keeps the field at its own size, centred', () => {
+    it('raises a 40 × 30 card to 155px and keeps the field at its own size, at the card\'s left edge (under it, the caption)', () => {
         renderCard({ artwork: { ...baseArtwork, width_cm: 40, height_cm: 30 }, k: 3.168 });
 
         expect(screen.getByRole('link')).toHaveStyle({ width: '155px' });
         expect(field()).toHaveStyle({ width: '127px', height: '95px' });
-        expect(field().parentElement).toHaveClass('justify-center');
+        expect(field().parentElement).toHaveClass('justify-start');
+        expect(field()).toHaveClass('shadow-hang');
     });
 
     it('bottom-aligns the field in the row zone it is given', () => {
@@ -94,14 +95,13 @@ describe('ArtworkCard', () => {
         expect(field().querySelector('img')).toHaveAttribute('src', 'https://example.test/thumb.webp');
     });
 
-    it('shows code, title, artist, dimensions with × and the medium, and a formatted price', () => {
+    it('captions the work: title (Spectral italic 18px), "artist · size", and the price in 600 wine', () => {
         renderCard({ k: 1 });
 
-        expect(screen.getByText('AN-2026-014')).toBeInTheDocument();
-        expect(screen.getByText('Sunset Over Baku')).toHaveClass('font-editorial', 'italic');
-        expect(screen.getByText('Aygün Məmmədova')).toBeInTheDocument();
-        expect(screen.getByText(exactText(`80${NBSP}×${NBSP}60${NBSP}sm, kətan üzərində yağlı boya`))).toBeInTheDocument();
-        expect(screen.getByText(exactText(`3${NBSP}200${NBSP}AZN`))).toBeInTheDocument();
+        expect(screen.getByText('Sunset Over Baku')).toHaveClass('font-editorial', 'italic', 'text-[18px]');
+        expect(screen.getByText(exactText(`Aygün Məmmədova · 80${NBSP}×${NBSP}60${NBSP}sm`))).toHaveClass('text-meta', 'text-ink-muted');
+        expect(screen.getByText(exactText(`3${NBSP}200${NBSP}AZN`))).toHaveClass('font-semibold', 'text-wine');
+        expect(screen.queryByText('AN-2026-014')).not.toBeInTheDocument();
     });
 
     it('hides the price of a sold work and shows "Satılıb" in muted ink, not red', () => {
@@ -143,7 +143,7 @@ describe('ArtworkCard', () => {
         localStorage.setItem('public-locale', 'en');
         renderCard({ artwork: { ...baseArtwork, availability: 'sold' } });
 
-        expect(screen.getByText(exactText(`80${NBSP}×${NBSP}60${NBSP}cm, kətan üzərində yağlı boya`))).toBeInTheDocument();
+        expect(screen.getByText(exactText(`Aygün Məmmədova · 80${NBSP}×${NBSP}60${NBSP}cm`))).toBeInTheDocument();
         expect(screen.getByText('Sold')).toBeInTheDocument();
         localStorage.removeItem('public-locale');
     });

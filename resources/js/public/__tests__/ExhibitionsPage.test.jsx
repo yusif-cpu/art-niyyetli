@@ -39,22 +39,23 @@ describe('ExhibitionsPage', () => {
 
         const headings = await screen.findAllByRole('heading', { level: 2 });
         expect(headings.map((h) => h.textContent)).toEqual(['Cari sərgilər', 'Gələcək sərgilər', 'Arxiv']);
-        expect(screen.getByRole('heading', { level: 1, name: 'Sərgilər' })).toHaveClass('text-display');
+        expect(screen.getByRole('heading', { level: 1, name: 'Cari və keçmiş sərgilər' })).toHaveClass('text-banner');
         expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('filter=current'), expect.anything());
         expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('filter=upcoming'), expect.anything());
         expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('filter=archive'), expect.anything());
     });
 
-    it('renders each exhibition as one row link: title, date range, venue, status', async () => {
+    it('renders each exhibition as one card link: "dates · venue", the title in 600 wine, the cover when there is one', async () => {
+        groups.current = page([show('winter-show-2026', 'Winter Show 2026', 'current', { short_text: 'Short.', media: [{ type: 'photo', url: 'https://example.test/c.webp' }] })]);
         renderPage();
 
-        const row = await screen.findByRole('link', { name: /Winter Show 2026/ });
-        expect(row).toHaveAttribute('href', '/exhibitions/winter-show-2026');
-        expect(within(row).getByText('10 yanvar 2026 – 10 fevral 2026')).toBeInTheDocument();
-        expect(within(row).getByText('Main Gallery')).toBeInTheDocument();
-        // Plain small text, no box.
-        expect(within(row).getByText('Cari')).toHaveClass('text-caption', 'text-ink-muted');
-        expect(within(row).getByText('Cari').className).not.toMatch(/border/);
+        const card = await screen.findByRole('link', { name: /Winter Show 2026/ });
+        expect(card).toHaveAttribute('href', '/exhibitions/winter-show-2026');
+        expect(within(card).getByText('10 yanvar – 10 fevral 2026 · Main Gallery')).toHaveClass('text-meta', 'text-ink-muted');
+        expect(within(card).getByText('Winter Show 2026')).toHaveClass('font-semibold', 'text-wine');
+        expect(within(card).getByText('Short.')).toHaveClass('font-editorial');
+        expect(card.querySelector('img')).toHaveAttribute('src', 'https://example.test/c.webp');
+        expect(card.querySelector('img').parentElement).toHaveClass('md:h-[340px]');
     });
 
     it('uses no Signal, "current" included', async () => {
@@ -74,13 +75,13 @@ describe('ExhibitionsPage', () => {
         expect(screen.getByRole('heading', { name: 'Arxiv' })).toBeInTheDocument();
     });
 
-    it('does not leave an empty cell for a missing venue', async () => {
+    it('leaves out a missing venue and a missing cover without an empty box', async () => {
         renderPage();
 
-        const row = await screen.findByRole('link', { name: /Old Show/ });
-        expect(within(row).getByText('Arxiv')).toBeInTheDocument();
-        expect([...row.children].filter((c) => c.textContent.trim() === '')).toHaveLength(0);
-        expect(row.children).toHaveLength(3); // title, dates, status
+        const card = await screen.findByRole('link', { name: /Old Show/ });
+        expect(within(card).getByText('10 yanvar – 10 fevral 2026')).toBeInTheDocument();
+        expect(card.querySelector('img')).toBeNull();
+        expect([...card.children].filter((c) => c.textContent.trim() === '')).toHaveLength(0);
     });
 
     it('pages the archive', async () => {

@@ -11,6 +11,8 @@ import { getEnquirySubjects } from '../services/enquiries.js';
 import { getPage } from '../services/pages.js';
 import EnquiryForm from '../components/EnquiryForm.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import PageHeader from '../components/PageHeader.jsx';
+import Emphasis from '../components/Emphasis.jsx';
 
 // "buy" needs an artwork code (E17 answers 422 without one): it belongs to the artwork page's form, not this one.
 const ARTWORK_ONLY_SUBJECTS = ['buy'];
@@ -22,30 +24,30 @@ export function mapHref(address) {
 
 function Details({ settings, locale }) {
     const rows = [
+        settings?.phone && { key: 'phone', label: t(locale, 'contact.phone'), value: <a href={phoneHref(settings.phone)} className="figures text-[clamp(28px,2.4vw,34px)] leading-[1.15] font-semibold tracking-[-0.02em] text-wine">{settings.phone}</a> },
+        settings?.contact_email && { key: 'email', label: t(locale, 'contact.email'), value: <a href={`mailto:${settings.contact_email}`} className="text-[clamp(20px,1.7vw,24px)] leading-[1.25] font-semibold break-all text-wine">{settings.contact_email}</a> },
+        settings?.opening_hours && { key: 'hours', label: t(locale, 'pages.contact.hours'), value: <span className="figures text-[19px] leading-[1.35] whitespace-pre-line text-ink md:text-[20px]">{settings.opening_hours}</span> },
         settings?.address && {
             key: 'address',
             label: t(locale, 'contact.address'),
             value: (
                 <>
-                    <span className="block whitespace-pre-line">{settings.address}</span>
-                    <a href={mapHref(settings.address)} target="_blank" rel="noopener noreferrer" className="mt-step-1 inline-block text-meta text-ink link-line">
-                        {t(locale, 'contact.openMap')}
+                    <span className="block text-[17px] leading-[1.45] whitespace-pre-line text-ink">{settings.address}</span>
+                    <a href={mapHref(settings.address)} target="_blank" rel="noopener noreferrer" className="mt-step-2 inline-flex min-h-11 items-center text-[13px] font-semibold text-wine max-md:text-[14px]">
+                        <span className="link-line">{t(locale, 'contact.openMap')}</span>
                     </a>
                 </>
             ),
         },
-        settings?.phone && { key: 'phone', label: t(locale, 'contact.phone'), value: <a href={phoneHref(settings.phone)} className="figures text-ink">{settings.phone}</a> },
-        settings?.contact_email && { key: 'email', label: t(locale, 'contact.email'), value: <a href={`mailto:${settings.contact_email}`} className="text-ink">{settings.contact_email}</a> },
-        settings?.opening_hours && { key: 'hours', label: t(locale, 'contact.hours'), value: <span className="figures whitespace-pre-line">{settings.opening_hours}</span> },
     ].filter(Boolean);
     if (rows.length === 0) return null;
 
     return (
-        <dl className="flex flex-col gap-step-4 text-ui" data-testid="contact-details">
+        <dl className="border-t border-line" data-testid="contact-details">
             {rows.map((row) => (
-                <div key={row.key}>
-                    <dt className="text-label text-ink-muted">{row.label}</dt>
-                    <dd className="mt-step-1">{row.value}</dd>
+                <div key={row.key} className="border-b border-line py-step-5">
+                    <dt className="text-[13px] text-ink-muted max-md:text-[14px]">{row.label}</dt>
+                    <dd className="mt-step-2">{row.value}</dd>
                 </div>
             ))}
         </dl>
@@ -53,8 +55,11 @@ function Details({ settings, locale }) {
 }
 
 /**
- * Contact: the enquiry form with a subject choice (E16), and the gallery's address, phone, e-mail and hours from the
- * site settings (E14, shared shell data). A "open in map" link instead of a map frame. Social links stay in the footer.
+ * Contact (krem-bordo): the wine header band ("Gəlin *danışaq*"), then two columns (1fr | 1.15fr). Left: the direct
+ * contact rows from the site settings (E14) — the phone 34px 600 wine (tel:), the e-mail 24px 600 (mailto:), the reply
+ * hours, the address only when set — and "Nə ilə kömək edə bilərik": four small surface-sunk cards of fixed dictionary
+ * text. Right: the enquiry form (E16 subjects, E17) on a surface-sunk card, 56px inside, under "Sorğu *göndərin*".
+ * Fields and validation are the form's own, unchanged. Social links stay in the footer.
  */
 export default function ContactPage() {
     const { locale } = useLocale();
@@ -73,25 +78,37 @@ export default function ContactPage() {
 
     const labeledSubjects = Array.isArray(subjects) ? subjects.filter((item) => item.label && !ARTWORK_ONLY_SUBJECTS.includes(item.key)) : [];
     const subject = labeledSubjects.some((item) => item.key === selectedSubject) ? selectedSubject : labeledSubjects[0]?.key || '';
+    const help = t(locale, 'pages.contact.help');
 
     return (
-        <div className="px-page pt-step-8 pb-step-9 font-ui">
-            <h1 className="border-b border-line pb-step-5 text-display">{t(locale, 'contact.title')}</h1>
+        <div className="font-ui">
+            <PageHeader label={t(locale, 'contact.title')} title={t(locale, 'pages.contact.title')} description={t(locale, 'pages.contact.description')} />
 
-            {/* A 36rem-capped column beside a flexible one needs room for both: at md (768px) the cap plus its gap
-                already exceeds the content width, squeezing the flexible column until its content overflows. The
-                other pages with this exact shape (CataloguePage, ArtworkDetailPage) already wait for lg for the
-                same reason, so this one now matches them instead of switching a tablet-width column too early. */}
-            <div className="mt-step-7 grid gap-step-8 lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:gap-step-9">
-                <aside className="lg:col-start-2 lg:row-start-1">
+            <div className="grid grid-cols-1 gap-step-8 px-page py-[clamp(80px,9.72vw,140px)] lg:grid-cols-[1fr_1.15fr] lg:gap-[100px]">
+                <aside className="min-w-0">
+                    <p className="mb-step-5 text-[13px] font-semibold text-wine max-md:text-[14px]">{t(locale, 'pages.contact.direct')}</p>
                     <Details settings={settings} locale={locale} />
+
+                    <h2 className="mt-step-8 mb-step-5 text-[13px] font-semibold text-wine max-md:text-[14px]">{t(locale, 'pages.contact.helpTitle')}</h2>
+                    <ul className="grid grid-cols-1 gap-step-4 sm:grid-cols-2" data-testid="contact-help">
+                        {help.map((item) => (
+                            <li key={item.title} className="bg-surface-sunk px-step-5 py-step-5">
+                                <p className="text-[16px] leading-[1.3] font-semibold text-wine">{item.title}</p>
+                                <p className="mt-step-1 text-meta text-ink-muted">{item.text}</p>
+                            </li>
+                        ))}
+                    </ul>
                 </aside>
 
-                <div className="lg:col-start-1 lg:row-start-1">
+                <div className="min-w-0 bg-surface-sunk p-step-6 md:p-[56px]" data-testid="contact-form-card">
+                    <h2 className="text-[clamp(30px,2.7vw,38px)] leading-[1.1] font-bold tracking-[-0.03em] text-wine">
+                        <Emphasis text={t(locale, 'pages.contact.formTitle')} />
+                    </h2>
+                    <p className="mt-step-3 mb-step-6 font-editorial text-[17px] text-ink-muted">{t(locale, 'pages.contact.formNote')}</p>
                     {loading && !subjects && (
                         <div aria-busy="true" data-testid="contact-skeleton">
                             <div aria-hidden="true" className="flex flex-col gap-step-4">
-                                {[0, 1, 2, 3].map((i) => <div key={i} className="h-10 w-full border border-line bg-surface-field" />)}
+                                {[0, 1, 2, 3].map((i) => <div key={i} className="h-[54px] w-full bg-surface" />)}
                             </div>
                         </div>
                     )}
@@ -99,12 +116,12 @@ export default function ContactPage() {
                     {!error && subjects && (
                         <div className="flex flex-col gap-step-4">
                             {labeledSubjects.length > 0 && (
-                                <label className="block text-label text-ink-muted">
+                                <label className="block text-[13px] leading-[1.35] font-semibold text-ink max-md:text-[14px]">
                                     {t(locale, 'contact.subjectLabel')}
                                     <select
                                         value={subject}
                                         onChange={(e) => setSelectedSubject(e.target.value)}
-                                        className="mt-step-1 block min-h-11 w-full cursor-pointer border border-line-strong bg-surface-raised px-step-3 py-step-2 text-ui text-ink"
+                                        className="mt-step-2 block min-h-[54px] w-full cursor-pointer border border-field-line bg-surface px-step-4 py-step-3 text-ui font-normal text-ink"
                                     >
                                         {labeledSubjects.map((item) => (
                                             <option key={item.key} value={item.key}>

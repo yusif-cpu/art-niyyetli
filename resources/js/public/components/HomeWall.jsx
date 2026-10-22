@@ -47,9 +47,9 @@ export function firstVisibleIndex(items, scrollLeft) {
  * counter follows the scroll. Each work links to its page and carries the hung-work shadow. Captions give title,
  * artist and size, never a price: the wall is not a shop window. Horizontal captions are centred under their work
  * (≤ 180px, the box wallLayout spaces for); vertical captions run from the work to the right edge, so a small work
- * does not squeeze its text.
+ * does not squeeze its text. `note` ("3 əsər · siluet 170 sm") stands at the right end of the line under the floor.
  */
-export default function HomeWall({ artworks, label }) {
+export default function HomeWall({ artworks, label, note = null }) {
     const { locale } = useLocale();
     const [ref, width] = useElementWidth();
     const [scrollLeft, setScrollLeft] = useState(0);
@@ -123,12 +123,15 @@ export default function HomeWall({ artworks, label }) {
                             <span className="text-caption whitespace-nowrap text-ink-muted">{t(locale, 'artwork.figure')}</span>
                             <ScaleRule k={L.k} maxWidth={width} />
                         </div>
-                        {!vertical && count > 1 && (
-                            <p className="figures text-caption text-ink-muted" data-testid="wall-position" aria-live="polite">
-                                <span className="sr-only">{t(locale, 'home.position')} </span>
-                                {firstVisibleIndex(L.items, scrollLeft) + 1} / {count}
-                            </p>
-                        )}
+                        <div className="flex items-center gap-step-5">
+                            {note && <p className="figures text-caption whitespace-nowrap text-ink-muted" data-testid="wall-note">{note}</p>}
+                            {!vertical && count > 1 && (
+                                <p className="figures text-caption text-ink-muted" data-testid="wall-position" aria-live="polite">
+                                    <span className="sr-only">{t(locale, 'home.position')} </span>
+                                    {firstVisibleIndex(L.items, scrollLeft) + 1} / {count}
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </>
             )}

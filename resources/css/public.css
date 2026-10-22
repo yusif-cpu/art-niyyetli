@@ -306,6 +306,9 @@
     /* The brief's ONE shadow exception (2px, 6%): only under a work shown as hung — the main image of the artwork
        page and works on a wall section. Never on catalogue cards or similar-work grids. */
     --shadow-hang: 0 2px 0 rgb(26 22 20 / 0.06);
+    /* Krem-bordo: the large presentation images (the artwork page's main work, the wall view, the journal's lead card)
+       add a soft drop under the hang line. */
+    --shadow-present: 0 2px 0 rgb(26 22 20 / 0.06), 0 30px 60px -30px rgb(26 22 20 / 0.45);
 }
 
 @media (max-width: 1024px) {

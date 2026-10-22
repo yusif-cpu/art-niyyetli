@@ -47,80 +47,95 @@ describe('ArtistDetailPage', () => {
     it('renders bio, approach, exhibition and award history, and the works (unchanged content)', async () => {
         renderPage();
 
-        expect(await screen.findByText('Bio text.')).toHaveClass('font-editorial', 'text-reading');
-        expect(screen.getByText('Approach text.')).toHaveClass('font-editorial', 'text-reading');
+        expect(await screen.findByText('Bio text.')).toHaveClass('font-editorial', 'md:text-[19px]');
+        expect(screen.getByTestId('artist-quote')).toHaveTextContent('“Approach text.”');
         expect(screen.getByText('Some Show')).toBeInTheDocument();
         expect(screen.getByText('Some Venue')).toBeInTheDocument();
         expect(screen.getByText('Some Award')).toBeInTheDocument();
-        expect(screen.getByText('A Piece')).toBeInTheDocument();
+        expect(within(screen.getByTestId('artist-work-list')).getByText('A Piece')).toBeInTheDocument();
     });
 
-    it('orders the page: compact header, works wall, texts, history, enquiry', async () => {
+    it('orders the page: the header band, 01 the works wall, 02 the texts, 03 the history, the closing band', async () => {
         renderPage();
-        await screen.findByText('A Piece');
+        await screen.findByTestId('artist-wall');
 
-        const order = ['artist-portrait', 'home-wall'].map((id) => screen.getByTestId(id));
-        const texts = [screen.getByText('Bio text.'), screen.getByText('Some Show'), screen.getByRole('link', { name: 'Rəssam haqqında soruş' })];
-        const nodes = [...order, ...texts];
+        const nodes = [
+            screen.getByTestId('artist-header'),
+            screen.getByTestId('home-wall'),
+            screen.getByText('Bio text.'),
+            screen.getByText('Some Show'),
+            screen.getByTestId('wine-callout'),
+        ];
         nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
+        expect(screen.getAllByTestId('section-label').map((el) => el.textContent)).toEqual(['01', '03']);
+        expect(screen.getByRole('heading', { name: '02 · Yaradıcılıq yanaşması' })).toBeInTheDocument();
     });
 
-    it('sets biography and approach side by side from 1024px, each a reading measure', async () => {
+    it('sets the approach\'s first sentence as a Spectral italic wine quote beside the biography', async () => {
+        artist = { ...detail, artistic_approach: 'First sentence. Second sentence.' };
+        mockApi();
         renderPage();
         await screen.findByText('Bio text.');
 
         const texts = screen.getByTestId('artist-texts');
-        expect(texts).toHaveClass('grid', 'lg:grid-cols-2');
-        expect(texts.children).toHaveLength(2);
-        [...texts.children].forEach((column) => expect(column).toHaveClass('max-w-prose'));
+        expect(texts.firstElementChild).toHaveClass('grid', 'lg:grid-cols-[1fr_1.15fr]');
+        const quote = screen.getByTestId('artist-quote');
+        expect(quote).toHaveTextContent('“First sentence.”');
+        expect(quote).toHaveClass('font-editorial', 'italic', 'text-wine');
+        // The rest of the approach is read after the biography, so no sentence shows twice.
+        expect(screen.getByText('Second sentence.')).toBeInTheDocument();
+        expect(screen.queryAllByText(/First sentence\./)).toHaveLength(1);
     });
 
     it('shows the approach text once only (no excerpt of it in the header)', async () => {
         renderPage();
 
-        expect(await screen.findAllByText('Approach text.')).toHaveLength(1);
+        expect(await screen.findAllByText(/Approach text\./)).toHaveLength(1);
     });
 
-    it('shows the header block: a 4:5 portrait up to 160px, the name, direction and birth year and place', async () => {
+    it('shows the header band: the portrait 200 × 240, "Rəssam", the name with the surname emphasised, direction · year, place, two buttons', async () => {
         renderPage();
 
-        // (was: text-heading) — the design pass raises the artist's name to text-display.
-        expect(await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' })).toHaveClass('text-display');
+        const h1 = await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' });
+        expect(h1).toHaveClass('text-banner', 'text-surface');
+        expect(within(h1).getByText('Məmmədova').tagName).toBe('EM');
+        const band = screen.getByTestId('artist-header');
+        expect(band).toHaveClass('bg-wine');
         const portrait = screen.getByTestId('artist-portrait');
-        expect(portrait).toHaveClass('aspect-[4/5]', 'max-w-40');
+        expect(portrait).toHaveClass('aspect-[5/6]', 'md:w-[200px]');
         expect(portrait.className).not.toMatch(/border/); // no frame
         expect(within(portrait).getByRole('img', { name: 'Aygün Məmmədova' })).toHaveAttribute('src', 'https://example.test/portrait.webp');
-        expect(screen.getByText('Müasir rəssamlıq')).toBeInTheDocument();
-        expect(screen.getByText('1985, Bakı')).toBeInTheDocument();
-        expect(document.body.innerHTML).not.toMatch(/rounded/);
+        expect(within(band).getByText('Rəssam')).toBeInTheDocument();
+        expect(within(band).getByText('Müasir rəssamlıq · 1985, Bakı')).toBeInTheDocument();
+        expect(within(band).getByRole('link', { name: 'Əsərlərə bax' })).toHaveClass('bg-surface', 'text-wine');
+        expect(within(band).getByRole('link', { name: 'Rəssam haqqında sorğu' })).toHaveAttribute('href', '/contact');
     });
 
-    it('shows the artist\'s monogram in the portrait\'s place without a portrait, not an empty beige field', async () => {
+    it('shows the artist\'s initials on wine-deep in the portrait\'s place without a portrait, not an empty field', async () => {
         artist = { ...detail, portrait_url: null };
         mockApi();
         renderPage();
 
         await screen.findByRole('heading', { level: 1, name: 'Aygün Məmmədova' });
         const portrait = screen.getByTestId('artist-portrait');
-        expect(portrait).toHaveClass('aspect-[4/5]', 'items-end');
-        expect(portrait.className).not.toMatch(/bg-surface-field/);
+        expect(portrait.firstElementChild).toHaveClass('bg-wine-deep');
         expect(within(portrait).queryByRole('img')).not.toBeInTheDocument();
         expect(within(portrait).getByTestId('artist-monogram')).toHaveTextContent('AM');
+        expect(within(portrait).getByTestId('artist-monogram')).toHaveClass('italic', 'text-wine-accent', 'md:text-[84px]');
     });
 
-    it('hangs the works on a wall at one k, with the 170 cm figure at 170 × k', async () => {
+    it('hangs the works on a wall at one k, with the 170 cm figure at 170 × k, on surface-sunk', async () => {
         renderPage();
-        await screen.findByText('A Piece');
+        await screen.findByTestId('artist-wall');
 
+        expect(screen.getByTestId('artist-wall')).toHaveClass('bg-surface-sunk');
         const [big, small] = screen.getAllByTestId('wall-field');
         expect(big.style.width).toBe(`${Math.round(180 * K)}px`);
         expect(small.style.width).toBe(`${Math.round(40 * K)}px`);
         expect(screen.getByTestId('human-figure')).toHaveAttribute('height', String(Math.round(170 * K)));
         expect(screen.getByRole('region', { name: /Rəssamın əsərləri divarda/ })).toHaveAttribute('tabindex', '0');
-        // No wall surface or frame: only the floor line.
-        expect(screen.getByTestId('wall-surface')).toHaveClass('border-b', 'border-line');
-        expect(screen.getByTestId('wall-surface').className).not.toMatch(/bg-|border-t/);
         expect(within(screen.getByTestId('wall-footer')).getByTestId('scale-rule')).toBeInTheDocument();
+        expect(screen.getByTestId('wall-note')).toHaveTextContent('2 əsər · siluet 170 sm');
     });
 
     it('still builds the wall for an artist with one work', async () => {
@@ -128,7 +143,7 @@ describe('ArtistDetailPage', () => {
         mockApi();
         renderPage();
 
-        expect(await screen.findByText('Only One')).toBeInTheDocument();
+        expect(within(await screen.findByTestId('artist-work-list')).getByText('Only One')).toBeInTheDocument();
         expect(screen.getAllByTestId('wall-field')).toHaveLength(1);
         expect(screen.getByTestId('human-figure')).toBeInTheDocument();
     });
@@ -141,7 +156,7 @@ describe('ArtistDetailPage', () => {
         await screen.findByRole('heading', { level: 1 });
         expect(screen.queryByRole('heading', { name: 'Əsərləri' })).not.toBeInTheDocument();
         expect(screen.queryByTestId('home-wall')).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Tərcümeyi-hal' })).not.toBeInTheDocument();
+        expect(screen.queryByTestId('artist-texts')).not.toBeInTheDocument();
     });
 
     it('shows "Rəssam tapılmadı" with a link back to the artists for a 404', async () => {
@@ -175,14 +190,26 @@ describe('ArtistDetailPage', () => {
         expect(document.head.querySelector('meta[property="og:image"]')).toHaveAttribute('content', 'https://example.test/og.jpg');
     });
 
-    it('uses no Signal on the page itself; the enquiry link is a plain text link, not a button', async () => {
+    it('uses no Signal on the page itself, and ends with the wine band and its cream button', async () => {
         const { container } = renderPage();
-        await screen.findByText('A Piece');
+        await screen.findByTestId('artist-wall');
 
         expect(container.innerHTML).not.toMatch(/signal/);
-        const enquire = screen.getByRole('link', { name: 'Rəssam haqqında soruş' });
-        expect(enquire.className).not.toMatch(/bg-|border/);
-        expect(within(enquire).getByText('Rəssam haqqında soruş')).toHaveClass('link-line');
+        const band = screen.getByTestId('wine-callout');
+        expect(within(band).getByRole('heading', { level: 2, name: 'Rəssamın işləri ilə maraqlanırsınız?' })).toBeInTheDocument();
+        expect(within(band).getByRole('link', { name: 'Sorğu göndər' })).toHaveClass('bg-surface', 'text-wine');
+    });
+
+    it('lists exhibitions and awards newest first: year in wine 600, the title in Spectral italic, the place', async () => {
+        renderPage();
+
+        const list = await screen.findByTestId('artist-history-list');
+        const rows = [...list.children];
+        expect(rows.map((row) => row.firstElementChild.textContent)).toEqual(['2020', '2019']);
+        expect(rows[0].firstElementChild).toHaveClass('font-semibold', 'text-wine');
+        expect(within(rows[0]).getByText('Some Show')).toHaveClass('font-editorial', 'italic');
+        expect(within(rows[1]).getByText('Mükafat')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2, name: 'Sərgilər və mükafatlar' })).toBeInTheDocument();
     });
 
     it('shows a static skeleton while loading, and an error with a retry', async () => {

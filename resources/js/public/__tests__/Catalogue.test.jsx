@@ -61,12 +61,14 @@ describe('Catalogue', () => {
         renderPage();
 
         expect(await screen.findByText('Uzun divar', {}, { timeout: 3000 })).toBeInTheDocument();
-        expect(screen.getByText('50 əsər')).toBeInTheDocument();
+        expect(screen.getByText('50 əsər göstərilir')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Növbəti' })).toBeInTheDocument();
-        // one k for the list: the 180 cm work takes 44% of the 1296px container, the 40 cm card is raised to 155px
+        // one k for the list: the 180 cm work takes 30% of the 1296px container (no side column any more), the 40 cm
+        // card is raised to 155px around its own field
+        const k = (1296 * 0.3) / 180;
         const fields = screen.getAllByTestId('artwork-field');
-        expect(fields[0]).toHaveStyle({ width: '570px' });
-        expect(fields[1]).toHaveStyle({ width: '127px' });
+        expect(parseFloat(fields[0].style.width)).toBeCloseTo(180 * k, -0.5);
+        expect(parseFloat(fields[1].style.width)).toBeCloseTo(40 * k, -0.5);
     });
 
     it('writes a filter choice to the URL under the API parameter name, with replaceState, and re-fetches', async () => {
@@ -190,11 +192,15 @@ describe('Catalogue', () => {
         renderPage();
         await screen.findByText('Uzun divar', {}, { timeout: 3000 });
 
+        // The result count on the left, the rule on the right, on the line above the grid.
         const rule = screen.getByTestId('scale-rule');
-        const grid = rule.parentElement;
-        expect(grid.firstElementChild).toBe(rule);
+        const line = rule.parentElement;
+        expect(line.firstElementChild).toHaveTextContent('50 əsər göstərilir');
+        expect(line.lastElementChild).toBe(rule);
+        const grid = rule.closest('[data-k]');
+        expect(grid.firstElementChild).toBe(line);
         const k = Number(grid.dataset.k);
-        expect(k).toBeCloseTo((1296 * 0.44) / 180, 9);
+        expect(k).toBeCloseTo((1296 * 0.3) / 180, 9);
         expect(screen.getByTestId('scale-rule-line')).toHaveStyle({ width: `${Math.round(100 * k)}px` });
     });
 
@@ -261,8 +267,49 @@ describe('Catalogue', () => {
         await screen.findByText('Priced Piece');
         const titles = screen.getAllByText(/Piece$/).map((el) => el.textContent);
         expect(titles).toEqual(['Priced Piece', 'Hidden Price Piece']);
-        expect(screen.getByText((_, el) => el?.tagName === 'P' && el.textContent === '500 AZN')).toBeInTheDocument();
+        expect(screen.getByText((_, el) => el?.tagName === 'SPAN' && el.textContent === '500 AZN')).toBeInTheDocument();
         expect(screen.getByText('Qiymət sorğu ilə')).toBeInTheDocument();
+    });
+
+    it('heads the page with the wine band: "Kolleksiya", "Bütün *əsərlər*" and the collection\'s figures', async () => {
+        artworksResponse = () => jsonResponse({
+            data: [artwork('AN-1', 'Uzun divar', 180, 140), { ...artwork('AN-2', 'Kağız, iki qat', 40, 30), artist: { id: 2, name: 'Aysel' }, price: 900 }],
+            meta: { current_page: 1, last_page: 1, total: 2, per_page: 24 },
+        });
+        mockApi();
+        renderPage();
+
+        const band = await screen.findByTestId('page-header');
+        expect(within(band).getByRole('heading', { level: 1, name: 'Bütün əsərlər' })).toHaveClass('text-banner');
+        const figures = await within(band).findByTestId('page-header-meta');
+        // (the price keeps its non-breaking space; compared here with a plain one)
+        expect([...figures.querySelectorAll('dd')].map((dd) => dd.textContent.replace(/ /g, ' '))).toEqual(['2', '2', '40 – 180 sm', '900 AZN-dən']);
+    });
+
+    it('shows no figures when it opens on a filtered list (they would describe the filter, not the collection)', async () => {
+        window.history.replaceState(null, '', '/artworks?genre=fiqurativ');
+        renderPage();
+        await screen.findByText('Uzun divar', {}, { timeout: 3000 });
+
+        expect(screen.queryByTestId('page-header-meta')).not.toBeInTheDocument();
+    });
+
+    it('puts the genre chips and the other filters in one strip, and ends with the wine "Fərdi seçim" band', async () => {
+        renderPage();
+        await screen.findByText('Uzun divar', {}, { timeout: 3000 });
+
+        const chips = await screen.findByTestId('genre-chips');
+        expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Hamısı', 'Abstraksiya', 'Fiqurativ']);
+        for (const name of ['Rəssam', 'Texnika', 'Ölçü', 'Qiymət', 'Status']) {
+            expect(screen.getByRole('button', { name })).toHaveAttribute('aria-expanded', 'false');
+        }
+        await userEvent.click(screen.getByRole('button', { name: 'Rəssam' }));
+        expect(screen.getByRole('button', { name: 'Rəssam' })).toHaveAttribute('aria-expanded', 'true');
+        expect(document.getElementById('filter-artist')).toHaveClass('block');
+
+        const callout = screen.getByTestId('wine-callout');
+        expect(within(callout).getByRole('heading', { level: 2, name: 'Axtardığınızı tapmadınız?' })).toBeInTheDocument();
+        expect(within(callout).getByRole('link', { name: 'Sorğu göndər' })).toHaveAttribute('href', '/contact');
     });
 
     it('sets a static catalogue document title', async () => {

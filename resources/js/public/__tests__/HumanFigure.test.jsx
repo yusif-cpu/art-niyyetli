@@ -36,7 +36,7 @@ describe('HumanFigure', () => {
         const { container } = render(<HumanFigure width={46} height={170} />);
 
         const svg = screen.getByTestId('human-figure');
-        expect(svg).toHaveClass('fill-surface-field-2');
+        expect(svg).toHaveClass('fill-figure');
         expect(svg).toHaveAttribute('aria-hidden', 'true');
         expect(container.querySelectorAll('[stroke]')).toHaveLength(0);
         expect([...svg.children].map((el) => el.dataset.part)).toEqual(['body', 'neck', 'head']);

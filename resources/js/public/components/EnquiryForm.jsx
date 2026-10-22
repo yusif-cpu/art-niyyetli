@@ -3,9 +3,10 @@ import { useLocale } from '../i18n/LocaleContext.jsx';
 import { t } from '../i18n/dictionary.js';
 import { submitEnquiry } from '../services/enquiries.js';
 import { PublicApiError } from '../lib/api.js';
+import { buttonClass } from '../lib/buttons.js';
 
-// Square fields (no radius, not even the input token here): raised surface, 1px line-strong, interface text.
-const inputBase = 'mt-step-1 block min-h-11 w-full border bg-surface-raised px-step-3 py-step-2 text-ui text-ink';
+// Krem-bordo fields: square, cream, a 1px #CFC6B7 line, 54px tall, interface text; placeholders in ink-muted.
+const inputBase = 'mt-step-2 block min-h-[54px] w-full border bg-surface px-step-4 py-step-3 text-ui text-ink placeholder:text-ink-muted/70';
 
 /**
  * One labelled field. The label sits above in text-label / ink-muted; a server error turns the border signal-ink and
@@ -17,8 +18,8 @@ function Field({ label, error, children }) {
 
     return (
         <div>
-            <label htmlFor={id} className="block text-label text-ink-muted">{label}</label>
-            {children({ id, className: `${inputBase} ${error ? 'border-signal-ink' : 'border-line-strong'}`, 'aria-invalid': error ? 'true' : undefined, 'aria-describedby': error ? errorId : undefined })}
+            <label htmlFor={id} className="block text-[13px] leading-[1.35] font-semibold text-ink max-md:text-[14px]">{label}</label>
+            {children({ id, className: `${inputBase} ${error ? 'border-signal-ink' : 'border-field-line'}`, 'aria-invalid': error ? 'true' : undefined, 'aria-describedby': error ? errorId : undefined })}
             {error && <p id={errorId} className="mt-step-1 text-caption text-signal-ink">{error}</p>}
         </div>
     );
@@ -39,7 +40,7 @@ const EMPTY_FIELDS = { name: '', email: '', phone: '', message: '', website: '' 
  * message (no timer). On a failure nothing is reset and the button stays open, a 429 included: the server enforces
  * its rate limit, the form does not lock the visitor out. The focus goes to the first invalid field when the server
  * names one (422), otherwise to the error message (500, network error, 429, a 422 without a known field). The submit
- * button is the only filled one: wine with wine-ink.
+ * button is the full-width primary button (wine, surface text).
  */
 export default function EnquiryForm({ subject, artworkCode, onSuccess }) {
     const { locale } = useLocale();
@@ -172,20 +173,23 @@ export default function EnquiryForm({ subject, artworkCode, onSuccess }) {
                     </Field>
                 )}
 
-                <Field label={t(locale, 'enquiryForm.name')} error={errorOf('name')}>
-                    {(props) => <input {...props} ref={fieldRefs.name} value={fields.name} onChange={set('name')} autoComplete="name" />}
-                </Field>
+                {/* Name and e-mail side by side from md (the tab order stays name, e-mail, phone, message). */}
+                <div className="grid grid-cols-1 gap-step-4 md:grid-cols-2">
+                    <Field label={t(locale, 'enquiryForm.name')} error={errorOf('name')}>
+                        {(props) => <input {...props} ref={fieldRefs.name} value={fields.name} onChange={set('name')} autoComplete="name" placeholder={t(locale, 'pages.form.namePlaceholder')} />}
+                    </Field>
 
-                <Field label={t(locale, 'enquiryForm.email')} error={errorOf('email')}>
-                    {(props) => <input {...props} ref={fieldRefs.email} type="email" value={fields.email} onChange={set('email')} autoComplete="email" />}
-                </Field>
+                    <Field label={t(locale, 'enquiryForm.email')} error={errorOf('email')}>
+                        {(props) => <input {...props} ref={fieldRefs.email} type="email" value={fields.email} onChange={set('email')} autoComplete="email" placeholder={t(locale, 'pages.form.emailPlaceholder')} />}
+                    </Field>
+                </div>
 
                 <Field label={t(locale, 'enquiryForm.phone')} error={errorOf('phone')}>
-                    {(props) => <input {...props} ref={fieldRefs.phone} type="tel" value={fields.phone} onChange={set('phone')} autoComplete="tel" />}
+                    {(props) => <input {...props} ref={fieldRefs.phone} type="tel" value={fields.phone} onChange={set('phone')} autoComplete="tel" placeholder={t(locale, 'pages.form.phonePlaceholder')} />}
                 </Field>
 
                 <Field label={t(locale, 'enquiryForm.message')} error={errorOf('message')}>
-                    {(props) => <textarea {...props} ref={fieldRefs.message} rows={5} value={fields.message} onChange={set('message')} />}
+                    {(props) => <textarea {...props} ref={fieldRefs.message} rows={5} value={fields.message} onChange={set('message')} placeholder={t(locale, 'pages.form.messagePlaceholder')} />}
                 </Field>
 
                 {/* Honeypot: a real field moved off-screen (never display:none/type=hidden, which bots skip), out of the Tab
@@ -196,8 +200,8 @@ export default function EnquiryForm({ subject, artworkCode, onSuccess }) {
                     <input name="website" tabIndex={-1} autoComplete="off" value={fields.website} onChange={set('website')} />
                 </div>
 
-                <div>
-                    <button type="submit" disabled={disabled} className="cursor-pointer bg-wine px-step-5 py-step-3 text-ui text-wine-ink transition-opacity duration-[120ms] ease-standard disabled:cursor-default disabled:opacity-50">
+                <div className="pt-step-2">
+                    <button type="submit" disabled={disabled} className={`w-full ${buttonClass('primary', 'cream')}`}>
                         {t(locale, 'enquiryForm.submit')}
                     </button>
                 </div>

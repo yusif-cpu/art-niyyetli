@@ -45,90 +45,121 @@ describe('ExhibitionDetailPage', () => {
         document.head.querySelectorAll('meta[property^="og:"], meta[name="description"]').forEach((m) => m.remove());
     });
 
-    it('shows the title, dates, venue and status in the header, then the text in reading type', async () => {
+    it('opens with the wine band: "Cari sərgi" with the red dot, the title, the short text and the figures', async () => {
         renderPage();
 
-        expect(await screen.findByRole('heading', { level: 1, name: 'Winter Show 2026' })).toHaveClass('text-heading');
-        expect(screen.getByText('10 yanvar 2026 – 10 fevral 2026')).toBeInTheDocument();
-        expect(screen.getByText('Main Gallery')).toBeInTheDocument();
-        expect(screen.getByText('Cari')).toHaveClass('text-caption', 'text-ink-muted');
-        expect(screen.getByText('Cari').className).not.toMatch(/border/);
-        expect(screen.getByText('Full concept text.')).toHaveClass('font-editorial', 'text-reading', 'max-w-prose');
+        const h1 = await screen.findByRole('heading', { level: 1, name: 'Winter Show 2026' });
+        expect(h1).toHaveClass('text-banner', 'text-surface');
+        const band = screen.getByTestId('page-header');
+        expect(band).toHaveClass('bg-wine');
+        const label = within(band).getByTestId('page-header-label');
+        expect(label).toHaveTextContent('Cari sərgi');
+        expect(label.querySelector('.bg-brand')).not.toBeNull();
+        expect(within(band).getByText('Short.')).toHaveClass('font-editorial');
+        const figures = within(band).getByTestId('page-header-meta');
+        expect([...figures.querySelectorAll('dt')].map((dt) => dt.textContent)).toEqual(['Tarix', 'Yer', 'Rəssam', 'Əsər']);
+        expect([...figures.querySelectorAll('dd')].map((dd) => dd.textContent)).toEqual(['10 yan – 10 fev 2026', 'Main Gallery', '2', '2']);
     });
 
-    it('reads title, dates, venue, status and text as one block, step-4 apart (not step-9)', async () => {
+    it('labels a past show "Keçmiş sərgi" without the dot', async () => {
+        exhibition = { ...detail, status: 'past' };
+        mockApi();
+        renderPage();
+
+        const label = await screen.findByTestId('page-header-label');
+        expect(label).toHaveTextContent('Keçmiş sərgi');
+        expect(label.querySelector('.bg-brand')).toBeNull();
+    });
+
+    it('puts the cover inside the band, 640px tall, with "Ekspozisiya görünüşü" under it', async () => {
+        renderPage();
+
+        const cover = await screen.findByTestId('exhibition-cover');
+        expect(cover).toHaveAttribute('src', 'https://example.test/ex.webp');
+        expect(cover).toHaveClass('object-cover', 'md:h-[640px]');
+        expect(screen.getByTestId('page-header')).toContainElement(cover);
+        expect(screen.getByText('Ekspozisiya görünüşü')).toBeInTheDocument();
+    });
+
+    it('sets 01 "Sərgi haqqında" with the full text beside it, and the enquiry link', async () => {
         renderPage();
 
         const intro = await screen.findByTestId('exhibition-intro');
-        expect(intro).toHaveClass('gap-step-4');
-        expect(within(intro).getByRole('heading', { level: 1 })).toBeInTheDocument();
+        expect(within(intro).getByRole('heading', { level: 2, name: 'Sərgi haqqında' })).toBeInTheDocument();
+        expect(within(intro).getByTestId('section-label')).toHaveTextContent('01');
         expect(within(intro).getByText('Full concept text.')).toBeInTheDocument();
-        expect(within(intro).getByText('Cari')).toBeInTheDocument();
+        const enquire = within(intro).getByRole('link', { name: 'Sərgi haqqında soruş' });
+        expect(enquire).toHaveAttribute('href', '/contact');
+        expect(within(enquire).getByText('Sərgi haqqında soruş')).toHaveClass('link-line');
     });
 
-    it('hangs the works on a wall at one k, with the 170 cm figure at 170 × k', async () => {
+    it('shows the works at true size with the ScaleRule, under 02 "Sərgidəki əsərlər"', async () => {
         renderPage();
-        await screen.findByText('A Piece');
 
-        const [big, small] = screen.getAllByTestId('wall-field');
-        expect(big.style.width).toBe(`${Math.round(180 * K)}px`);
-        expect(small.style.width).toBe(`${Math.round(40 * K)}px`);
-        expect(screen.getByTestId('human-figure')).toHaveAttribute('height', String(Math.round(170 * K)));
-        expect(screen.getByRole('region', { name: /Sərgidəki əsərlər divarda/ })).toHaveAttribute('tabindex', '0');
-        expect(screen.getByRole('link', { name: /^A Piece, Aygün Məmmədova/ })).toHaveAttribute('href', '/artworks/AN-1');
+        const section = (await screen.findByRole('heading', { level: 2, name: 'Sərgidəki əsərlər' })).closest('section');
+        expect(within(section).getByTestId('scale-rule')).toBeInTheDocument();
+        const fields = within(section).getAllByTestId('artwork-field');
+        expect(parseFloat(fields[0].style.width) / parseFloat(fields[1].style.width)).toBeCloseTo(180 / 40, 1);
+        expect(within(section).getByRole('link', { name: /^A Piece, Aygün Məmmədova/ })).toHaveAttribute('href', '/artworks/AN-1');
+        expect(within(section).getByRole('link', { name: 'Kataloqda bax' })).toHaveAttribute('href', '/artworks');
     });
 
-    it('lists the participating artists with the artists list card; an artist without a slug is plain text', async () => {
+    it('lists the participating artists on a wine band in wine-deep cards; an artist without a slug is plain text', async () => {
         renderPage();
 
         const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
-        expect(within(section).getByRole('link', { name: /Aygün Məmmədova/ })).toHaveAttribute('href', '/artists/aygun-mammadova');
+        expect(section).toHaveClass('bg-wine');
+        const list = within(section).getByTestId('exhibition-artists');
+        expect(list).toHaveClass('lg:grid-cols-4');
+        const aygun = within(section).getByRole('link', { name: /Aygün Məmmədova/ });
+        expect(aygun).toHaveAttribute('href', '/artists/aygun-mammadova');
+        expect(aygun).toHaveClass('bg-wine-deep');
+        expect(within(aygun).getByText('Aygün Məmmədova')).toHaveClass('text-[21px]', 'font-semibold');
+        expect(within(aygun).getByTestId('artist-monogram')).toHaveTextContent('AM');
         expect(within(section).getByText('No Slug').closest('a')).toBeNull();
-        expect(within(section).getAllByTestId('artist-card-work')).toHaveLength(2);
-        expect(within(section).getByRole('list')).toHaveClass('grid-cols-2', 'md:grid-cols-4');
-        expect(within(section).queryByTestId('artist-portrait')).not.toBeInTheDocument();
     });
 
-    it('shows under each participating artist their number of works in this show, counted from the page, not the direction', async () => {
-        exhibition = { ...detail, artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova', direction: 'Modern' }, { id: 6, slug: null, name: 'No Slug' }] };
+    it('fills a participating artist\'s direction, birth year and place from the artists list', async () => {
+        const roster = [{ id: 5, slug: 'aygun-mammadova', first_name: 'Aygün', last_name: 'Məmmədova', direction: 'Modern', birth_year: 1985, birth_place: 'Bakı' }];
+        global.fetch = vi.fn((url) => Promise.resolve(url.startsWith('/api/v1/artists') ? jsonResponse(200, { data: roster }) : jsonResponse(200, { data: url.includes('filter=archive') ? [] : detail })));
+        renderPage();
+
+        const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
+        expect(await within(section).findByText('Modern · 1985, Bakı')).toBeInTheDocument();
+    });
+
+    it('shows a participating artist\'s portrait at 64px when there is one', async () => {
+        exhibition = { ...detail, artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova', portrait_url: 'https://example.test/aygun.webp' }] };
         mockApi();
         renderPage();
 
         const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
-        // Both works on the page are Aygün's (artist id 5).
-        expect(within(within(section).getByRole('link', { name: /Aygün Məmmədova/ })).getByTestId('artist-works-count')).toHaveTextContent('2 əsər');
-        expect(within(section).queryByText(/Modern/)).not.toBeInTheDocument();
-        // None of No Slug's: no count line at all.
-        expect(within(section).getByText('No Slug').parentElement.querySelector('[data-testid="artist-works-count"]')).toBeNull();
+        expect(section.querySelector('img')).toHaveAttribute('src', 'https://example.test/aygun.webp');
+        expect(section.querySelector('img')).toHaveClass('h-16', 'w-16');
     });
 
-    it('shows a participating artist\'s work from this show, the monogram otherwise (never the portrait)', async () => {
-        const withImage = { ...work('AN-1', 'A Piece', 180, 140), image_url: 'https://example.test/an1.webp' };
-        exhibition = {
-            ...detail,
-            artworks: [withImage, work('AN-2', 'Small Piece', 40, 30)],
-            artists: [{ id: 5, slug: 'aygun-mammadova', name: 'Aygün Məmmədova', portrait_url: 'https://example.test/aygun.webp' }, { id: 6, slug: 'other', name: 'Other Artist', portrait_url: null }],
-        };
+    it('shows the photos after the cover in a plain grid, and no video when there is none', async () => {
+        exhibition = { ...detail, media: [...detail.media, { type: 'photo', url: 'https://example.test/second.webp' }] };
         mockApi();
-        renderPage();
-
-        const section = (await screen.findByRole('heading', { name: 'İştirakçı rəssamlar' })).closest('section');
-        const [aygun, other] = within(section).getAllByTestId('artist-card-work');
-        expect(aygun.querySelector('img')).toHaveAttribute('src', 'https://example.test/an1.webp');
-        expect(other.querySelector('img')).toBeNull();
-        expect(within(other).getByTestId('artist-monogram')).toHaveTextContent('OA');
-        expect(section.innerHTML).not.toMatch(/aygun\.webp/);
-    });
-
-    it('shows the photos with a URL in a plain grid, no shadow, and no video when there is none', async () => {
         const { container } = renderPage();
 
         const section = (await screen.findByRole('heading', { name: 'Fotolar və video' })).closest('section');
         const images = within(section).getAllByRole('img');
         expect(images).toHaveLength(1);
-        expect(images[0]).toHaveAttribute('src', 'https://example.test/ex.webp');
+        expect(images[0]).toHaveAttribute('src', 'https://example.test/second.webp');
         expect(images[0].closest('li').className).not.toMatch(/shadow/);
         expect(container.querySelector('iframe')).toBeNull();
+    });
+
+    it('shows up to two past exhibitions as cards, never this one', async () => {
+        const past = (slug, title) => ({ ...detail, slug, title, status: 'past', media: [] });
+        global.fetch = vi.fn((url) => Promise.resolve(jsonResponse(200, { data: url.includes('filter=archive') ? [past('winter-show-2026', 'Same'), past('a', 'Past A'), past('b', 'Past B')] : detail })));
+        renderPage();
+
+        const section = (await screen.findByRole('heading', { name: 'Keçmiş sərgilər' })).closest('section');
+        expect(within(section).getAllByTestId('exhibition-card').map((card) => card.getAttribute('href'))).toEqual(['/exhibitions/a', '/exhibitions/b']);
+        expect(within(section).getByText('Past A')).toHaveClass('font-semibold', 'text-wine');
+        expect(within(section).getByRole('link', { name: 'Bütün sərgilər' })).toHaveAttribute('href', '/exhibitions');
     });
 
     it('renders the YouTube embed when there is a video', async () => {
@@ -145,18 +176,16 @@ describe('ExhibitionDetailPage', () => {
         renderPage();
 
         await screen.findByRole('heading', { level: 1 });
-        expect(screen.queryByTestId('home-wall')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('artwork-field')).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
     });
 
-    it('uses no Signal and no rounded or neutral classes; the enquiry link is a plain text link', async () => {
+    it('uses no Signal and no neutral classes; the only rounded shape is the current show\'s dot', async () => {
         const { container } = renderPage();
-        await screen.findByText('A Piece');
+        await screen.findByRole('heading', { level: 1 });
 
-        expect(container.innerHTML).not.toMatch(/signal|rounded|neutral-/);
-        const enquire = screen.getByRole('link', { name: 'Sərgi haqqında soruş' });
-        expect(enquire.className).not.toMatch(/bg-|border/);
-        expect(within(enquire).getByText('Sərgi haqqında soruş')).toHaveClass('link-line');
+        expect(container.innerHTML).not.toMatch(/signal|neutral-/);
+        expect(container.innerHTML.match(/rounded[-\w]*/g)).toEqual(['rounded-full']);
     });
 
     it('shows "Sərgi tapılmadı" with a link back to the exhibitions for a 404', async () => {

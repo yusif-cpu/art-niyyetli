@@ -8,29 +8,39 @@ import DetailWallView from '../components/DetailWallView.jsx';
 import ArtworkCard from '../components/ArtworkCard.jsx';
 import HomeWall from '../components/HomeWall.jsx';
 
-// No outlined or filled buttons outside forms: toggles are text, the chosen one ink with a line under it.
+// Text toggles stay text — the chosen one ink with a line under it. Krem-bordo boxes are deliberate and few: the
+// genre chips, the wall-height choice and the buttons (lib/buttons.js).
 const noBox = (el) => expect(el.className).not.toMatch(/(^|\s)border(\s|-line|-strong)|bg-/);
 
-describe('plain controls (no boxes, no outlined buttons)', () => {
-    it('filter options are text; the chosen one is ink with a line, the others keep a transparent line', () => {
+describe('plain controls', () => {
+    it('genre chips are boxes (the chosen one wine); the options in a filter\'s panel stay text with a line', () => {
         render(
             <LocaleProvider>
-                <FilterBar filters={{ genre: 'p' }} onChange={() => {}} genres={[{ slug: 'p', name: 'Painting' }, { slug: 'd', name: 'Drawing' }]} />
+                <FilterBar
+                    filters={{ genre: 'p', medium: 'oil' }}
+                    onChange={() => {}}
+                    genres={[{ slug: 'p', name: 'Painting' }, { slug: 'd', name: 'Drawing' }]}
+                    mediums={[{ slug: 'oil', name: 'Oil' }, { slug: 'ink', name: 'Ink' }]}
+                />
             </LocaleProvider>
         );
 
-        const chosen = screen.getByRole('button', { name: 'Painting' });
-        const other = screen.getByRole('button', { name: 'Drawing' });
+        expect(screen.getByRole('button', { name: 'Painting' })).toHaveClass('bg-wine', 'text-surface', 'border-wine');
+        expect(screen.getByRole('button', { name: 'Drawing' })).toHaveClass('border-line', 'text-ink');
+        expect(screen.getByRole('button', { name: 'Drawing' }).className).not.toMatch(/bg-wine/);
+
+        const chosen = screen.getByRole('button', { name: 'Oil' });
+        const other = screen.getByRole('button', { name: 'Ink' });
         [chosen, other].forEach(noBox);
         expect(chosen).toHaveClass('text-ink');
-        expect(within(chosen).getByText('Painting')).toHaveClass('link-line');
-        expect(within(chosen).getByText('Painting')).not.toHaveClass('border-transparent');
+        expect(within(chosen).getByText('Oil')).toHaveClass('link-line');
+        expect(within(chosen).getByText('Oil')).not.toHaveClass('border-transparent');
         expect(other).toHaveClass('text-ink-muted');
         // Not link-line: its border shorthand would beat border-transparent and draw the line anyway.
-        expect(within(other).getByText('Drawing')).toHaveClass('border-b', 'border-transparent', 'pb-[3px]');
-        expect(within(other).getByText('Drawing')).not.toHaveClass('link-line');
-        // Form fields stay fields.
-        expect(screen.getByRole('combobox')).toHaveClass('border', 'border-line-strong');
+        expect(within(other).getByText('Ink')).toHaveClass('border-b', 'border-transparent', 'pb-[3px]');
+        expect(within(other).getByText('Ink')).not.toHaveClass('link-line');
+        // The set filter's name is wine 600 in the strip.
+        expect(screen.getByRole('button', { name: 'Texnika' })).toHaveClass('font-semibold', 'text-wine');
     });
 
     it('pagination is text; the current page carries the line', () => {
@@ -81,14 +91,15 @@ describe('plain controls (no boxes, no outlined buttons)', () => {
         }
     });
 
-    it('the wall heights are text toggles', () => {
+    it('the wall heights are one segmented choice on wine; only the chosen height is on cream', () => {
         render(<LocaleProvider><DetailWallView artwork={{ inventory_code: 'AN-1', width_cm: 100, height_cm: 80 }} /></LocaleProvider>);
 
-        screen.getAllByRole('button').forEach(noBox);
-        const pressed = screen.getAllByRole('button').filter((b) => b.getAttribute('aria-pressed') === 'true');
+        const buttons = screen.getAllByRole('button');
+        expect(buttons.map((b) => b.textContent)).toEqual(['240 sm', '270 sm', '320 sm']);
+        const pressed = buttons.filter((b) => b.getAttribute('aria-pressed') === 'true');
         expect(pressed).toHaveLength(1);
-        expect(pressed[0].querySelector('.link-line:not(.border-transparent)')).not.toBeNull();
-        // Only the chosen height carries the line.
-        expect(document.querySelectorAll('fieldset .link-line')).toHaveLength(1);
+        expect(pressed[0]).toHaveClass('bg-surface', 'text-wine');
+        buttons.filter((b) => b !== pressed[0]).forEach((b) => expect(b).toHaveClass('text-surface'));
+        expect(buttons[0].parentElement).toHaveClass('border', 'border-surface/30');
     });
 });

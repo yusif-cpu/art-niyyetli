@@ -32,7 +32,7 @@ describe('ArtistsPage', () => {
         expect(within(kamran).getByText('Abstrakt kompozisiya')).toHaveClass('text-meta', 'text-ink-muted');
         expect(within(kamran).getByText('Kamran Səfərli')).toHaveClass('text-[20px]', 'font-semibold', 'text-wine');
         expect(screen.getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/artists/kamran-seferli', '/artists/aygun-mammadova']);
-        expect(screen.getByRole('heading', { level: 1, name: 'Rəssamlar' })).toHaveClass('text-display');
+        expect(screen.getByRole('heading', { level: 1, name: 'Qalereyanın rəssamları' })).toHaveClass('text-banner');
     });
 
     it('shows one of the artist\'s works from one catalogue page (the artists list carries none), not the portrait', async () => {
@@ -82,7 +82,7 @@ describe('ArtistsPage', () => {
 
         const skeleton = screen.getByTestId('artists-skeleton');
         expect(skeleton.children).toHaveLength(4);
-        skeleton.querySelectorAll(':scope > div > div:first-child').forEach((area) => expect(area).toHaveClass('h-[200px]', 'md:h-[300px]'));
+        skeleton.querySelectorAll(':scope > div > div:first-child').forEach((area) => expect(area).toHaveClass('h-[200px]', 'md:h-[340px]', 'bg-surface-sunk'));
         expect(skeleton.innerHTML).not.toMatch(/rounded/);
     });
 

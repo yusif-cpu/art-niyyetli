@@ -5,37 +5,79 @@ import { useApiData } from '../lib/useApiData.js';
 import { usePageMeta } from '../lib/usePageMeta.js';
 import { seoMeta } from '../lib/seoMeta.js';
 import { excerpt } from '../lib/text.js';
-import { formatDateRange } from '../lib/format.js';
-import { getExhibition } from '../services/exhibitions.js';
-import ArtistCard from '../components/ArtistCard.jsx';
-import { artworkFor, worksBy } from '../lib/artists.js';
-import HomeWall from '../components/HomeWall.jsx';
+import { formatDateSpan } from '../lib/format.js';
+import { artistName as nameOf } from '../lib/artists.js';
+import { getExhibition, listExhibitions } from '../services/exhibitions.js';
+import { listArtists } from '../services/artists.js';
+import ScaledArtworkGrid from '../components/ScaledArtworkGrid.jsx';
 import YoutubeEmbed from '../components/YoutubeEmbed.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import NotFoundState from '../components/NotFoundState.jsx';
-import { ExhibitionStatus } from '../components/ExhibitionRow.jsx';
+import PageHeader from '../components/PageHeader.jsx';
+import SectionHeading from '../components/SectionHeading.jsx';
+import Monogram from '../components/Monogram.jsx';
+import ExhibitionCard, { exhibitionCover } from '../components/ExhibitionCard.jsx';
+import { PRESETS } from '../lib/wall.js';
+
+const SECTION_PAD = 'py-[clamp(80px,9.72vw,140px)]';
+const GRID_PRESET = { ...PRESETS.catalogue, share: 0.3 };
+const PAST_SHOWN = 2;
 
 function Skeleton() {
     return (
-        <div className="px-page pt-step-8 pb-step-9" aria-busy="true" data-testid="exhibition-skeleton">
-            <div aria-hidden="true" className="flex flex-col gap-step-3">
-                <div className="h-8 w-1/2 bg-surface-field" />
-                <div className="h-4 w-1/3 bg-surface-field" />
-                <div className="mt-step-6 h-64 w-full border border-line bg-surface-field" />
+        <div aria-busy="true" data-testid="exhibition-skeleton">
+            <div aria-hidden="true" className="flex flex-col gap-step-3 bg-wine px-page py-[88px]">
+                <div className="h-3 w-1/6 bg-wine-deep" />
+                <div className="h-14 w-1/2 bg-wine-deep" />
+                <div className="h-4 w-1/3 bg-wine-deep" />
             </div>
         </div>
     );
 }
 
+function paragraphs(text) {
+    return String(text ?? '').split(/\n+/).map((p) => p.trim()).filter(Boolean);
+}
+
+/** One participating artist on wine-deep: the portrait or a 64px monogram, the name, "direction · year, place". */
+function ArtistTile({ artist }) {
+    const name = nameOf(artist);
+    const line = [artist.direction, [artist.birth_year, artist.birth_place].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+    const body = (
+        <>
+            {artist.portrait_url ? (
+                <img src={artist.portrait_url} alt="" loading="lazy" decoding="async" className="h-16 w-16 object-cover" />
+            ) : (
+                <span className="flex h-16 w-16 items-center justify-center bg-wine">
+                    <Monogram name={name} className="text-[24px] text-wine-accent" />
+                </span>
+            )}
+            <span className="mt-step-6 block text-[21px] leading-[1.2] font-semibold text-surface decoration-1 underline-offset-4 group-hover:underline">{name}</span>
+            {line && <span className="figures mt-step-2 block text-[13px] leading-[1.45] text-wine-muted max-md:text-[14px]">{line}</span>}
+        </>
+    );
+
+    return artist.slug ? (
+        <a href={`/artists/${encodeURIComponent(artist.slug)}`} className="group block h-full bg-wine-deep p-step-6">{body}</a>
+    ) : (
+        <div className="h-full bg-wine-deep p-step-6">{body}</div>
+    );
+}
+
 /**
- * An exhibition: title, dates, venue and status; the text; the works in the show hung on the wall at true size (an
- * exhibition *is* works on a wall — the home wall component, one k, the 170 cm figure); the participating artists;
- * the photos (a plain grid, no lightbox) and the video; an enquiry link. No Signal on the page.
+ * An exhibition (krem-bordo): the wine header band — "Cari sərgi" with the red dot (a past show: "Keçmiş sərgi", no
+ * dot), the title, the short text and the figures (dates, venue, artists, works) — with the cover inside the band, 72px
+ * from the edges, 640px tall, "Ekspozisiya görünüşü" under it; 01 the text; 02 the works at true size with the
+ * ScaleRule; 03 the participating artists on a wine band (their direction and birth from the artists list, E5);
+ * the other photos and the video; 04 two past exhibitions. No Signal on the page.
  */
 export default function ExhibitionDetailPage({ params }) {
     const { locale } = useLocale();
     const [retryToken, setRetryToken] = useState(0);
     const { data, loading, error } = useApiData(() => getExhibition(locale, params.slug), [locale, params.slug, retryToken]);
+    // Both only decorate the page: a failed answer leaves the cards plainer or the section out, never an error.
+    const roster = useApiData(() => listArtists(locale), [locale]);
+    const past = useApiData(() => listExhibitions(locale, { filter: 'archive', per_page: PAST_SHOWN + 1 }), [locale]);
 
     const photos = Array.isArray(data?.media) ? data.media.filter((m) => m.type === 'photo' && m.url) : [];
     const meta = data ? seoMeta(data, { title: data.title, description: data.short_text || excerpt(data.full_text) || undefined }) : null;
@@ -47,62 +89,86 @@ export default function ExhibitionDetailPage({ params }) {
     }
     if (error) return <ErrorState error={error} onRetry={() => setRetryToken((n) => n + 1)} />;
 
-    const dates = formatDateRange(data.start_date, data.end_date, locale);
-    const text = data.full_text || data.short_text;
+    const cover = exhibitionCover(data);
+    const morePhotos = photos.filter((photo) => photo.url !== cover);
     const artworks = Array.isArray(data.artworks) ? data.artworks : [];
-    const artists = Array.isArray(data.artists) ? data.artists.filter((a) => a.name) : [];
+    const listed = Array.isArray(roster.data) ? roster.data : [];
+    const artists = (Array.isArray(data.artists) ? data.artists.filter((a) => a.name) : []).map((artist) => ({
+        ...(listed.find((full) => (artist.id != null && full.id === artist.id) || (artist.slug && full.slug === artist.slug)) ?? {}),
+        ...artist,
+    }));
+    const pastShows = (Array.isArray(past.data) ? past.data : []).filter((show) => show.slug !== data.slug).slice(0, PAST_SHOWN);
+    const text = paragraphs(data.full_text);
+    const status = data.status === 'current' ? 'current' : data.status === 'upcoming' ? 'upcoming' : 'past';
+    const figures = [
+        { label: t(locale, 'pages.exhibition.metaDates'), value: formatDateSpan(data.start_date, data.end_date, locale, { short: true }) },
+        { label: t(locale, 'pages.exhibition.metaVenue'), value: data.venue },
+        { label: t(locale, 'pages.exhibition.metaArtists'), value: artists.length > 0 ? String(artists.length) : null },
+        { label: t(locale, 'pages.exhibition.metaWorks'), value: artworks.length > 0 ? String(artworks.length) : null },
+    ];
+
+    let counter = 0;
+    const next = () => String(++counter).padStart(2, '0');
 
     return (
-        <article className="flex flex-col gap-step-9 px-page pt-step-8 pb-step-9 font-ui" key={data.slug}>
-            {/* Title, dates, venue, status and the text read as one block: step-4 inside, step-9 only between sections. */}
-            <div className="flex flex-col gap-step-4" data-testid="exhibition-intro">
-                <header>
-                    <h1 className="text-heading">{data.title}</h1>
-                    <div className="mt-step-3 flex flex-wrap items-baseline gap-x-step-5 gap-y-step-2">
-                        {dates && <span className="figures text-meta text-ink-muted">{dates}</span>}
-                        {data.venue && <span className="text-meta text-ink-muted">{data.venue}</span>}
-                        <ExhibitionStatus status={data.status} />
+        <article className="font-ui" key={data.slug}>
+            <PageHeader label={t(locale, `pages.exhibition.${status}`)} dot={status === 'current'} title={data.title} description={data.short_text} meta={figures}>
+                {cover && (
+                    <div className="px-page">
+                        <img src={cover} alt={data.title} loading="eager" fetchPriority="high" decoding="async" className="block h-[56vw] w-full object-cover md:h-[640px]" data-testid="exhibition-cover" />
                     </div>
-                </header>
+                )}
+            </PageHeader>
+            {cover && <p className="px-page pt-step-3 text-[13px] text-ink-muted max-md:text-[14px]">{t(locale, 'pages.exhibition.coverCaption')}</p>}
 
-                {text && <p className="max-w-prose font-editorial text-reading whitespace-pre-line">{text}</p>}
-            </div>
+            {text.length > 0 && (
+                <section aria-labelledby="exhibition-about" className={`px-page ${SECTION_PAD}`} data-testid="exhibition-intro">
+                    <div className="grid grid-cols-1 gap-step-6 lg:grid-cols-[1fr_1.15fr] lg:items-start lg:gap-step-9">
+                        <SectionHeading id="exhibition-about" number={next()}>{t(locale, 'pages.exhibition.aboutTitle')}</SectionHeading>
+                        <div className="min-w-0 max-w-prose">
+                            {text.map((p, index) => (
+                                <p key={index} className={index === 0 ? 'text-[18px] leading-[1.5] font-medium text-ink md:text-[19px]' : 'mt-step-5 font-editorial text-[17px] leading-[1.7] text-ink-muted md:text-[18px]'}>{p}</p>
+                            ))}
+                            <a href="/contact" className="mt-step-6 inline-flex min-h-11 items-center text-[14px] font-semibold text-wine">
+                                <span className="link-line">{t(locale, 'exhibitions.enquire')}</span>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {artworks.length > 0 && (
-                <section aria-labelledby="exhibition-works">
-                    <h2 id="exhibition-works" className="mb-step-5 text-section">{t(locale, 'exhibitions.works')}</h2>
-                    <HomeWall artworks={artworks} label={t(locale, 'exhibitions.wallLabel')} />
+                <section aria-labelledby="exhibition-works" className={`px-page ${SECTION_PAD} ${text.length > 0 ? 'pt-0' : ''}`}>
+                    <SectionHeading id="exhibition-works" number={next()} divider link={{ href: '/artworks', label: t(locale, 'pages.exhibition.inCatalogue') }}>
+                        {t(locale, 'pages.exhibition.worksTitle')}
+                    </SectionHeading>
+                    <div className="mt-step-7">
+                        <ScaledArtworkGrid artworks={artworks} preset={GRID_PRESET} />
+                    </div>
                 </section>
             )}
 
             {artists.length > 0 && (
-                <section aria-labelledby="exhibition-artists">
-                    <h2 id="exhibition-artists" className="mb-step-4 text-section">{t(locale, 'exhibitions.participatingArtists')}</h2>
-                    {/* The artists list's own card: one of the artist's works in this show, else the monogram. Under
-                        the name, the artist's number of works in THIS show ("2 əsər"), counted from the works on the
-                        page — not the direction. A slug can be null here (E10 is not filtered): then the card is
-                        plain, not a link. */}
-                    <ul className="grid grid-cols-2 gap-x-step-4 gap-y-step-7 md:grid-cols-4 md:gap-x-step-6">
+                <section aria-labelledby="exhibition-artists" data-surface="wine" className={`bg-wine px-page text-surface ${SECTION_PAD}`}>
+                    <SectionHeading id="exhibition-artists" number={next()} tone="wine" divider>{t(locale, 'pages.exhibition.artistsTitle')}</SectionHeading>
+                    <ul className="mt-step-7 grid grid-cols-1 gap-step-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="exhibition-artists">
                         {artists.map((artist) => (
-                            <li key={artist.id}>
-                                <ArtistCard
-                                    artist={{ ...artist, direction: null, artworks_count: worksBy(artist, artworks).length }}
-                                    artwork={artworkFor(artist, artworks)}
-                                />
+                            <li key={artist.id ?? artist.slug ?? artist.name}>
+                                <ArtistTile artist={artist} />
                             </li>
                         ))}
                     </ul>
                 </section>
             )}
 
-            {(photos.length > 0 || data.video) && (
-                <section aria-labelledby="exhibition-media" className="flex flex-col gap-step-5">
-                    <h2 id="exhibition-media" className="text-section">{t(locale, 'exhibitions.media')}</h2>
-                    {photos.length > 0 && (
+            {(morePhotos.length > 0 || data.video) && (
+                <section aria-labelledby="exhibition-media" className={`flex flex-col gap-step-6 px-page ${SECTION_PAD}`}>
+                    <SectionHeading id="exhibition-media" divider>{t(locale, 'exhibitions.media')}</SectionHeading>
+                    {morePhotos.length > 0 && (
                         <ul className="grid grid-cols-1 gap-step-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {photos.map((photo, index) => (
-                                <li key={photo.url} className="aspect-[4/3] overflow-hidden bg-surface-field">
-                                    <img src={photo.url} alt={`${data.title} — ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                            {morePhotos.map((photo, index) => (
+                                <li key={photo.url} className="aspect-[4/3] overflow-hidden bg-surface-sunk">
+                                    <img src={photo.url} alt={`${data.title} — ${index + 2}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                                 </li>
                             ))}
                         </ul>
@@ -111,11 +177,20 @@ export default function ExhibitionDetailPage({ params }) {
                 </section>
             )}
 
-            <div>
-                <a href="/contact" className="inline-flex min-h-11 items-center text-ui text-ink">
-                    <span className="link-line">{t(locale, 'exhibitions.enquire')}</span>
-                </a>
-            </div>
+            {pastShows.length > 0 && (
+                <section aria-labelledby="exhibition-past" className={`px-page ${SECTION_PAD}`}>
+                    <SectionHeading id="exhibition-past" number={next()} divider link={{ href: '/exhibitions', label: t(locale, 'pages.exhibition.allExhibitions') }}>
+                        {t(locale, 'pages.exhibition.pastTitle')}
+                    </SectionHeading>
+                    <ul className="mt-step-7 grid grid-cols-1 gap-step-8 md:grid-cols-2 md:gap-step-6" data-testid="exhibition-past">
+                        {pastShows.map((show) => (
+                            <li key={show.slug}>
+                                <ExhibitionCard exhibition={show} />
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
         </article>
     );
 }

@@ -12,7 +12,7 @@ import ErrorState from '../components/ErrorState.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 
 // The home page's artist grid: two columns on phones, four from md.
-const GRID = 'grid grid-cols-2 gap-x-step-4 gap-y-step-7 md:grid-cols-4 md:gap-x-step-6';
+const GRID = 'grid grid-cols-2 gap-x-step-4 gap-y-step-7 md:grid-cols-4 md:gap-x-step-5';
 // The artists list carries no works: one catalogue page (the API's largest) gives each card a work to show.
 const WORKS_PER_PAGE = 60;
 
@@ -33,19 +33,17 @@ export default function ArtistsPage() {
     usePageMeta({ title: `${t(locale, 'nav.artists')} | ArtNiyyətli`, description: t(locale, 'artist.listDescription') });
 
     return (
-        <div className="px-page pb-step-9 font-ui">
-            <PageHeader label={t(locale, 'labels.representation')} title={t(locale, 'nav.artists')} description={t(locale, 'artist.listDescription')} />
+        <div className="font-ui">
+            <PageHeader label={t(locale, 'nav.artists')} title={t(locale, 'pages.artist.listTitle')} description={t(locale, 'artist.listDescription')} />
 
-            <div className="mt-step-7">
+            <div className="px-page py-[clamp(80px,9.72vw,140px)]">
                 {loading && !data && (
                     <div className={GRID} aria-busy="true" data-testid="artists-skeleton">
                         {Array.from({ length: 4 }, (_, i) => (
                             <div key={i} aria-hidden="true">
                                 {/* The cards' work area, so the page does not jump when they load. */}
-                                <div className="flex h-[200px] items-end md:h-[300px]">
-                                    <div className="h-3/4 w-3/4 bg-surface-field" />
-                                </div>
-                                <div className="mt-step-4 h-4 w-2/3 bg-surface-field" />
+                                <div className="h-[200px] bg-surface-sunk md:h-[340px]" />
+                                <div className="mt-step-4 h-4 w-2/3 bg-surface-sunk" />
                             </div>
                         ))}
                     </div>
